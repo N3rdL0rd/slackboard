@@ -3,7 +3,7 @@ import { EMPTY_MOON } from "./moonBackup";
 import { EMPTY_PREFS } from "./prefsBackup";
 import { EMPTY_SPACES } from "./spacesBackup";
 import { describe, expect, it } from "vitest";
-import { at } from "./stats";
+import { parseStamp as at } from "./days";
 import { csvField, CSV_HEADER, exportFileName, exportJson, inRange, logbookCsv } from "./export";
 import type { LogEntry } from "./types";
 

@@ -30,7 +30,7 @@ day's entries); training-only days count as climbing days; local notifications, 
 - `src/core/localMigrations.ts`: an ordered list `{ version, up(db) }`. `ensureLocalSchema` reads `l_meta.schema_version`, runs the
   missing migrations in one transaction each, then records the new version. A fresh install runs them all.
 - Every new table below is a migration. Version 1 is the existing schema, unchanged.
-- The list of local tables is **derived from the migrations** (or a registry), so `clearLocalData` and the backup cannot forget a table.
+- The list of local tables is **derived from the migrations**: each table declares whether it is cleared when the user removes their data, and which section of the backup file carries it (or `"none"` with a reason). A test checks every table names a real backup section, so `clearLocalData` and the backup cannot forget one.
 - Tests: a database snapshot at version 1 migrates to the latest with no data lost; running twice changes nothing; a failed migration
   leaves the old version in place.
 
@@ -78,8 +78,9 @@ review and the planner, so all three agree. Tests cover quiet months, the baseli
 
 - New settings, with defaults: `trainTab` (true), `units` (`{ weight: "kg" | "lb", length: "m" | "ft" }`), `motivation` (true),
   `nudges` (`"relaxed" | "standard" | "keen" | "off"`), and `notifications` (per-type switches, time of day, quiet hours).
-- The persisted store version goes from 1 to 2, with a migration that fills the new defaults. `Settings` and `prefsBackup.ts` (the
-  parser) both gain the new fields, validated field by field.
+- The persisted store version goes from 1 to 2, with a migration, and a `merge` step so any setting the stored copy lacks always comes from
+  the defaults. `Settings` now lives in `core/settings.ts` (types, defaults, and a safe parser) and is shared by the store, `prefsBackup.ts` and
+  the future notification scheduler. A new install gets pounds and feet in the US, Liberia and Myanmar, and kilograms and metres elsewhere.
 - Units are used only at the edges: values are stored in kg and metres and converted for display and entry.
 
 ### F6. Navigation, icon and the rename
@@ -198,7 +199,7 @@ Shared pieces extracted from `outside.tsx` so roped and gym logging use the same
 
 | # | Milestone | Done when |
 |---|---|---|
-| M0 | F1 to F5: migrations, activity model, days, load model, settings and store version | Existing screens behave identically; all existing tests pass; new foundations tested |
+| M0 | F1 to F5: migrations, activity model, days, load model, settings and store version | Existing screens behave identically; all existing tests pass; new foundations tested. **Built.** The activity model has adapters but the Log tab still reads the old lists; it moves to it in M3 |
 | M1 | Rename to Climb workout, `muscle` icon, Train tab shell | The tab is there, hideable, and empty states render |
 | M2 | Roped: grades, log form, quick repeat, stats, backup and CSV | A roped climb can be logged, edited, backed up and restored |
 | M3 | Unified Log timeline, streak, default motivation, day notes and nudge | The Log tab shows every kind; streak and the motivation line appear on the Climb tab |

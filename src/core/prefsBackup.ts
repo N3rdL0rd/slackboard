@@ -1,20 +1,9 @@
 /** Settings, per-board angles and the training timer, for a backup. Validated field by field: an unknown or bad value is dropped. */
-import type { GradeDisplay } from "./grades";
+import { parseSettings, type Settings } from "./settings";
 import type { TimerConfig } from "./timer";
 
-export interface PreferenceSettings {
-  gradeDisplay: GradeDisplay;
-  shapes: boolean;
-  highContrast: boolean;
-  autoConnect: boolean;
-  autoDisconnectSec: number;
-  logLit: boolean;
-  haptics: boolean;
-  statsOffBoard: boolean;
-}
-
 export interface Preferences {
-  settings: Partial<PreferenceSettings>;
+  settings: Partial<Settings>;
   /** The angle each board was last viewed at, by board id. */
   angles: Record<string, number>;
   timer: TimerConfig | null;
@@ -25,28 +14,18 @@ export const EMPTY_PREFS: Preferences = { settings: {}, angles: {}, timer: null,
 export const hasPreferences = (p: Preferences): boolean => Object.keys(p.settings).length + Object.keys(p.angles).length > 0 || p.timer !== null || p.restSec !== null;
 
 /** The preferences in the app's stored state. */
-export function preferencesOf(s: { settings: Partial<PreferenceSettings>; angles: Record<string, number>; timer: TimerConfig; restSec: number }): Preferences {
+export function preferencesOf(s: { settings: Partial<Settings>; angles: Record<string, number>; timer: TimerConfig; restSec: number }): Preferences {
   return { settings: { ...s.settings }, angles: { ...s.angles }, timer: s.timer, restSec: s.restSec };
 }
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
 const num = (v: unknown, lo: number, hi: number): number | null => (typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi ? v : null);
-const DISPLAYS: GradeDisplay[] = ["both", "v", "font"];
-const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard"] as const;
 const TIMER_KEYS: (keyof TimerConfig)[] = ["prepSec", "workSec", "restSec", "reps", "sets", "setRestSec"];
 
 export function parsePreferences(raw: unknown): Preferences {
   if (!isObj(raw)) return EMPTY_PREFS;
-  const settings: Partial<PreferenceSettings> = {};
-  if (isObj(raw.settings)) {
-    const s = raw.settings;
-    const display = DISPLAYS.find((d) => d === s.gradeDisplay);
-    if (display) settings.gradeDisplay = display;
-    for (const k of BOOLS) if (typeof s[k] === "boolean") settings[k] = s[k] as boolean;
-    const sec = num(s.autoDisconnectSec, 0, 3600);
-    if (sec !== null) settings.autoDisconnectSec = sec;
-  }
+  const settings = parseSettings(raw.settings);
   const angles: Record<string, number> = {};
   if (isObj(raw.angles)) {
     let n = 0;

@@ -5,7 +5,7 @@
  */
 import { hashSeed } from "./filters";
 import type { GradeScale } from "./grades";
-import { at } from "./stats";
+import { parseStamp as at } from "./days";
 import type { LogEntry } from "./types";
 
 export type OutsideSetting = "gym" | "outdoor";

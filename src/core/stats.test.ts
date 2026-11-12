@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { overview, weekStart } from "./stats";
+import { weekStart } from "./days";
+import { overview } from "./stats";
 import type { LogEntry } from "./types";
 
 const e = (over: Partial<LogEntry>): LogEntry => ({ id: Math.random().toString(), provider: "tension", climbUuid: "c" + Math.random(), climbName: "x", angle: 40, isMirror: false, bidCount: 1, quality: 3, difficulty: 14, comment: "", climbedAt: "2026-10-28 18:00:00", isSend: true, ...over });

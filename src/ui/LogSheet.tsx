@@ -1,4 +1,5 @@
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { parseStamp } from "../core/days";
 import { useEffect, useState } from "react";
 import { Platform, TextInput, View } from "react-native";
 import type { SaveSendInput } from "../core/api";
@@ -13,9 +14,6 @@ import { Button, Segmented, Sheet, Stars, Tap } from "./parts";
 import { Text } from "./Text";
 
 export type LogMode = "send" | "attempt";
-
-/** `yyyy-MM-dd HH:mm:ss` from the server is local time at logging. */
-const parseServerTime = (t: string) => new Date(t.replace(" ", "T"));
 
 function whenLabel(d: Date): string {
   const today = new Date();
@@ -48,7 +46,7 @@ export function LogSheet({ visible, onClose, mode, setMode, climbUuid, climbName
   useEffect(() => {
     if (!visible) return;
     if (edit) {
-      setAttempts(edit.bidCount); setChosen(edit.isSend ? edit.difficulty : null); setStars(edit.isSend ? edit.quality : null); setNotes(edit.comment); setWhen(parseServerTime(edit.climbedAt));
+      setAttempts(edit.bidCount); setChosen(edit.isSend ? edit.difficulty : null); setStars(edit.isSend ? edit.quality : null); setNotes(edit.comment); setWhen(parseStamp(edit.climbedAt));
     } else {
       setAttempts(1); setChosen(trusted ? community : null); setStars(trusted ? Math.round(stat![3]) : null); setNotes(""); setWhen(new Date());
     }

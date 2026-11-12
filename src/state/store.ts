@@ -2,27 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { DEFAULT_FILTER, type ClimbFilter } from "../core/filters";
-import type { GradeDisplay } from "../core/grades";
+import { defaultUnits, DEFAULT_SETTINGS, withDefaults, type Settings } from "../core/settings";
 import { DEFAULT_CONFIG, type TimerConfig } from "../core/timer";
 import { migrateAccounts, type Accounts } from "../core/accounts";
 import type { ProviderId } from "../core/provider";
 import type { Board } from "../core/types";
 import { DEFAULT_PROVIDER } from "../providers";
 import { useData } from "./data";
-
-export interface Settings {
-  gradeDisplay: GradeDisplay;
-  shapes: boolean;
-  highContrast: boolean;
-  autoConnect: boolean;
-  autoDisconnectSec: number;
-  /** Tell the server which climbs are lit on the board, for its Recently lit history. The official app always does. */
-  logLit: boolean;
-  /** Haptic feedback for swiping, the angle dial, sends, attempts and the timer. */
-  haptics: boolean;
-  /** Count gym and outdoor climbs in the stats (default on). */
-  statsOffBoard?: boolean;
-}
 
 interface State {
   /** One signed-in account per provider. Tokens are kept in the keystore (state/session.ts). */
@@ -58,6 +44,13 @@ interface State {
   setPendingLink: (url: string | null) => void;
 }
 
+/** Defaults for a new install: pounds and feet where people use them, kilograms and metres elsewhere. */
+function initialSettings(): Settings {
+  let region: string | undefined;
+  try { region = Intl.DateTimeFormat().resolvedOptions().locale.split("-")[1]; } catch { /* no locale: metric */ }
+  return { ...DEFAULT_SETTINGS, units: defaultUnits(region) };
+}
+
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
@@ -66,7 +59,7 @@ export const useStore = create<State>()(
       angles: {},
       boardUsed: {},
       filters: {},
-      settings: { gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, autoDisconnectSec: 60, logLit: true, haptics: true },
+      settings: initialSettings(),
       timer: DEFAULT_CONFIG,
       restSec: 120,
       randomSeed: 1,
@@ -91,9 +84,11 @@ export const useStore = create<State>()(
       setPendingLink: (pendingLink) => set({ pendingLink }),
     }),
     {
-      name: "slackboard-v2", storage: createJSONStorage(() => AsyncStorage), version: 1,
-      // Version 0 held a single signed-in user; it becomes the first provider's account.
+      name: "slackboard-v2", storage: createJSONStorage(() => AsyncStorage), version: 2,
+      // Version 0 held a single signed-in user; it becomes the first provider's account. Version 1 had fewer settings.
       migrate: (old) => ({ ...(old as object), accounts: migrateAccounts(old as Parameters<typeof migrateAccounts>[0], DEFAULT_PROVIDER.id) }) as never,
+      // Whatever the stored copy lacks (a setting added since it was saved) comes from the defaults.
+      merge: (persisted, current) => ({ ...current, ...(persisted as object), settings: withDefaults((persisted as { settings?: unknown } | undefined)?.settings, current.settings) }),
     },
   ),
 );

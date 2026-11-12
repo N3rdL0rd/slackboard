@@ -7,8 +7,10 @@ import { encodeFrames } from "./frames";
 import { EMPTY_MOON, exportMoon, parseMoon } from "./moonBackup";
 import { climbCount, createBoard, LOCAL_USER_ID, saveLog, saveOwnClimb, setTag } from "./moonLocal";
 import { layoutIdOf, setupByKey } from "./moonboard";
+import { DEFAULT_NOTIFICATIONS } from "./settings";
 import { EMPTY_PREFS, parsePreferences, preferencesOf } from "./prefsBackup";
 import { loadLogbook, loadStatsAt } from "./repo";
+import { localTables } from "./localMigrations";
 import { ensureSchema } from "./schema";
 import { EMPTY_SPACES, exportSpaces } from "./spacesBackup";
 import { saveBoardPlace, saveLogSpace, saveSpaceLineage, saveSpaceName } from "./spaces";
@@ -194,7 +196,7 @@ describe("everything that only this phone had", () => {
 
   it("round trips MoonBoard boards, problems you set, likes and blocks, spaces and preferences", async () => {
     const { moon, local } = await seeded();
-    const prefs = preferencesOf({ settings: { gradeDisplay: "v", shapes: true, haptics: false, autoDisconnectSec: 30 }, angles: { b1: 35 }, timer: { prepSec: 5, workSec: 7, restSec: 3, reps: 6, sets: 2, setRestSec: 60 }, restSec: 180 });
+    const prefs = preferencesOf({ settings: { gradeDisplay: "v", shapes: true, haptics: false, autoDisconnectSec: 30, trainTab: false, nudges: "relaxed", units: { weight: "lb", length: "ft" }, notifications: { ...DEFAULT_NOTIFICATIONS, plan: true, planTime: "06:30" } }, angles: { b1: 35 }, timer: { prepSec: 5, workSec: 7, restSec: 3, reps: 6, sets: 2, setRestSec: 60 }, restSec: 180 });
     const logs = (await loadLogbook(moon, LOCAL_USER_ID, "moon")).map((e) => ({ ...e, provider: "moon" }));
     const text = file({ moon: await exportMoon(moon), spaces: await exportSpaces(local), preferences: prefs, logbook: logs });
     const parsed = parseBackup(text, isLocal);
@@ -314,5 +316,12 @@ describe("saying what a backup holds", () => {
     expect(describeRestored(base)).toBe("Restored 2 off-board climbs, 1 MoonBoard, 3 problems you set.");
     expect(describeRestored({ ...base, skipped: 2 })).toContain("2 records were damaged and skipped.");
     expect(describeRestored({ offBoard: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Nothing needed restoring.");
+  });
+});
+
+describe("every local table is backed up or says why not", () => {
+  it("names a section the backup file really has", () => {
+    const sections = Object.keys(JSON.parse(file({})));
+    for (const t of localTables()) if (t.backup !== "none") expect(sections, t.name).toContain(t.backup);
   });
 });

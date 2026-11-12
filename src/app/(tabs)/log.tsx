@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { View } from "react-native";
 import { JumpList } from "../../ui/JumpToTop";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { parseStamp } from "../../core/days";
 import type { LogEntry } from "../../core/types";
 import { groupLogSessions, sessionSummary } from "../../core/spaces";
 import { gradeColor } from "../../core/grades";
@@ -50,7 +51,7 @@ export default function LogTab() {
   const [saving, setSaving] = useState(false);
   const [mirror, setMirror] = useState(false);
 
-  const inRange = useMemo(() => sends.filter((s) => Date.now() - at(s.climbedAt).getTime() <= DAYS[range] * 86400000), [sends, range]);
+  const inRange = useMemo(() => sends.filter((s) => Date.now() - parseStamp(s.climbedAt).getTime() <= DAYS[range] * 86400000), [sends, range]);
   const sendOnly = inRange.filter((s) => s.isSend);
   const stats = {
     sessions: groupLogSessions(inRange, spaces, logSpaces, gradeOfEntry).filter((g) => !g.earlier).length,
@@ -152,7 +153,7 @@ export default function LogTab() {
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text v="climbName" numberOfLines={1}>{s.climbName}</Text>
                       <Text v="secondary">
-                        {at(s.climbedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} · {s.angle}°{s.isMirror ? " · Mirrored" : ""} · {s.bidCount} {s.bidCount === 1 ? "attempt" : "attempts"}{s.isSend && s.bidCount === 1 ? " · Flash" : ""}{s.pending ? " · Waiting to upload" : ""}
+                        {parseStamp(s.climbedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} · {s.angle}°{s.isMirror ? " · Mirrored" : ""} · {s.bidCount} {s.bidCount === 1 ? "attempt" : "attempts"}{s.isSend && s.bidCount === 1 ? " · Flash" : ""}{s.pending ? " · Waiting to upload" : ""}
                       </Text>
                       {s.isSend && <Stars value={s.quality} />}
                       {s.comment ? <Text v="caption" numberOfLines={2}>{s.comment}</Text> : null}

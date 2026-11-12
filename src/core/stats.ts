@@ -1,18 +1,7 @@
+import { dayOf, parseStamp, weekStart } from "./days";
 import type { LogEntry } from "./types";
 
 const DAY = 86_400_000;
-
-/** Server times are `yyyy-MM-dd HH:mm:ss` in the device's local time, so they parse as local. */
-export const at = (t: string): Date => new Date(t.replace(" ", "T"));
-
-/** Midnight at the start of the local week (Monday). */
-export function weekStart(d: Date): Date {
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-  return x;
-}
-
-const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
 export interface WeekPoint {
   /** Monday of the week, local. */
@@ -61,13 +50,13 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
   const graded = sends.filter((e) => e.difficulty > 0).map((e) => ({ e, g: gradeOf(e) }));
   const attempts = entries.reduce((n, e) => n + Math.max(0, e.bidCount), 0);
   const uniqueClimbs = new Set(sends.map((e) => e.climbUuid)).size;
-  const days = new Set(entries.map((e) => dayKey(at(e.climbedAt))));
+  const days = new Set(entries.map((e) => dayOf(e.climbedAt)));
 
   let hardest: Overview["hardest"] = null;
   for (const { e, g } of graded) if (!hardest || g > hardest.grade) hardest = { name: e.climbName, grade: g, provider: e.provider, climbedAt: e.climbedAt, angle: e.angle };
 
   const since = now.getTime() - 30 * DAY;
-  const recent = entries.filter((e) => at(e.climbedAt).getTime() >= since);
+  const recent = entries.filter((e) => parseStamp(e.climbedAt).getTime() >= since);
 
   const byV = new Map<number, number>();
   for (const { g } of graded) { const v = Math.floor(g); byV.set(v, (byV.get(v) ?? 0) + 1); }
@@ -76,7 +65,7 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
   const thisWeek = weekStart(now).getTime();
   const weekMs = new Map<number, LogEntry[]>();
   for (const e of entries) {
-    const k = weekStart(at(e.climbedAt)).getTime();
+    const k = weekStart(parseStamp(e.climbedAt)).getTime();
     (weekMs.get(k) ?? weekMs.set(k, []).get(k)!).push(e);
   }
   const first = entries.length ? Math.min(...weekMs.keys()) : thisWeek;
@@ -94,7 +83,7 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
   for (const w of weeks) {
     const lo = windowStart(w);
     const hi = w.start.getTime() + 7 * DAY;
-    const top = graded.filter(({ e }) => { const t = at(e.climbedAt).getTime(); return t >= lo && t < hi; }).map(({ g }) => g).sort((a, b) => b - a).slice(0, 3);
+    const top = graded.filter(({ e }) => { const t = parseStamp(e.climbedAt).getTime(); return t >= lo && t < hi; }).map(({ g }) => g).sort((a, b) => b - a).slice(0, 3);
     w.working = top.length ? top.reduce((a, b) => a + b, 0) / top.length : null;
   }
   const trailing = weeks.slice(-weeksShown);
@@ -117,7 +106,7 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
     sessions: days.size,
     flashRate: sends.length ? sends.filter((e) => e.bidCount <= 1).length / sends.length : null,
     hardest,
-    last30: { sends: recent.filter((e) => e.isSend).length, sessions: new Set(recent.map((e) => dayKey(at(e.climbedAt)))).size },
+    last30: { sends: recent.filter((e) => e.isSend).length, sessions: new Set(recent.map((e) => dayOf(e.climbedAt))).size },
     streakWeeks: streak,
     byGrade: [...byV.entries()].sort((a, b) => a[0] - b[0]).map(([v, n]) => ({ v, sends: n })),
     weeks: trailing,

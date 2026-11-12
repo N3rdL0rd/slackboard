@@ -1,5 +1,6 @@
 import type { Db } from "./db";
 import { makeRef, refKey, type ClimbRef, type ProviderId } from "./provider";
+import { localTables, migrateLocal } from "./localMigrations";
 
 /**
  * A circuit as the user sees it: one named, coloured list of climbs that may hold climbs from several providers. It lives
@@ -133,30 +134,9 @@ export function reconcile(local: LogicalCircuit[], provider: ProviderId, remotes
 // ---------------------------------------------------------------------------------------------------------------------
 // Storage
 
-export const LOCAL_SCHEMA_VERSION = 1;
-
-export const LOCAL_SCHEMA = `
-CREATE TABLE IF NOT EXISTS l_meta (key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS l_circuits (uuid TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL, color TEXT NOT NULL, user_id INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS l_circuit_items (circuit_uuid TEXT NOT NULL, position INTEGER NOT NULL, provider TEXT NOT NULL, climb_id TEXT NOT NULL, PRIMARY KEY (circuit_uuid, provider, climb_id));
-CREATE TABLE IF NOT EXISTS l_projections (circuit_uuid TEXT NOT NULL, provider TEXT NOT NULL, remote_uuid TEXT NOT NULL, is_public INTEGER NOT NULL, remote_hash TEXT NOT NULL, remote_items TEXT NOT NULL, PRIMARY KEY (circuit_uuid, provider));
-CREATE TABLE IF NOT EXISTS l_local_logs (id TEXT PRIMARY KEY, provider TEXT NOT NULL, climb_id TEXT NOT NULL, climb_name TEXT NOT NULL, angle INTEGER NOT NULL, is_mirror INTEGER NOT NULL, bid_count INTEGER NOT NULL, quality INTEGER NOT NULL, difficulty REAL NOT NULL, comment TEXT NOT NULL, climbed_at TEXT NOT NULL, is_send INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS l_board_places (board_id TEXT PRIMARY KEY, gym_name TEXT, lat REAL, lon REAL, added_at TEXT NOT NULL, manual_space_id TEXT);
-CREATE TABLE IF NOT EXISTS l_space_names (space_id TEXT PRIMARY KEY, name TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS l_space_lineage (old_space_id TEXT PRIMARY KEY, new_space_id TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS l_log_spaces (entry_id TEXT PRIMARY KEY, space_id TEXT NOT NULL, board_id TEXT NOT NULL, space_name TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS l_outside_logs (id TEXT PRIMARY KEY, setting TEXT NOT NULL, name TEXT NOT NULL, venue TEXT NOT NULL, link TEXT NOT NULL, wall TEXT NOT NULL, grade_system TEXT, grade_label TEXT, grade REAL, result TEXT NOT NULL, attempts INTEGER NOT NULL, tags TEXT NOT NULL, note TEXT NOT NULL, climbed_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS l_lit_history (id TEXT PRIMARY KEY, provider TEXT NOT NULL, climb_id TEXT NOT NULL, climb_name TEXT NOT NULL, board_id TEXT NOT NULL, board_name TEXT NOT NULL, angle INTEGER NOT NULL, lit_at TEXT NOT NULL);
-CREATE INDEX IF NOT EXISTS l_lit_history_at ON l_lit_history (lit_at);
-`;
-
-/**
- * Local data is never dropped by a version change: tables are only ever added (IF NOT EXISTS) or altered by a migration
- * written here, because this is the one place the user's own data lives.
- */
+/** Brings the phone's own database up to date (see localMigrations.ts). */
 export async function ensureLocalSchema(db: Db): Promise<void> {
-  await db.exec(LOCAL_SCHEMA);
-  await db.run("INSERT OR REPLACE INTO l_meta (key, value) VALUES ('schema_version', ?)", [String(LOCAL_SCHEMA_VERSION)]);
+  await migrateLocal(db);
 }
 
 export async function loadLogicalCircuits(db: Db): Promise<LogicalCircuit[]> {
@@ -214,6 +194,7 @@ export async function syncLogicalCircuits(db: Db, provider: ProviderId, remotes:
   return after;
 }
 
+/** Empties the tables that hold what the user logged on this phone and what was built from it, when they remove their data. */
 export async function clearLocalData(db: Db): Promise<void> {
-  for (const t of ["l_circuits", "l_circuit_items", "l_projections", "l_local_logs", "l_board_places", "l_space_names", "l_space_lineage", "l_log_spaces"]) await db.exec(`DELETE FROM ${t}`);
+  for (const t of localTables()) if (t.clearable) await db.exec(`DELETE FROM ${t.name}`);
 }

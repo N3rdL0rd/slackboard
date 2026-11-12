@@ -11,7 +11,7 @@ import { preferencesOf } from "../core/prefsBackup";
 import { exportSpaces } from "../core/spacesBackup";
 import { exportFileName, exportJson, inRange, logbookCsv, RANGE_LABELS, type ExportFormat, type ExportRange } from "../core/export";
 import { gradeOptions, type OutsideLog } from "../core/outside";
-import { at } from "../core/stats";
+import { parseStamp as at } from "../core/days";
 import { grades } from "../data/grades";
 import { getDb, getLocalDb } from "../data/sqlite";
 import { getProvider } from "../providers";

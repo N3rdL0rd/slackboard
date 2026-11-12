@@ -17,6 +17,7 @@ import { Icon } from "../ui/Icon";
 import { haptic } from "../ui/haptics";
 import { Text } from "../ui/Text";
 import { c, r } from "../theme";
+import { parseStamp } from "../core/days";
 
 const SYSTEMS: { value: OutsideGradeSystem; label: string }[] = [{ value: "v", label: "V scale" }, { value: "font", label: "Font" }];
 const SETTINGS: { value: OutsideSetting; label: string }[] = [{ value: "gym", label: SETTING_LABEL.gym }, { value: "outdoor", label: SETTING_LABEL.outdoor }];
@@ -24,7 +25,6 @@ const RESULTS: { value: OutsideResult; label: string }[] = [{ value: "flash", la
 
 const input = { minHeight: 48, borderRadius: r.input, borderWidth: 1, borderColor: c.line, backgroundColor: c.card, color: c.text, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, fontFamily: "Barlow_400Regular" } as const;
 
-const at = (t: string) => new Date(t.replace(" ", "T"));
 
 function draftFrom(l: OutsideLog): OutsideDraft {
   return { setting: l.setting, name: l.name, venue: l.venue, link: l.link, wall: l.wall, gradeSystem: l.gradeSystem ?? "v", gradeLabel: l.gradeLabel, result: l.result, attempts: l.attempts, tags: l.tags, note: l.note };
@@ -62,7 +62,7 @@ export default function Outside() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
   // Editing: fill the form once the saved log has been read.
-  if (existing && loadedId !== existing.id) { setLoadedId(existing.id); setDraft(draftFrom(existing)); setWhen(at(existing.climbedAt)); }
+  if (existing && loadedId !== existing.id) { setLoadedId(existing.id); setDraft(draftFrom(existing)); setWhen(parseStamp(existing.climbedAt)); }
 
   const patch = (p: Partial<OutsideDraft>) => { setError(""); setDraft((d) => ({ ...d, ...p })); };
   const gradeCells = useMemo(() => gradeOptions(grades, draft.gradeSystem).map((g) => ({ key: g.label, primary: g.label, band: grades.band(g.difficulty) })), [draft.gradeSystem]);

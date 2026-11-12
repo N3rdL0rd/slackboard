@@ -1,4 +1,5 @@
 import type { Db } from "./db";
+import { dayOf, parseStamp } from "./days";
 import { distanceKm } from "./gyms";
 import type { LogEntry } from "./types";
 
@@ -215,12 +216,6 @@ export interface LogSession {
   earlier: boolean;
 }
 
-const localDate = (value: string): Date => new Date(value.replace(" ", "T"));
-const localDayKey = (value: string): string => {
-  const d = localDate(value);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
-
 /** One session per local calendar day and Space. Entries logged before Spaces existed form one Earlier group. */
 export function groupLogSessions(
   entries: LogEntry[],
@@ -238,13 +233,13 @@ export function groupLogSessions(
       continue;
     }
     const spaceId = attribution.spaceId;
-    const day = localDayKey(entry.climbedAt);
+    const day = dayOf(entry.climbedAt);
     const key = `${day}:${spaceId}`;
     let session = sessions.get(key);
     if (!session) {
       session = {
         key, dayKey: day, spaceId,
-        title: localDate(entry.climbedAt).toLocaleDateString("en-US", { weekday: "long" }),
+        title: parseStamp(entry.climbedAt).toLocaleDateString("en-US", { weekday: "long" }),
         spaceName: spaceById.get(spaceId)?.name ?? attribution.spaceName,
         entries: [], sendCount: 0, boardCount: 0, hardest: null, earlier: false,
       };

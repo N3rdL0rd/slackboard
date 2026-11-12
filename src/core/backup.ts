@@ -6,6 +6,7 @@
  * The file is untrusted input: every record is checked, and one that doesn't pass is skipped and counted, never half-applied.
  */
 import type { Db } from "./db";
+import { parseStamp } from "./days";
 import type { LitEntry } from "./litHistory";
 import { saveLit } from "./litLocal";
 import { EMPTY_MOON, hasMoon, parseMoon, restoreMoon, type MoonBackup } from "./moonBackup";
@@ -153,7 +154,7 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
  */
 /** A log entry as the input that saves it, so a restored MoonBoard log lands in the MoonBoard database with its ticks and stats. */
 function sendInputOf(e: LogEntry): SaveSendInput {
-  const input: SaveSendInput = { climbUuid: e.climbUuid, angle: e.angle, isMirror: e.isMirror, bidCount: e.bidCount, comment: e.comment, climbedAt: new Date(e.climbedAt.replace(" ", "T")) };
+  const input: SaveSendInput = { climbUuid: e.climbUuid, angle: e.angle, isMirror: e.isMirror, bidCount: e.bidCount, comment: e.comment, climbedAt: parseStamp(e.climbedAt) };
   return e.isSend ? { ...input, quality: e.quality, difficulty: e.difficulty } : input;
 }
 

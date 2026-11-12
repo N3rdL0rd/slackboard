@@ -1,7 +1,7 @@
 import { difficultyOf, hashSeed, isClassic, type DoneState } from "./filters";
 import type { ProviderId } from "./provider";
 import type { GradeEvidence } from "./outside";
-import { at } from "./stats";
+import { parseStamp as at } from "./days";
 import type { Climb, LogEntry, StatsAt } from "./types";
 
 /** One board's climbs, with what is known about them at the angle the user views that board. */

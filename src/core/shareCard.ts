@@ -3,6 +3,7 @@
  * Two kinds: a climb card (the board and everything worth knowing about the climb), and a send card (the same plus a hero
  * line, "Flashed!" or "Sent!", for something you just did). Both are landscape: the info on the left, the board on the right.
  */
+import { parseStamp } from "./days";
 import type { Frame } from "./frames";
 import type { GradeDisplay } from "./grades";
 import type { AngleStat, BoardSpec, Placement, Role } from "./types";
@@ -56,7 +57,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 /** `1 Nov 2026` from a logbook time; empty when it can't be read. */
 export function shortDate(climbedAt: string): string {
-  const d = new Date(climbedAt.replace(" ", "T"));
+  const d = parseStamp(climbedAt);
   if (Number.isNaN(d.getTime())) return "";
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
