@@ -1,21 +1,25 @@
 /**
  * Reading a backup file back in. A backup is the JSON export (see export.ts). Server-held data (board sends, server circuits) comes
- * back by signing in and syncing, so a restore brings back only what exists on the phone alone: off-board climbs, sends logged on
- * boards with no service (MoonBoard), and circuits that were never published anywhere.
+ * back by signing in and syncing, so a restore brings back only what exists on the phone alone: off-board climbs, MoonBoard boards,
+ * problems, logs, likes and blocks, circuits that were never published, lit history, spaces, and settings.
  *
  * The file is untrusted input: every record is checked, and one that doesn't pass is skipped and counted, never half-applied.
  */
 import type { Db } from "./db";
 import type { LitEntry } from "./litHistory";
 import { saveLit } from "./litLocal";
+import { EMPTY_MOON, hasMoon, parseMoon, restoreMoon, type MoonBackup } from "./moonBackup";
+import { EMPTY_PREFS, hasPreferences, parsePreferences, type Preferences } from "./prefsBackup";
+import { EMPTY_SPACES, hasSpaces, parseSpaces, restoreSpaces, type SpacesBackup } from "./spacesBackup";
+import { saveLog } from "./moonLocal";
+import type { SaveSendInput } from "./api";
 import { loadLogicalCircuits, saveLogicalCircuits, type LogicalCircuit } from "./logicalCircuits";
 import { cleanLink, MAX_ATTEMPTS, STYLE_TAGS, WALL_STYLES, type OutsideGradeSystem, type OutsideLog, type OutsideResult, type OutsideSetting, type WallStyleId } from "./outside";
 import { saveOutside } from "./outsideLocal";
-import { saveLocalLog } from "./mergedLog";
 import type { LogEntry } from "./types";
 
 /** The newest file format this version of the app writes and reads. */
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
 
 export interface ParsedBackup {
   exportedAt: string;
@@ -26,6 +30,10 @@ export interface ParsedBackup {
   circuits: LogicalCircuit[];
   /** Climbs lit on boards. */
   litHistory: LitEntry[];
+  /** MoonBoard boards, the problems set on them, and likes and blocks. */
+  moon: MoonBackup;
+  spaces: SpacesBackup;
+  preferences: Preferences;
   /** Records in the file that were damaged or of a kind this app can't use. */
   skipped: number;
 }
@@ -37,7 +45,19 @@ export interface RestoreSummary {
   localLogs: number;
   circuits: number;
   litHistory: number;
+  moonBoards: number;
+  moonProblems: number;
+  /** Likes and blocks on MoonBoard problems. */
+  moonTags: number;
+  places: number;
+  preferences: boolean;
   skipped: number;
+}
+
+/** Where a restore finds each provider's database, and the phone's own. */
+export interface RestoreTargets {
+  dbFor: (provider: string) => Promise<Db>;
+  local: Db;
 }
 
 type Obj = Record<string, unknown>;
@@ -121,20 +141,70 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
   const localLogs = allLogs.filter((e) => isLocalProvider(e.provider));
   const circuits = each(raw.circuits, (v) => circuitOf(v, fallback));
   const litHistory = each(raw.litHistory, litOf);
-  return { ok: true, backup: { exportedAt, offBoard, localLogs, circuits, litHistory, skipped } };
+  const moon = parseMoon(raw.moon, () => { skipped++; });
+  const spaces = parseSpaces(raw.spaces, () => { skipped++; });
+  const preferences = parsePreferences(raw.preferences);
+  return { ok: true, backup: { exportedAt, offBoard, localLogs, circuits, litHistory, moon, spaces, preferences, skipped } };
 }
 
 /**
  * Writes the backup's records into the local database. A record already there with the same id is replaced by the file's copy; a
  * circuit already there is left alone.
  */
-export async function restoreBackup(db: Db, b: ParsedBackup): Promise<RestoreSummary> {
-  for (const l of b.offBoard) await saveOutside(db, l);
-  for (const e of b.localLogs) await saveLocalLog(db, e);
-  for (const e of b.litHistory) await saveLit(db, e);
-  const have = await loadLogicalCircuits(db);
+/** A log entry as the input that saves it, so a restored MoonBoard log lands in the MoonBoard database with its ticks and stats. */
+function sendInputOf(e: LogEntry): SaveSendInput {
+  const input: SaveSendInput = { climbUuid: e.climbUuid, angle: e.angle, isMirror: e.isMirror, bidCount: e.bidCount, comment: e.comment, climbedAt: new Date(e.climbedAt.replace(" ", "T")) };
+  return e.isSend ? { ...input, quality: e.quality, difficulty: e.difficulty } : input;
+}
+
+export async function restoreBackup(t: RestoreTargets, b: ParsedBackup): Promise<RestoreSummary> {
+  for (const l of b.offBoard) await saveOutside(t.local, l);
+  for (const e of b.litHistory) await saveLit(t.local, e);
+  // Boards first, so the problems, logs and tags that belong to them have somewhere to go.
+  if (hasMoon(b.moon)) await restoreMoon(await t.dbFor("moonboard"), b.moon);
+  for (const e of b.localLogs) await saveLog(await t.dbFor(e.provider), sendInputOf(e), e.id);
+  await restoreSpaces(t.local, b.spaces);
+  const have = await loadLogicalCircuits(t.local);
   const known = new Set(have.map((c) => c.uuid));
   const added = b.circuits.filter((c) => !known.has(c.uuid));
-  if (added.length) await saveLogicalCircuits(db, [...have, ...added], have);
-  return { offBoard: b.offBoard.length, localLogs: b.localLogs.length, circuits: added.length, litHistory: b.litHistory.length, skipped: b.skipped };
+  if (added.length) await saveLogicalCircuits(t.local, [...have, ...added], have);
+  return {
+    offBoard: b.offBoard.length, localLogs: b.localLogs.length, circuits: added.length, litHistory: b.litHistory.length, moonBoards: b.moon.boards.length,
+    moonProblems: b.moon.problems.length, moonTags: b.moon.tags.length, places: b.spaces.places.length, preferences: hasPreferences(b.preferences), skipped: b.skipped,
+  };
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** What a backup holds, in words, for the preview before restoring. */
+export function describeBackup(b: ParsedBackup): string {
+  const parts = [
+    b.offBoard.length ? plural(b.offBoard.length, "off-board climb", "off-board climbs") : "",
+    b.localLogs.length ? plural(b.localLogs.length, "MoonBoard log entry", "MoonBoard log entries") : "",
+    b.moon.boards.length ? plural(b.moon.boards.length, "MoonBoard", "MoonBoards") : "",
+    b.moon.problems.length ? plural(b.moon.problems.length, "problem you set", "problems you set") : "",
+    b.moon.tags.length ? plural(b.moon.tags.length, "MoonBoard like or block", "MoonBoard likes and blocks") : "",
+    b.circuits.length ? plural(b.circuits.length, "circuit", "circuits") : "",
+    b.litHistory.length ? plural(b.litHistory.length, "lit climb", "lit climbs") : "",
+    b.spaces.places.length ? plural(b.spaces.places.length, "board location", "board locations") : "",
+    hasPreferences(b.preferences) ? "your settings" : "",
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : "nothing this phone keeps on its own";
+}
+
+/** What a restore brought back, in words. */
+export function describeRestored(s: RestoreSummary): string {
+  const parts = [
+    s.offBoard ? plural(s.offBoard, "off-board climb", "off-board climbs") : "",
+    s.localLogs ? plural(s.localLogs, "MoonBoard log entry", "MoonBoard log entries") : "",
+    s.moonBoards ? plural(s.moonBoards, "MoonBoard", "MoonBoards") : "",
+    s.moonProblems ? plural(s.moonProblems, "problem you set", "problems you set") : "",
+    s.moonTags ? plural(s.moonTags, "MoonBoard like or block", "MoonBoard likes and blocks") : "",
+    s.circuits ? plural(s.circuits, "circuit", "circuits") : "",
+    s.litHistory ? plural(s.litHistory, "lit climb", "lit climbs") : "",
+    s.places ? plural(s.places, "board location", "board locations") : "",
+    s.preferences ? "your settings" : "",
+  ].filter(Boolean);
+  const done = parts.length ? `Restored ${parts.join(", ")}.` : "Nothing needed restoring.";
+  return s.skipped ? `${done} ${plural(s.skipped, "record was", "records were")} damaged and skipped.` : done;
 }

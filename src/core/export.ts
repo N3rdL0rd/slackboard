@@ -1,5 +1,8 @@
 import { BACKUP_VERSION } from "./backup";
 import type { LitEntry } from "./litHistory";
+import type { MoonBackup } from "./moonBackup";
+import type { Preferences } from "./prefsBackup";
+import type { SpacesBackup } from "./spacesBackup";
 import type { LogicalCircuit } from "./logicalCircuits";
 import { RESULT_LABEL, wallStyle, type OutsideLog } from "./outside";
 import type { LogEntry } from "./types";
@@ -66,6 +69,10 @@ export interface ExportBundle {
   offBoard: OutsideLog[];
   /** Climbs lit up on a board, newest first. */
   litHistory: LitEntry[];
+  /** MoonBoard boards, the problems the user set, and their likes and blocks. */
+  moon: MoonBackup;
+  spaces: SpacesBackup;
+  preferences: Preferences;
   liked: string[];
   blocked: string[];
   boards: { name: string; layout: string; size: string; angle: number; adjustable: boolean }[];
@@ -73,7 +80,7 @@ export interface ExportBundle {
 
 export function exportJson(input: {
   now: Date; user: { id: number | null; username: string }; range: ExportRange; logbook: LogEntry[]; circuits: LogicalCircuit[];
-  offBoard: OutsideLog[]; litHistory: LitEntry[]; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
+  offBoard: OutsideLog[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
   gradeOf: (e: LogEntry) => GradeText;
 }): string {
   const bundle: ExportBundle = {
@@ -85,6 +92,9 @@ export function exportJson(input: {
     circuits: input.circuits.map((c) => ({ uuid: c.uuid, name: c.name, description: c.description, color: c.color, userId: c.userId, createdAt: c.createdAt, updatedAt: c.updatedAt, isPublic: c.isPublic, climbs: c.climbs, items: c.items, publishedOn: c.projections.map((p) => ({ provider: p.provider, uuid: p.remoteUuid, isPublic: p.isPublic })) })),
     offBoard: input.offBoard,
     litHistory: input.litHistory,
+    moon: input.moon,
+    spaces: input.spaces,
+    preferences: input.preferences,
     liked: [...input.liked].sort(),
     blocked: [...input.blocked].sort(),
     boards: input.boards.map((b) => ({ name: b.name, layout: b.spec.layoutName, size: b.spec.sizeName, angle: b.angle, adjustable: b.isAdjustable })),

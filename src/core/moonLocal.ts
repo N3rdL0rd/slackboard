@@ -77,17 +77,18 @@ export async function ensureSeeded(db: Db, setup: MoonSetup, angle: number): Pro
 }
 
 /** Adds a board for the setup and angle. Returns its id. The board's own angle is fixed; MoonBoards do not adjust. */
-export async function createBoard(db: Db, input: { name: string; setup: MoonSetup; angle: number }): Promise<string> {
+/** Adds a board for the setup and angle. Returns its id; a restore passes the id the board had. The board's own angle is fixed. */
+export async function createBoard(db: Db, input: { name: string; setup: MoonSetup; angle: number; uuid?: string }): Promise<string> {
   await seedSetup(db, input.setup, input.angle);
-  const uuid = randomHex(32).toUpperCase();
+  const uuid = (input.uuid ?? randomHex(32)).toUpperCase();
   const product = productOf(input.setup);
   const now = serverTime(new Date());
   await db.run("INSERT OR IGNORE INTO users (id, username, created_at) VALUES (?, ?, ?)", [LOCAL_USER_ID, LOCAL_USERNAME, now]);
   await db.run(
-    "INSERT INTO walls (uuid, user_id, name, product_id, is_adjustable, angle, layout_id, product_size_id, hsm, serial_number, created_at) VALUES (?, ?, ?, ?, 0, ?, ?, ?, 1, NULL, ?)",
+    "INSERT OR REPLACE INTO walls (uuid, user_id, name, product_id, is_adjustable, angle, layout_id, product_size_id, hsm, serial_number, created_at) VALUES (?, ?, ?, ?, 0, ?, ?, ?, 1, NULL, ?)",
     [uuid, LOCAL_USER_ID, input.name, product, input.angle, layoutIdOf(input.setup, input.angle), product, now],
   );
-  await db.run("INSERT INTO walls_sets (wall_uuid, set_id) VALUES (?, ?)", [uuid, SET_ID]);
+  await db.run("INSERT OR REPLACE INTO walls_sets (wall_uuid, set_id) VALUES (?, ?)", [uuid, SET_ID]);
   return uuid;
 }
 
@@ -145,9 +146,9 @@ export async function wipe(db: Db): Promise<void> {
   for (const t of tables) await db.exec(`DELETE FROM "${t.name}"`);
 }
 
-/** How many climbs the setup's list holds, per angle. */
+/** How many downloaded problems the setup's list holds, per angle. The user's own problems do not count: they must not stop the list downloading. */
 export async function climbCount(db: Db, setup: MoonSetup, angle: number): Promise<number> {
-  return (await db.all<{ n: number }>("SELECT COUNT(*) AS n FROM climbs WHERE layout_id = ?", [layoutIdOf(setup, angle)]))[0]?.n ?? 0;
+  return (await db.all<{ n: number }>("SELECT COUNT(*) AS n FROM climbs WHERE layout_id = ? AND setter_id != ?", [layoutIdOf(setup, angle), LOCAL_USER_ID]))[0]?.n ?? 0;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -243,6 +244,8 @@ export async function* readEsr(db: Db, setupText: string, batch = 500): AsyncGen
 export interface OwnClimbInput {
   /** Present when editing one of the user's own problems. */
   uuid?: string;
+  /** With `uuid`: put the problem back (a restore) instead of editing an existing one. */
+  restore?: boolean;
   layoutId: number;
   name: string;
   /** The feet rule, stored where the dumps keep theirs. */
@@ -262,7 +265,7 @@ export async function saveOwnClimb(db: Db, i: OwnClimbInput): Promise<string> {
   const now = serverTime(new Date());
   const uuid = (i.uuid ?? randomHex(32)).toUpperCase();
   await db.transaction(async () => {
-    if (i.uuid) {
+    if (i.uuid && !i.restore) {
       const n = (await db.all<{ n: number }>("SELECT COUNT(*) AS n FROM climbs WHERE uuid = ? AND setter_id = ?", [uuid, LOCAL_USER_ID]))[0]?.n ?? 0;
       if (!n) throw new Error("You can only change problems you set.");
       await db.run(
@@ -271,7 +274,7 @@ export async function saveOwnClimb(db: Db, i: OwnClimbInput): Promise<string> {
       );
     } else {
       await db.run(
-        "INSERT INTO climbs (uuid, layout_id, setter_id, setter_username, name, description, hsm, edge_left, edge_right, edge_bottom, edge_top, angle, frames_count, frames_pace, frames, is_draft, is_listed, created_at, is_nomatch) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, 1, 0, ?, 0, 1, ?, 0)",
+        "INSERT OR REPLACE INTO climbs (uuid, layout_id, setter_id, setter_username, name, description, hsm, edge_left, edge_right, edge_bottom, edge_top, angle, frames_count, frames_pace, frames, is_draft, is_listed, created_at, is_nomatch) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, 1, 0, ?, 0, 1, ?, 0)",
         [uuid, i.layoutId, LOCAL_USER_ID, LOCAL_SETTER, i.name, i.method, edges.left, edges.right, edges.bottom, edges.top, i.angle, i.frames, now],
       );
     }
