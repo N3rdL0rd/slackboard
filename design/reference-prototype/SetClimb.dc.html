@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slackboard - Set a climb</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+input::placeholder{color:#8F9896}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #121618; color: #EDEBE4; font-family: 'Barlow', system-ui, sans-serif; display: flex; flex-direction: column">
+
+<div style="height: 56px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 0 8px">
+<a href="Climbs.dc.html" aria-label="Discard and close" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px">Set a boulder</div>
+<div style="display: flex; align-items: center; gap: 2px">
+<button type="button" style="height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid #2F383D; background: #1A2023; color: #EDEBE4; font-size: 14.5px; font-weight: 600; cursor: pointer">At 40°</button>
+<button type="button" aria-label="Light up board" style="width: 44px; height: 44px; border: 0; background: transparent; color: #EDEBE4; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
+</div>
+</div>
+
+<div style="position: relative; flex: none; margin: 4px 16px 0 16px; width: 358px; height: 358px; border-radius: 14px; background-color: #0C0F10; background-image: radial-gradient(circle, #343F44 1.2px, transparent 2px); background-size: 8.3333% 8.3333%; border: 1px solid #2F383D; box-sizing: border-box; overflow: hidden">
+<sc-for list="{{cells}}" as="k" hint-placeholder-count="12">
+<button type="button" onClick="{{k.tap}}" aria-label="{{k.label}}" style="position: absolute; left: {{k.l}}; top: {{k.t}}; width: 8.3333%; height: 8.3333%; padding: 0; border: 0; background: transparent; cursor: pointer">
+<span style="position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; box-sizing: border-box; border-radius: 50%; border: 3.5px solid {{k.c}}; box-shadow: {{k.glow}}"></span>
+</button>
+</sc-for>
+</div>
+
+<div style="flex: none; padding: 10px 16px 0 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{roles}}" as="r" hint-placeholder-count="4">
+<button type="button" onClick="{{r.tap}}" aria-pressed="{{r.on}}" style="height: 62px; border-radius: 12px; border: 1.5px solid {{r.bd}}; background: {{r.bg}}; color: #EDEBE4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer">
+<span style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 3px solid {{r.c}}"></span><span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; line-height: 1">{{r.n}}</span></span>
+<span style="font-size: 13px; font-weight: 600">{{r.name}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; gap: 6px; flex-wrap: wrap; font-size: 13.5px; font-weight: 500">
+<sc-for list="{{checks}}" as="ck" hint-placeholder-count="3">
+<span style="height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid {{ck.bd}}; color: {{ck.fg}}; display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{ck.bd}}; background: {{ck.dot}}"></span>{{ck.label}}</span>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="nm" style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Name</label>
+<input id="nm" type="text" value="{{name}}" onInput="{{onName}}" maxlength="50" placeholder="Name your boulder" style="height: 50px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1px solid #3A454A; background: #1A2023; color: #EDEBE4; font-family: inherit; font-size: 17px">
+</div>
+
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+<div style="flex: 1">
+<div style="font-size: 16px; font-weight: 600">Save as draft</div>
+<div style="font-size: 13px; color: #A3ABA9; line-height: 1.35; margin-top: 2px">{{draftHelp}}</div>
+</div>
+<button type="button" role="switch" aria-checked="{{draft}}" aria-label="Save as draft" onClick="{{toggleDraft}}" style="flex: none; width: 56px; height: 44px; border: 0; background: transparent; padding: 0; cursor: pointer; display: flex; align-items: center">
+<span style="position: relative; width: 52px; height: 30px; border-radius: 15px; background: {{trackBg}}; border: 1px solid #3A454A; box-sizing: border-box"><span style="position: absolute; top: 3px; left: {{knobLeft}}; width: 22px; height: 22px; border-radius: 50%; background: {{knobBg}}"></span></span>
+</button>
+</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; box-sizing: border-box; padding: 8px 16px 18px 16px; background: #121618; border-top: 1px solid #2F383D; display: flex; flex-direction: column; gap: 4px">
+<div style="height: 18px; font-size: 13.5px; color: #E8C766; text-align: center">{{needMsg}}</div>
+<button type="button" style="height: 52px; border: 0; border-radius: 14px; background: {{ctaBg}}; color: {{ctaFg}}; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 23px; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer">{{ctaLabel}}</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { role: 's', holds: { '122': 's', '104': 'm', '77': 'm', '54': 'm', '131': 'x', '123': 's' }, name: '', draft: true };
+}
+renderVals() {
+const S = this.state;
+const set = (o) => this.setState(o);
+const COL = { s: '#34D17D', m: '#4C8DFF', f: '#FF5A52', x: '#E357D9' };
+const NAMES = { s: 'Start', m: 'Middle', f: 'Finish', x: 'Foot only' };
+const count = (r) => Object.keys(S.holds).filter((k) => S.holds[k] === r).length;
+const total = Object.keys(S.holds).length;
+const cells = [];
+for (let i = 0; i < 144; i++) {
+const r = Math.floor(i / 12); const c = i % 12; const role = S.holds[String(i)];
+cells.push({
+l: (c / 12 * 100) + '%', t: (r / 12 * 100) + '%',
+c: role ? COL[role] : 'transparent', glow: role ? '0 0 10px ' + COL[role] : 'none',
+label: 'Row ' + (12 - r) + ', column ' + (c + 1) + (role ? ', ' + NAMES[role] + '. Tap to remove' : ', empty'),
+tap: () => {
+const h = Object.assign({}, S.holds);
+if (h[String(i)] === S.role) delete h[String(i)];
+else if (h[String(i)] || Object.keys(h).length < 35) h[String(i)] = S.role;
+set({ holds: h });
+}
+});
+}
+const roles = ['s', 'm', 'f', 'x'].map((k) => ({ n: count(k), name: NAMES[k], c: COL[k], on: S.role === k, bd: S.role === k ? '#EDEBE4' : '#2F383D', bg: S.role === k ? '#232A2E' : '#1A2023', tap: () => set({ role: k }) }));
+const sN = count('s'); const fN = count('f');
+const sOk = sN >= 1 && sN <= 2; const fOk = fN >= 1 && fN <= 2; const tOk = total >= 2;
+const mk = (ok, label) => ({ label, fg: ok ? '#EDEBE4' : '#B4BBB9', bd: ok ? '#EDEBE4' : '#46515A', dot: ok ? '#EDEBE4' : 'transparent' });
+const checks = [mk(sOk, '1-2 start'), mk(fOk, '1-2 finish'), mk(tOk, total + ' / 35 holds')];
+let need = '';
+if (sN < 1) need = 'Add a start hold';
+else if (sN > 2) need = 'Use at most 2 start holds';
+else if (fN < 1) need = 'Add a finish hold';
+else if (fN > 2) need = 'Use at most 2 finish holds';
+else if (!tOk) need = 'Add at least 2 holds';
+else if (S.name.trim().length === 0) need = 'Give it a name';
+const ready = need === '';
+return {
+cells, roles, checks, name: S.name, draft: S.draft,
+onName: (e) => set({ name: e.target.value }),
+toggleDraft: () => set({ draft: !S.draft }),
+trackBg: S.draft ? '#EDEBE4' : '#232A2E', knobBg: S.draft ? '#121618' : '#A3ABA9', knobLeft: S.draft ? '26px' : '3px',
+draftHelp: S.draft ? 'You can edit a draft and publish it later. Once published, a boulder cannot be changed.' : 'Publishes right away. A published boulder cannot be edited afterwards.',
+needMsg: need,
+ctaLabel: S.draft ? 'Save draft' : 'Publish boulder',
+ctaBg: ready ? '#EDEBE4' : '#2F383D', ctaFg: ready ? '#121618' : '#A3ABA9'
+};
+}
+}
+</script>
+</body>
+</html>

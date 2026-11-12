@@ -1,0 +1,52 @@
+name: Android build
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: Build variant
+        type: choice
+        options: [release, debug]
+        default: release
+  push:
+    tags: ["v*"]
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - run: npm run typecheck && npm test
+      # The native project is generated, never committed: app.json and plugins/ are its source.
+      - run: npx expo prebuild --platform android --no-install
+      - name: Restore the signing key, if one is configured
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/slackboard.jks"
+            echo "SLACKBOARD_KEYSTORE=$RUNNER_TEMP/slackboard.jks" >> "$GITHUB_ENV"
+          else
+            echo "No ANDROID_KEYSTORE_BASE64 secret: the release APK will be signed with the debug key."
+          fi
+      - name: Build
+        working-directory: android
+        env:
+          SLACKBOARD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SLACKBOARD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SLACKBOARD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ "${{ inputs.variant || 'release' }}" = debug ]; then ./gradlew assembleDebug; else ./gradlew assembleRelease bundleRelease; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: slackboard-android
+          path: |
+            android/app/build/outputs/apk/**/*.apk
+            android/app/build/outputs/bundle/**/*.aab

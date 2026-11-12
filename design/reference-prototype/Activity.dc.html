@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slackboard - Activity</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #121618; color: #EDEBE4; font-family: 'Barlow', system-ui, sans-serif; display: flex; flex-direction: column">
+
+<div style="flex: none; display: flex; align-items: center; gap: 4px; padding: 10px 8px 0 8px">
+<a href="Discover.dc.html" aria-label="Back to Discover" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 34px">Activity</h1>
+</div>
+
+<div style="flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 10px 16px 6px 16px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+<button type="button" onClick="{{f.tap}}" aria-pressed="{{f.on}}" style="flex: none; height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid {{f.bd}}; background: {{f.bg}}; color: {{f.fg}}; font-size: 15px; font-weight: 600; cursor: pointer">{{f.label}}</button>
+</sc-for>
+</div>
+
+<div style="flex: 1; overflow-y: auto; padding-bottom: 100px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<div style="display: flex; gap: 12px; padding: 14px 16px 14px 12px; border-bottom: 1px solid #1E2528">
+<div aria-hidden="true" style="width: 8px; flex: none; display: flex; padding-top: 18px; justify-content: center"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{r.dot}}"></span></div>
+<div style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #2A3338; border: 1px solid #3A454A; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 19px">{{r.initials}}</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline">
+<div style="font-size: 16px; line-height: 1.3"><strong>{{r.user}}</strong> {{r.action}}</div>
+<div style="flex: none; font-size: 13px; color: #A3ABA9">{{r.time}}</div>
+</div>
+<sc-if value="{{r.hasDetail}}" hint-placeholder-val="{{ true }}"><div style="font-size: 14.5px; color: #C5CBC9; line-height: 1.35">{{r.detail}}</div></sc-if>
+<sc-if value="{{r.hasComment}}" hint-placeholder-val="{{ false }}"><div style="font-size: 14.5px; color: #A3ABA9; font-style: italic; line-height: 1.35">"{{r.comment}}"</div></sc-if>
+<sc-if value="{{r.pending}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 8px; margin-top: 8px">
+<button type="button" onClick="{{r.accept}}" style="height: 44px; padding: 0 22px; border: 0; border-radius: 12px; background: #EDEBE4; color: #121618; font-size: 15.5px; font-weight: 700; cursor: pointer">Accept</button>
+<button type="button" onClick="{{r.decline}}" style="height: 44px; padding: 0 22px; border-radius: 12px; border: 1px solid #3A454A; background: #1A2023; color: #EDEBE4; font-size: 15.5px; font-weight: 600; cursor: pointer">Decline</button>
+</div>
+</sc-if>
+<sc-if value="{{r.resolved}}" hint-placeholder-val="{{ false }}"><div style="margin-top: 4px; font-size: 14.5px; font-weight: 600; color: #B4BBB9">{{r.resolvedText}}</div></sc-if>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 56px 32px; text-align: center; display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Caveat Brush', cursive; font-size: 30px">All quiet</div>
+<div style="font-size: 15px; color: #A3ABA9; line-height: 1.4">Nothing here for this filter. Sends, likes and follows from climbers around you will show up as they happen.</div>
+</div>
+</sc-if>
+</div>
+
+<nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 0; height: 76px; box-sizing: border-box; padding: 6px 8px 14px 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #121618; border-top: 1px solid #2F383D">
+<a href="Climbs.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="9" cy="8" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="9" cy="16" r="1.3"/></svg>Climb</a>
+<a href="Discover.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #EDEBE4; font-size: 12px; font-weight: 600"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Discover</a>
+<a href="Log.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 9h6M9 13h6"/></svg>Log</a>
+<a href="Me.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-4 4-5.5 7-5.5s6 1.5 7 5.5"/></svg>You</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { filter: 'all', handled: {} };
+}
+renderVals() {
+const S = this.state;
+const set = (o) => this.setState(o);
+const all = [
+{ id: 'a', type: 'follows', req: true, user: 'tgonzalez', initials: 'TG', action: 'wants to follow you', time: '12m', fresh: true },
+{ id: 'b', type: 'follows', req: true, user: 'dwu', initials: 'DW', action: 'wants to follow you', time: '1h', fresh: true },
+{ id: 'c', type: 'sends', user: 'jlarsen', initials: 'JL', action: 'sent Hollow Earth', detail: 'V4 · ★★★ · 2 attempts at 40°', comment: 'Soft for V4, but the last move is great', time: '2h' },
+{ id: 'd', type: 'likes', user: 'rpatel', initials: 'RP', action: 'liked Night Shift', time: '5h' },
+{ id: 'e', type: 'climbs', user: 'mkoenig', initials: 'MK', action: 'set a new boulder', detail: 'Low Tide', time: 'Yesterday' },
+{ id: 'f', type: 'follows', user: 'sbrandt', initials: 'SB', action: 'started following you', time: 'Yesterday' }
+];
+const list = all.filter((r) => S.filter === 'all' || r.type === S.filter);
+const rows = list.map((r) => {
+const h = S.handled[r.id];
+return {
+user: r.user, initials: r.initials, action: r.action, time: r.time, detail: r.detail || '', comment: r.comment || '',
+hasDetail: !!r.detail, hasComment: !!r.comment,
+dot: r.fresh && !h ? '#EDEBE4' : 'transparent',
+pending: !!r.req && !h, resolved: !!r.req && !!h,
+resolvedText: h === 'accepted' ? 'Accepted. They can see your sends.' : 'Declined',
+accept: () => set({ handled: Object.assign({}, S.handled, { [r.id]: 'accepted' }) }),
+decline: () => set({ handled: Object.assign({}, S.handled, { [r.id]: 'declined' }) })
+};
+});
+const filters = [['all', 'All'], ['sends', 'Sends'], ['climbs', 'New climbs'], ['likes', 'Likes'], ['follows', 'Follows']].map((o) => { const on = S.filter === o[0]; return { label: o[1], on, bg: on ? '#EDEBE4' : '#1A2023', fg: on ? '#121618' : '#EDEBE4', bd: on ? '#EDEBE4' : '#2F383D', tap: () => set({ filter: o[0] }) }; });
+return { filters, rows, empty: rows.length === 0 };
+}
+}
+</script>
+</body>
+</html>

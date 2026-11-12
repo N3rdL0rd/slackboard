@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slackboard - Add a board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+input::placeholder{color:#8F9896}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #121618; color: #EDEBE4; font-family: 'Barlow', system-ui, sans-serif; display: flex; flex-direction: column">
+
+<div style="height: 56px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 0 8px">
+<a href="Climbs.dc.html" aria-label="Cancel" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+<div style="font-size: 14px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Step {{step}} of 3</div>
+<div style="width: 48px"></div>
+</div>
+
+<div style="flex: none; display: flex; gap: 6px; padding: 4px 20px 0 20px">
+<div style="flex: 1; height: 4px; border-radius: 2px; background: #EDEBE4"></div>
+<div style="flex: 1; height: 4px; border-radius: 2px; background: {{bar2}}"></div>
+<div style="flex: 1; height: 4px; border-radius: 2px; background: {{bar3}}"></div>
+</div>
+
+<div style="flex: 1; overflow-y: auto; padding: 22px 20px 120px 20px; display: flex; flex-direction: column; gap: 18px">
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 38px; line-height: 1.02">{{title}}</h1>
+
+<sc-if value="{{s1}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{products}}" as="p" hint-placeholder-count="3">
+<button type="button" onClick="{{p.tap}}" aria-pressed="{{p.on}}" style="display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; border: 1.5px solid {{p.bd}}; background: {{p.bg}}; color: #EDEBE4; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="position: relative; width: 84px; height: 84px; flex: none; border-radius: 10px; background-color: #0C0F10; background-image: radial-gradient(circle, #2B3438 1px, transparent 1.6px); background-size: 14.2857% 14.2857%; overflow: hidden">
+<sc-for list="{{p.dots}}" as="d" hint-placeholder-count="8"><span style="position: absolute; left: {{d.l}}; top: {{d.t}}; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: {{d.c}}"></span></sc-for>
+</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 3px">
+<span style="font-size: 18px; font-weight: 600; line-height: 1.15">{{p.name}}</span>
+<span style="font-size: 14px; color: #A3ABA9; line-height: 1.3">{{p.sub}}</span>
+</span>
+<span style="width: 24px; height: 24px; flex: none; box-sizing: border-box; border-radius: 50%; border: 2px solid {{p.bd}}; background: {{p.dot}}"></span>
+</button>
+</sc-for>
+</div>
+<div style="font-size: 14px; color: #A3ABA9; line-height: 1.4">Not sure? Compare your hold pattern to the pictures. We use this to know which climbs fit your wall.</div>
+</sc-if>
+
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Size (high × wide)</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{sizes}}" as="z" hint-placeholder-count="5">
+<button type="button" onClick="{{z.tap}}" aria-pressed="{{z.on}}" style="width: 98px; height: 96px; padding: 0; border-radius: 12px; border: 1.5px solid {{z.bd}}; background: {{z.bg}}; color: #EDEBE4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+<span aria-hidden="true" style="width: {{z.w}}px; height: {{z.h}}px; border-radius: 4px; background-color: #0C0F10; background-image: radial-gradient(circle, #46515A 1px, transparent 1.6px); background-size: 8px 8px; border: 1px solid #46515A"></span>
+<span style="font-size: 14.5px; font-weight: 600">{{z.label}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Hold sets on your wall</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{sets}}" as="o" hint-placeholder-count="4">
+<button type="button" onClick="{{o.tap}}" aria-pressed="{{o.on}}" style="height: 48px; padding: 0 18px; border-radius: 24px; border: 1.5px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}; font-size: 16px; font-weight: 600; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Angle</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #3A454A; border-radius: 12px; overflow: hidden">
+<button type="button" onClick="{{setAdjustable}}" style="height: 48px; border: 0; background: {{adjBg}}; color: {{adjFg}}; font-size: 15.5px; font-weight: 600; cursor: pointer">Adjustable</button>
+<button type="button" onClick="{{setFixed}}" style="height: 48px; border: 0; background: {{fixBg}}; color: {{fixFg}}; font-size: 15.5px; font-weight: 600; cursor: pointer">Fixed</button>
+</div>
+<div style="font-size: 14px; color: #A3ABA9">{{angleHelp}}</div>
+<div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px">
+<sc-for list="{{angles}}" as="a" hint-placeholder-count="10">
+<button type="button" onClick="{{a.tap}}" aria-pressed="{{a.on}}" style="flex: none; width: 58px; height: 48px; border-radius: 10px; border: 1px solid {{a.bd}}; background: {{a.bg}}; color: {{a.fg}}; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 21px; cursor: pointer">{{a.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="bn" style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Board name</label>
+<input id="bn" type="text" value="{{name}}" onInput="{{onName}}" placeholder="Joe's Garage" style="height: 54px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1px solid #3A454A; background: #1A2023; color: #EDEBE4; font-family: inherit; font-size: 18px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="sn" style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Controller serial · optional</label>
+<input id="sn" type="text" placeholder="12345" style="height: 54px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1px solid #3A454A; background: #1A2023; color: #EDEBE4; font-family: inherit; font-size: 18px">
+<div style="font-size: 14px; color: #A3ABA9; line-height: 1.4">Needed for Recently lit, which lists climbs shown on this controller. Connect your LEDs once and we can fill it in for you.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; border: 1px solid #2F383D; background: #1A2023">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Summary</div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.1">{{nameShown}}</div>
+<div style="font-size: 15px; color: #C5CBC9; line-height: 1.5">{{sumProduct}}<br>{{sumSize}} · {{sumSets}}<br>{{sumAngle}}</div>
+</div>
+</sc-if>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 92px; box-sizing: border-box; padding: 12px 20px 22px 20px; background: #121618; border-top: 1px solid #2F383D; display: flex; gap: 10px; align-items: center">
+<sc-if value="{{canBack}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{back}}" style="height: 56px; padding: 0 20px; border-radius: 14px; border: 1px solid #3A454A; background: #1A2023; color: #EDEBE4; font-size: 16px; font-weight: 600; cursor: pointer">Back</button>
+</sc-if>
+<button type="button" onClick="{{forward}}" style="flex: 1; height: 56px; border: 0; border-radius: 14px; background: {{ctaBg}}; color: {{ctaFg}}; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 23px; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer">{{ctaLabel}}</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { step: 1, product: 'mirror', size: 1, sets: {}, adjustable: true, angle: 40, name: '' };
+}
+renderVals() {
+const S = this.state;
+const set = (o) => this.setState(o);
+const dotsOf = (arr, c) => arr.map((p) => ({ l: ((p[0] + 0.5) / 7 * 100) + '%', t: ((p[1] + 0.5) / 7 * 100) + '%', c }));
+const pats = {
+mirror: dotsOf([[1,1],[5,1],[2,3],[4,3],[3,5],[1,5],[5,5],[3,2]], '#EDEBE4'),
+spray: dotsOf([[1,1],[3,0],[5,2],[2,3],[6,4],[4,5],[0,5],[3,3],[5,6]], '#EDEBE4'),
+orig: dotsOf([[1,1],[3,1],[5,1],[1,3],[3,3],[5,3],[1,5],[3,5],[5,5],[0,6],[2,6],[4,6],[6,6]], '#EDEBE4')
+};
+const prods = [
+['mirror', 'Tension Board 2 Mirror', 'Symmetrical layout. Climbs can be mirrored.'],
+['spray', 'Tension Board 2 Spray', 'Asymmetrical spray layout.'],
+['orig', 'Tension Board (original)', 'First generation board, with kickboard rows.']
+];
+const products = prods.map((p) => { const on = S.product === p[0]; return { name: p[1], sub: p[2], dots: pats[p[0]], on, bd: on ? '#EDEBE4' : '#2F383D', bg: on ? '#1F272B' : '#1A2023', dot: on ? '#EDEBE4' : 'transparent', tap: () => set({ product: p[0], sets: {} }) }; });
+const sizeData = [['12 × 16', 12, 16], ['12 × 12', 12, 12], ['10 × 12', 10, 12], ['12 × 8', 12, 8], ['10 × 8', 10, 8]];
+const sizes = sizeData.map((z, i) => { const on = S.size === i; return { label: z[0], w: z[2] * 2.6, h: z[1] * 2.6, on, bd: on ? '#EDEBE4' : '#2F383D', bg: on ? '#1F272B' : '#1A2023', tap: () => set({ size: i }) }; });
+const setNames = S.size === 0 ? ['Wood', 'Plastic', 'Wood expansion', 'Plastic expansion'] : ['Wood', 'Plastic'];
+const sets = setNames.map((n) => { const on = !!S.sets[n]; return { label: n, on, bg: on ? '#EDEBE4' : '#232A2E', fg: on ? '#121618' : '#EDEBE4', bd: on ? '#EDEBE4' : '#3A454A', tap: () => set({ sets: Object.assign({}, S.sets, { [n]: !on }) }) }; });
+const angles = [];
+for (let a = 0; a <= 65; a += 5) { const on = a === S.angle; angles.push({ label: a + '°', on, bg: on ? '#EDEBE4' : '#232A2E', fg: on ? '#121618' : '#EDEBE4', bd: on ? '#EDEBE4' : '#3A454A', tap: () => set({ angle: a }) }); }
+const chosenSets = Object.keys(S.sets).filter((k) => S.sets[k] && setNames.indexOf(k) >= 0);
+const titles = { 1: 'Which board is it?', 2: 'Size and setup', 3: 'Name it' };
+let ok = true; let hint = '';
+if (S.step === 2 && chosenSets.length === 0) { ok = false; }
+if (S.step === 3 && S.name.trim().length === 0) { ok = false; }
+const labelByStep = { 1: 'Continue', 2: chosenSets.length ? 'Continue' : 'Pick a hold set', 3: S.name.trim() ? 'Create board' : 'Name your board' };
+const prodName = prods.find((p) => p[0] === S.product)[1];
+return {
+step: S.step, bar2: S.step >= 2 ? '#EDEBE4' : '#2F383D', bar3: S.step >= 3 ? '#EDEBE4' : '#2F383D',
+title: titles[S.step], s1: S.step === 1, s2: S.step === 2, s3: S.step === 3,
+products, sizes, sets, angles,
+adjBg: S.adjustable ? '#EDEBE4' : '#232A2E', adjFg: S.adjustable ? '#121618' : '#EDEBE4',
+fixBg: !S.adjustable ? '#EDEBE4' : '#232A2E', fixFg: !S.adjustable ? '#121618' : '#EDEBE4',
+setAdjustable: () => set({ adjustable: true }), setFixed: () => set({ adjustable: false }),
+angleHelp: S.adjustable ? 'Where it is set right now. You can change it any time from the climb list.' : 'The angle your wall is built at.',
+name: S.name, onName: (e) => set({ name: e.target.value }),
+nameShown: S.name.trim() ? S.name : 'Unnamed board',
+sumProduct: prodName,
+sumSize: sizeData[S.size][0].replace(' × ', ' high × ') + ' wide',
+sumSets: chosenSets.join(' + ') || 'No hold sets',
+sumAngle: (S.adjustable ? 'Adjustable, now at ' : 'Fixed at ') + S.angle + '°',
+canBack: S.step > 1,
+back: () => set({ step: S.step - 1 }),
+forward: () => { if (ok && S.step < 3) set({ step: S.step + 1 }); },
+ctaLabel: labelByStep[S.step], ctaBg: ok ? '#EDEBE4' : '#2F383D', ctaFg: ok ? '#121618' : '#A3ABA9'
+};
+}
+}
+</script>
+</body>
+</html>

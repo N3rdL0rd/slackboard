@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slackboard - Grade colors</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 960px; height: 700px; box-sizing: border-box; padding: 40px; background: #121618; color: #EDEBE4; font-family: 'Barlow', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+
+<div>
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 48px; line-height: 1">Grade colors</h1>
+<p style="margin: 8px 0 0 0; font-size: 16px; line-height: 1.45; color: #B4BBB9; max-width: 640px">Two grades per band. The grade is always written inside the chip, so color is a second cue and never the only one.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{bands}}" as="b" hint-placeholder-count="6">
+<div style="padding: 18px; border-radius: 16px; border: 1px solid #2F383D; background: #1A2023; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 8px">
+<div style="width: 72px; height: 50px; box-sizing: border-box; border-radius: 11px; border: 2px solid {{b.bd}}; background: {{b.bg}}; color: {{b.fg}}; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 32px; line-height: 1">{{b.a}}</div>
+<sc-if value="{{b.hasB}}" hint-placeholder-val="{{ true }}"><div style="width: 72px; height: 50px; box-sizing: border-box; border-radius: 11px; border: 2px solid {{b.bd}}; background: {{b.bg}}; color: {{b.fg}}; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 32px; line-height: 1">{{b.b}}</div></sc-if>
+</div>
+<div>
+<div style="font-size: 18px; font-weight: 600">{{b.name}} · {{b.range}}</div>
+<div style="font-size: 14px; color: #B4BBB9; margin-top: 4px; line-height: 1.5">Fill {{b.bg}}<br>Text {{b.fg}} · {{b.ratio}}:1<br>{{b.note}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">The full scale</div>
+<div style="display: flex; gap: 6px">
+<sc-for list="{{scale}}" as="s" hint-placeholder-count="11">
+<div style="flex: 1; height: 44px; box-sizing: border-box; border-radius: 9px; border: 1.5px solid {{s.bd}}; background: {{s.bg}}; color: {{s.fg}}; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; line-height: 1">{{s.label}}</div>
+</sc-for>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+const D = '#101416'; const C = '#EDEBE4';
+const bands = [
+{ name: 'Pink', range: 'VB to V0', a: 'VB', b: 'V0', hasB: true, bg: '#F49AC2', fg: D, bd: '#F49AC2', ratio: '9.0', note: 'Dark text' },
+{ name: 'Blue', range: 'V1 to V2', a: 'V1', b: 'V2', hasB: true, bg: '#5AA9FF', fg: D, bd: '#5AA9FF', ratio: '7.5', note: 'Dark text' },
+{ name: 'Green', range: 'V3 to V4', a: 'V3', b: 'V4', hasB: true, bg: '#4FD08A', fg: D, bd: '#4FD08A', ratio: '9.5', note: 'Dark text' },
+{ name: 'White', range: 'V5 to V6', a: 'V5', b: 'V6', hasB: true, bg: '#F2F0EA', fg: D, bd: '#F2F0EA', ratio: '16.3', note: 'Dark text' },
+{ name: 'Red', range: 'V7 to V8', a: 'V7', b: 'V8', hasB: true, bg: '#F2554D', fg: D, bd: '#F2554D', ratio: '5.5', note: 'Dark text, never white' },
+{ name: 'Black', range: 'V9 and up', a: 'V9', b: 'V10+', hasB: true, bg: '#050607', fg: C, bd: C, ratio: '17.0', note: 'Chalk outline: the fill alone is 1.1:1 on the slate' }
+];
+const GB = (n) => {
+if (n <= 0) return bands[0]; if (n <= 2) return bands[1]; if (n <= 4) return bands[2];
+if (n <= 6) return bands[3]; if (n <= 8) return bands[4]; return bands[5];
+};
+const scale = [];
+for (let g = 0; g <= 10; g++) { const b = GB(g); scale.push({ label: g === 10 ? 'V10' : 'V' + g, bg: b.bg, fg: b.fg, bd: b.bd }); }
+return { bands, scale };
+}
+}
+</script>
+</body>
+</html>

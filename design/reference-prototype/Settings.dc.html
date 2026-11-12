@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slackboard - Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+input::placeholder{color:#8F9896}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #121618; color: #EDEBE4; font-family: 'Barlow', system-ui, sans-serif; display: flex; flex-direction: column">
+
+<div style="flex: none; display: flex; align-items: center; gap: 4px; padding: 10px 8px 0 8px">
+<a href="Me.dc.html" aria-label="Back to You" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 34px">Settings</h1>
+</div>
+
+<div style="flex: 1; overflow-y: auto; padding: 8px 20px 100px 20px; display: flex; flex-direction: column; gap: 26px">
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Grades</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #3A454A; border-radius: 12px; overflow: hidden">
+<sc-for list="{{gradeOpts}}" as="o" hint-placeholder-count="3">
+<button type="button" onClick="{{o.tap}}" aria-pressed="{{o.on}}" style="height: 48px; border: 0; background: {{o.bg}}; color: {{o.fg}}; font-size: 15px; font-weight: 600; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+<div style="font-size: 14px; color: #A3ABA9">A 4b/V0 style grade shows as {{gradeSample}}.</div>
+<div style="display: flex; gap: 6px; margin-top: 4px">
+<span style="flex: 1; height: 34px; border-radius: 8px; background: #F49AC2; color: #101416; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px">VB-V0</span>
+<span style="flex: 1; height: 34px; border-radius: 8px; background: #5AA9FF; color: #101416; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px">V1-V2</span>
+<span style="flex: 1; height: 34px; border-radius: 8px; background: #4FD08A; color: #101416; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px">V3-V4</span>
+<span style="flex: 1; height: 34px; border-radius: 8px; background: #F2F0EA; color: #101416; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px">V5-V6</span>
+<span style="flex: 1; height: 34px; border-radius: 8px; background: #F2554D; color: #101416; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px">V7-V8</span>
+<span style="flex: 1; height: 34px; box-sizing: border-box; border-radius: 8px; border: 1.5px solid #EDEBE4; background: #050607; color: #EDEBE4; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px">V9+</span>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Reading the board</h2>
+
+<div style="padding: 16px; border-radius: 16px; border: 1px solid #2F383D; background: #0C0F10; display: flex; justify-content: space-around; align-items: center">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12.5px; color: #C5CBC9">
+<sc-if value="{{shapes}}" hint-placeholder-val="{{ false }}"><svg role="img" aria-label="Start: square" width="34" height="34" viewBox="0 0 34 34" fill="none"><rect x="5" y="5" width="24" height="24" rx="3" stroke="{{cS}}" stroke-width="4"/></svg></sc-if>
+<sc-if value="{{noShapes}}" hint-placeholder-val="{{ true }}"><svg role="img" aria-label="Start: circle" width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="12" stroke="{{cS}}" stroke-width="4"/></svg></sc-if>
+Start</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12.5px; color: #C5CBC9">
+<svg role="img" aria-label="Middle: circle" width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="12" stroke="{{cM}}" stroke-width="4"/></svg>Middle</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12.5px; color: #C5CBC9">
+<sc-if value="{{shapes}}" hint-placeholder-val="{{ false }}"><svg role="img" aria-label="Finish: triangle" width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 5L30 28H4z" stroke="{{cF}}" stroke-width="4" stroke-linejoin="round"/></svg></sc-if>
+<sc-if value="{{noShapes}}" hint-placeholder-val="{{ true }}"><svg role="img" aria-label="Finish: circle" width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="12" stroke="{{cF}}" stroke-width="4"/></svg></sc-if>
+Finish</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12.5px; color: #C5CBC9">
+<sc-if value="{{shapes}}" hint-placeholder-val="{{ false }}"><svg role="img" aria-label="Foot only: diamond" width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 4L30 17L17 30L4 17z" stroke="{{cX}}" stroke-width="4" stroke-linejoin="round"/></svg></sc-if>
+<sc-if value="{{noShapes}}" hint-placeholder-val="{{ true }}"><svg role="img" aria-label="Foot only: circle" width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="12" stroke="{{cX}}" stroke-width="4"/></svg></sc-if>
+Foot only</div>
+</div>
+
+<div style="border: 1px solid #2F383D; border-radius: 16px; background: #1A2023; overflow: hidden">
+<sc-for list="{{switches}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #2A3236">
+<div style="flex: 1"><div style="font-size: 16.5px; font-weight: 600">{{s.title}}</div><div style="font-size: 13.5px; color: #A3ABA9; line-height: 1.35; margin-top: 2px">{{s.desc}}</div></div>
+<button type="button" role="switch" aria-checked="{{s.on}}" aria-label="{{s.title}}" onClick="{{s.tap}}" style="flex: none; width: 56px; height: 44px; border: 0; background: transparent; padding: 0; cursor: pointer; display: flex; align-items: center">
+<span style="position: relative; width: 52px; height: 30px; border-radius: 15px; background: {{s.track}}; border: 1px solid #3A454A; box-sizing: border-box"><span style="position: absolute; top: 3px; left: {{s.left}}; width: 22px; height: 22px; border-radius: 50%; background: {{s.knob}}"></span></span>
+</button>
+</div>
+</sc-for>
+<div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+<div><div style="font-size: 16.5px; font-weight: 600">Auto disconnect</div><div style="font-size: 13.5px; color: #A3ABA9; line-height: 1.35; margin-top: 2px">For shared version 1 controller boxes. Frees the box when you stop using it.</div></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{discOpts}}" as="o" hint-placeholder-count="4">
+<button type="button" onClick="{{o.tap}}" aria-pressed="{{o.on}}" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}; font-size: 15px; font-weight: 600; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Account</h2>
+<div style="border: 1px solid #2F383D; border-radius: 16px; background: #1A2023; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 56px; padding: 0 16px"><span style="font-size: 16.5px">Signed in as</span><span style="font-size: 16px; color: #A3ABA9">your_username</span></div>
+<a href="Main.dc.html" style="display: flex; align-items: center; min-height: 56px; padding: 0 16px; border-top: 1px solid #2A3236; font-size: 16.5px; font-weight: 600">Sign out</a>
+<button type="button" onClick="{{openDelete}}" style="display: flex; align-items: center; width: 100%; min-height: 56px; padding: 0 16px; border: 0; border-top: 1px solid #2A3236; background: transparent; color: #FF8A82; font-size: 16.5px; font-weight: 600; text-align: left; cursor: pointer">Delete account</button>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 0 8px 0; text-align: center">
+<svg aria-hidden="true" width="120" height="34" viewBox="0 0 260 64" fill="none"><path d="M12 10 Q130 92 248 10" stroke="#EDEBE4" stroke-width="5" stroke-linecap="round"/><circle cx="12" cy="10" r="8" fill="#EDEBE4"/><circle cx="248" cy="10" r="8" fill="#EDEBE4"/></svg>
+<div style="font-family: 'Caveat Brush', cursive; font-size: 26px">slackboard</div>
+<div style="font-size: 13px; color: #9BA4A2; line-height: 1.5; max-width: 300px">Slackboard is an independent project and is not affiliated with or endorsed by Tension Climbing.</div>
+<div style="display: flex; gap: 6px"><button type="button" style="height: 44px; padding: 0 12px; border: 0; background: transparent; color: #EDEBE4; font-size: 14.5px; text-decoration: underline; cursor: pointer">Source code</button><button type="button" style="height: 44px; padding: 0 12px; border: 0; background: transparent; color: #EDEBE4; font-size: 14.5px; text-decoration: underline; cursor: pointer">Licenses</button></div>
+</section>
+
+</div>
+
+<sc-if value="{{del}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{closeDelete}}" aria-label="Close" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; border: 0; padding: 0; background: rgba(5,8,9,0.7); cursor: pointer"></button>
+<div role="dialog" aria-label="Delete account" style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 14px; padding: 10px 20px 26px 20px; background: #1A2023; border-radius: 24px 24px 0 0; border-top: 1px solid #3A454A">
+<div aria-hidden="true" style="width: 40px; height: 4px; border-radius: 2px; background: #46515A; margin: 0 auto 4px auto"></div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 28px">Delete your_username?</div>
+<div style="font-size: 15px; color: #C5CBC9; line-height: 1.45">This permanently removes your account, log and circuits. It cannot be undone.</div>
+<label for="pw" style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Password</label>
+<input id="pw" type="password" value="{{pw}}" onInput="{{onPw}}" style="height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1px solid #3A454A; background: #232A2E; color: #EDEBE4; font-family: inherit; font-size: 17px; margin-top: -8px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<span style="font-size: 15px">I understand this cannot be undone</span>
+<button type="button" role="switch" aria-checked="{{ack}}" aria-label="I understand this cannot be undone" onClick="{{toggleAck}}" style="flex: none; width: 56px; height: 44px; border: 0; background: transparent; padding: 0; cursor: pointer; display: flex; align-items: center"><span style="position: relative; width: 52px; height: 30px; border-radius: 15px; background: {{ackTrack}}; border: 1px solid #3A454A; box-sizing: border-box"><span style="position: absolute; top: 3px; left: {{ackLeft}}; width: 22px; height: 22px; border-radius: 50%; background: {{ackKnob}}"></span></span></button>
+</div>
+<button type="button" style="height: 54px; border: 0; border-radius: 14px; background: {{delBg}}; color: {{delFg}}; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer">Delete account</button>
+<button type="button" onClick="{{closeDelete}}" style="height: 48px; border: 0; background: transparent; color: #EDEBE4; font-size: 16px; font-weight: 600; cursor: pointer">Keep my account</button>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { grade: 'both', cb: false, hc: false, auto: true, disc: 'off', del: false, pw: '', ack: false };
+}
+renderVals() {
+const S = this.state;
+const set = (o) => this.setState(o);
+const gradeOpts = [['both', 'V and Font'], ['v', 'V-scale'], ['font', 'Font']].map((o) => { const on = S.grade === o[0]; return { label: o[1], on, bg: on ? '#EDEBE4' : '#232A2E', fg: on ? '#121618' : '#EDEBE4', tap: () => set({ grade: o[0] }) }; });
+const sample = { both: '4b / V0', v: 'V0', font: '4b' }[S.grade];
+const sw = (title, desc, on, fn) => ({ title, desc, on, track: on ? '#EDEBE4' : '#232A2E', knob: on ? '#121618' : '#A3ABA9', left: on ? '26px' : '3px', tap: fn });
+const shapes = S.cb || S.hc;
+const switches = [
+sw('Shapes as well as colors', 'Draws each hold role with its own shape, so color is never the only cue.', shapes, () => set({ cb: !S.cb })),
+sw('High contrast', 'Draws holds in plain chalk white. Turns on shapes so roles stay readable.', S.hc, () => set({ hc: !S.hc })),
+sw('Auto connect', 'Tap the bulb and connect as soon as your board is found. Saves a tap.', S.auto, () => set({ auto: !S.auto }))
+];
+switches[0].tap = () => { if (!S.hc) set({ cb: !S.cb }); };
+const discOpts = [['off', 'Off'], ['30', '30 sec'], ['60', '1 min'], ['300', '5 min']].map((o) => { const on = S.disc === o[0]; return { label: o[1], on, bg: on ? '#EDEBE4' : '#232A2E', fg: on ? '#121618' : '#EDEBE4', bd: on ? '#EDEBE4' : '#3A454A', tap: () => set({ disc: o[0] }) }; });
+const ready = S.ack && S.pw.length > 0;
+return {
+gradeOpts, gradeSample: sample, switches, discOpts,
+shapes, noShapes: !shapes,
+cS: S.hc ? '#EDEBE4' : '#34D17D', cM: S.hc ? '#EDEBE4' : '#4C8DFF', cF: S.hc ? '#EDEBE4' : '#FF5A52', cX: S.hc ? '#EDEBE4' : '#E357D9',
+del: S.del, openDelete: () => set({ del: true }), closeDelete: () => set({ del: false, pw: '', ack: false }),
+pw: S.pw, onPw: (e) => set({ pw: e.target.value }),
+ack: S.ack, toggleAck: () => set({ ack: !S.ack }),
+ackTrack: S.ack ? '#EDEBE4' : '#232A2E', ackKnob: S.ack ? '#121618' : '#A3ABA9', ackLeft: S.ack ? '26px' : '3px',
+delBg: ready ? '#FF8A82' : '#2F383D', delFg: ready ? '#121618' : '#A3ABA9'
+};
+}
+}
+</script>
+</body>
+</html>

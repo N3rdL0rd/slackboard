@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slackboard - Climbs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+input::placeholder{color:#8F9896}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #121618; color: #EDEBE4; font-family: 'Barlow', system-ui, sans-serif; display: flex; flex-direction: column">
+
+<div style="padding: 14px 16px 0 16px; display: flex; flex-direction: column; gap: 12px">
+
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<button type="button" onClick="{{openBoard}}" aria-label="Switch board" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px 0 8px; border-radius: 14px; border: 1px solid #2F383D; background: #1A2023; color: #EDEBE4; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="position: relative; width: 32px; height: 32px; flex: none; border-radius: 8px; background-color: #0C0F10; background-image: radial-gradient(circle, #3A454A 1px, transparent 1.6px); background-size: 8.333% 8.333%; overflow: hidden"></span>
+<span style="display: flex; flex-direction: column; line-height: 1.15">
+<span style="font-size: 17px; font-weight: 600">{{board.name}}</span>
+<span style="font-size: 12.5px; color: #A3ABA9">{{board.sub}}</span>
+</span>
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A3ABA9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+</button>
+<button type="button" aria-label="Connect LED board" style="position: relative; width: 48px; height: 48px; flex: none; border-radius: 50%; border: 1px solid #2F383D; background: #1A2023; color: #EDEBE4; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+<span aria-hidden="true" style="position: absolute; right: 10px; top: 10px; width: 8px; height: 8px; border-radius: 50%; background: #6C7674; border: 2px solid #1A2023"></span>
+</button>
+</div>
+
+<div style="display: flex; gap: 8px; align-items: center">
+<button type="button" onClick="{{openAngle}}" aria-label="{{angleLabel}}" style="height: 48px; min-width: 64px; padding: 0 12px; border-radius: 14px; border: 1px solid #2F383D; background: #232A2E; color: #EDEBE4; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; cursor: pointer">
+<span style="font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #A3ABA9">{{angleCaption}}</span>
+<span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; margin-top: 2px">{{angle}}°</span>
+</button>
+<label for="q" style="position: relative; flex: 1; display: block">
+<span style="position: absolute; left: 14px; top: 14px; display: flex"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A3ABA9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></span>
+<input id="q" type="text" placeholder="Search climbs" style="width: 100%; height: 48px; box-sizing: border-box; padding: 0 12px 0 42px; border-radius: 14px; border: 1px solid #2F383D; background: #1A2023; color: #EDEBE4; font-family: inherit; font-size: 16px">
+</label>
+<button type="button" onClick="{{openFilters}}" aria-label="Filters" style="position: relative; width: 48px; height: 48px; flex: none; border-radius: 14px; border: 1px solid #2F383D; background: #1A2023; color: #EDEBE4; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+<sc-if value="{{hasActive}}" hint-placeholder-val="{{ true }}">
+<span style="position: absolute; right: -5px; top: -5px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 5px; border-radius: 10px; background: #EDEBE4; color: #121618; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{activeCount}}</span>
+</sc-if>
+</button>
+</div>
+
+<div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px">
+<sc-for list="{{chips}}" as="ch" hint-placeholder-count="3">
+<button type="button" onClick="{{ch.tap}}" style="flex: none; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid {{ch.bd}}; background: {{ch.bg}}; color: {{ch.fg}}; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer">
+<span>{{ch.label}}</span>
+<sc-if value="{{ch.removable}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{hasActive}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{resetAll}}" style="flex: none; height: 36px; padding: 0 10px; border: 0; background: transparent; color: #EDEBE4; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer">Reset</button>
+</sc-if>
+</div>
+
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 16px 6px 16px; font-size: 13.5px; color: #A3ABA9">
+<span>{{count}} climbs at {{angle}}°</span>
+<span>Mirror layout</span>
+</div>
+
+<div style="flex: 1; overflow-y: auto; padding-bottom: 150px">
+<sc-for list="{{rows}}" as="c" hint-placeholder-count="5">
+<a href="ClimbView.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid #1E2528; color: #EDEBE4">
+<div style="position: relative; width: 64px; height: 64px; flex: none; border-radius: 10px; background-color: #0C0F10; background-image: radial-gradient(circle, #2B3438 1px, transparent 1.6px); background-size: 8.333% 8.333%; overflow: hidden">
+<sc-for list="{{c.dots}}" as="d" hint-placeholder-count="8">
+<div style="position: absolute; left: {{d.l}}; top: {{d.t}}; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: {{d.c}}"></div>
+</sc-for>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.name}}</div>
+<div style="font-size: 13.5px; color: #A3ABA9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.setter}} · {{c.sends}} sends</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1">
+<span style="letter-spacing: 1px"><span style="color: #E8C766">{{c.starsOn}}</span><span style="color: #46515A">{{c.starsOff}}</span></span>
+<sc-if value="{{c.classic}}" hint-placeholder-val="{{ false }}"><span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #E8C766; border: 1px solid #6B5D2E; border-radius: 4px; padding: 2px 5px">Classic</span></sc-if>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 52px">
+<div style="min-width: 56px; height: 38px; box-sizing: border-box; padding: 0 8px; border-radius: 9px; border: 1.5px solid {{c.gbd}}; background: {{c.gbg}}; color: {{c.gfg}}; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1">{{c.grade}}</div>
+<div style="font-size: 13px; color: #A3ABA9">{{c.font}}</div>
+<div style="font-size: 12px; font-weight: 600; color: {{c.stColor}}; height: 16px">{{c.status}}</div>
+</div>
+</a>
+</sc-for>
+
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 56px 32px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center">
+<div style="font-family: 'Caveat Brush', cursive; font-size: 30px; color: #EDEBE4">Nothing on the board</div>
+<div style="font-size: 15px; color: #A3ABA9; line-height: 1.4">No climbs match these filters at {{angle}}°. Try a wider grade range, or another angle.</div>
+<button type="button" onClick="{{resetAll}}" style="margin-top: 8px; height: 48px; padding: 0 22px; border-radius: 12px; border: 1px solid #3A454A; background: #1A2023; color: #EDEBE4; font-size: 16px; font-weight: 600; cursor: pointer">Reset filters</button>
+</div>
+</sc-if>
+</div>
+
+<a href="SetClimb.dc.html" style="position: absolute; right: 16px; bottom: 92px; height: 52px; padding: 0 20px 0 16px; border-radius: 26px; background: #EDEBE4; color: #121618; display: flex; align-items: center; gap: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 8px 24px rgba(0,0,0,0.45)">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+Set a climb
+</a>
+
+<nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 0; height: 76px; box-sizing: border-box; padding: 6px 8px 14px 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #121618; border-top: 1px solid #2F383D">
+<a href="Climbs.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #EDEBE4; font-size: 12px; font-weight: 600">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="9" cy="8" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="9" cy="16" r="1.3"/></svg>Climb</a>
+<a href="Discover.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Discover</a>
+<a href="Log.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 9h6M9 13h6"/></svg>Log</a>
+<a href="Me.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-4 4-5.5 7-5.5s6 1.5 7 5.5"/></svg>You</a>
+</nav>
+
+<sc-if value="{{hasSheet}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{closeSheet}}" aria-label="Close" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; border: 0; padding: 0; background: rgba(5,8,9,0.62); cursor: pointer"></button>
+</sc-if>
+
+<sc-if value="{{isFilters}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Filters" style="position: absolute; left: 0; right: 0; bottom: 0; max-height: 86%; display: flex; flex-direction: column; background: #1A2023; border-radius: 24px 24px 0 0; border-top: 1px solid #3A454A">
+<div style="padding: 10px 20px 0 20px">
+<div aria-hidden="true" style="width: 40px; height: 4px; border-radius: 2px; background: #46515A; margin: 0 auto 12px auto"></div>
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 28px">Filters</div>
+<button type="button" onClick="{{resetAll}}" style="height: 44px; padding: 0 4px; border: 0; background: transparent; color: #EDEBE4; font-size: 16px; font-weight: 600; text-decoration: underline; cursor: pointer">Reset</button>
+</div>
+</div>
+<div style="flex: 1; overflow-y: auto; padding: 4px 20px 16px 20px; display: flex; flex-direction: column; gap: 22px">
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Grade</span><span style="font-size: 15px; font-weight: 600">{{gradeLabel}}</span></div>
+<div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px">
+<sc-for list="{{gradeBtns}}" as="g" hint-placeholder-count="8">
+<button type="button" onClick="{{g.tap}}" style="flex: none; width: 48px; height: 48px; border-radius: 10px; border: 1px solid {{g.bd}}; background: {{g.bg}}; color: {{g.fg}}; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; cursor: pointer">{{g.label}}</button>
+</sc-for>
+</div>
+<div style="font-size: 13px; color: #A3ABA9">Tap a start grade, then an end grade.</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">My progress</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid #3A454A; border-radius: 12px; overflow: hidden">
+<sc-for list="{{progressOpts}}" as="o" hint-placeholder-count="4">
+<button type="button" onClick="{{o.tap}}" style="height: 48px; border: 0; background: {{o.bg}}; color: {{o.fg}}; font-size: 14.5px; font-weight: 600; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Climb</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{toggleChips}}" as="o" hint-placeholder-count="6">
+<button type="button" onClick="{{o.tap}}" aria-pressed="{{o.on}}" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}; font-size: 15px; font-weight: 500; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Also show</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{alsoChips}}" as="o" hint-placeholder-count="3">
+<button type="button" onClick="{{o.tap}}" aria-pressed="{{o.on}}" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}; font-size: 15px; font-weight: 500; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; border: 1px solid #3A454A; border-radius: 12px">
+<button type="button" style="height: 52px; padding: 0 16px; border: 0; background: transparent; color: #EDEBE4; display: flex; justify-content: space-between; align-items: center; font-size: 16px; cursor: pointer"><span>Setter</span><span style="color: #A3ABA9">Anyone</span></button>
+<button type="button" style="height: 52px; padding: 0 16px; border: 0; border-top: 1px solid #3A454A; background: transparent; color: #EDEBE4; display: flex; justify-content: space-between; align-items: center; font-size: 16px; cursor: pointer"><span>Circuits</span><span style="color: #A3ABA9">Any</span></button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Sort by</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{sortChips}}" as="o" hint-placeholder-count="6">
+<button type="button" onClick="{{o.tap}}" aria-pressed="{{o.on}}" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}; font-size: 15px; font-weight: 500; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+
+</div>
+<div style="padding: 12px 20px 22px 20px; border-top: 1px solid #2F383D; background: #1A2023">
+<button type="button" onClick="{{closeSheet}}" style="width: 100%; height: 54px; border: 0; border-radius: 12px; background: {{ctaBg}}; color: {{ctaFg}}; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer">{{ctaLabel}}</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isBoard}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Switch board" style="position: absolute; left: 0; right: 0; bottom: 0; max-height: 86%; display: flex; flex-direction: column; background: #1A2023; border-radius: 24px 24px 0 0; border-top: 1px solid #3A454A">
+<div style="padding: 10px 20px 0 20px">
+<div aria-hidden="true" style="width: 40px; height: 4px; border-radius: 2px; background: #46515A; margin: 0 auto 12px auto"></div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 28px">Your boards</div>
+</div>
+<div style="padding: 8px 20px 24px 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto">
+<sc-for list="{{boardRows}}" as="b" hint-placeholder-count="2">
+<button type="button" onClick="{{b.tap}}" style="display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 10px 14px; border-radius: 14px; border: 1px solid {{b.bd}}; background: {{b.bg}}; color: #EDEBE4; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="width: 48px; height: 48px; flex: none; border-radius: 10px; background-color: #0C0F10; background-image: radial-gradient(circle, #3A454A 1px, transparent 1.6px); background-size: 8.333% 8.333%"></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 17px; font-weight: 600">{{b.name}}</span>
+<span style="font-size: 13.5px; color: #A3ABA9">{{b.detail}}</span>
+</span>
+<span style="font-size: 13px; font-weight: 600; color: #EDEBE4">{{b.mark}}</span>
+</button>
+</sc-for>
+<a href="AddBoard.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 52px; border-radius: 14px; border: 1px dashed #4A565B; color: #EDEBE4; font-size: 16px; font-weight: 600">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add a board</a>
+<div style="margin-top: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9">Gyms near you</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #3A454A; border-radius: 14px">
+<button type="button" style="min-height: 60px; padding: 8px 14px; border: 0; background: transparent; color: #EDEBE4; display: flex; align-items: center; justify-content: space-between; text-align: left; cursor: pointer"><span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">[Gym name]</span><span style="font-size: 13.5px; color: #A3ABA9">[Distance] · [Board and size]</span></span><span style="color: #A3ABA9">Open</span></button>
+<button type="button" style="min-height: 60px; padding: 8px 14px; border: 0; border-top: 1px solid #3A454A; background: transparent; color: #EDEBE4; display: flex; align-items: center; justify-content: space-between; text-align: left; cursor: pointer"><span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">[Gym name]</span><span style="font-size: 13.5px; color: #A3ABA9">[Distance] · [Board and size]</span></span><span style="color: #A3ABA9">Open</span></button>
+<button type="button" style="height: 52px; padding: 0 14px; border: 0; border-top: 1px solid #3A454A; background: transparent; color: #EDEBE4; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer">Find more on the map</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isAngle}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Angle" style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; background: #1A2023; border-radius: 24px 24px 0 0; border-top: 1px solid #3A454A">
+<div style="padding: 10px 20px 0 20px">
+<div aria-hidden="true" style="width: 40px; height: 4px; border-radius: 2px; background: #46515A; margin: 0 auto 12px auto"></div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 28px">Board angle</div>
+<div style="font-size: 14.5px; color: #A3ABA9; line-height: 1.4; margin-top: 2px">Grades, stars and sends are tracked per angle. Climbs nobody has sent at this angle show as projects.</div>
+</div>
+<div style="padding: 16px 20px 28px 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{angleBtns}}" as="a" hint-placeholder-count="12">
+<button type="button" onClick="{{a.tap}}" style="height: 52px; border-radius: 12px; border: 1px solid {{a.bd}}; background: {{a.bg}}; color: {{a.fg}}; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; cursor: pointer">{{a.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { sheet: null, board: 0, angle: 40, gMin: null, gMax: null, progress: 'any', classic: false, sort: 'best', t: {}, boulders: true };
+}
+renderVals() {
+const S = this.state;
+const set = (o) => this.setState(o);
+const ON = { bg: '#EDEBE4', fg: '#121618', bd: '#EDEBE4' };
+const OFF = { bg: '#232A2E', fg: '#EDEBE4', bd: '#3A454A' };
+const style = (on) => (on ? ON : OFF);
+const boards = [
+{ name: 'Garage Board', sub: '12×12 · adjustable', detail: 'Tension Board 2 Mirror · 12 high × 12 wide', fixed: null },
+{ name: 'Home wall', sub: '10×8 · fixed 35°', detail: 'Tension Board 2 Spray · 10 high × 8 wide · 35° fixed', fixed: 35 }
+];
+const board = boards[S.board];
+const angle = board.fixed ? board.fixed : S.angle;
+const shift = Math.round((angle - 40) / 10);
+const FONT = ['4+', '5', '5+', '6a', '6b', '6c', '7a', '7a+', '7b', '7c', '7c+'];
+const SC = { s: '#34D17D', m: '#4C8DFF', f: '#FF5A52', x: '#E357D9' };
+const data = [
+{ id: 6, name: 'Hollow Earth', setter: 'mkoenig', sends: 312, g: 4, stars: 3, classic: true, status: 'sent', h: [[2,10,'s'],[4,10,'s'],[3,8,'m'],[5,6,'m'],[7,7,'m'],[6,4,'m'],[8,2,'f'],[3,11,'x'],[9,9,'x']] },
+{ id: 5, name: 'Pinch Me Twice', setter: 'jlarsen', sends: 187, g: 3, stars: 3, classic: false, status: null, h: [[5,10,'s'],[6,9,'m'],[4,7,'m'],[7,5,'m'],[5,3,'m'],[6,1,'f'],[8,10,'x']] },
+{ id: 4, name: 'Slab Fever', setter: 'tgonzalez', sends: 421, g: 2, stars: 2, classic: true, status: 'sent', h: [[1,11,'s'],[2,9,'m'],[4,8,'m'],[3,6,'m'],[5,4,'m'],[4,2,'f'],[2,11,'x']] },
+{ id: 3, name: 'Night Shift', setter: 'rpatel', sends: 64, g: 5, stars: 3, classic: false, status: 'tried', h: [[9,10,'s'],[10,10,'s'],[8,7,'m'],[6,6,'m'],[8,4,'m'],[5,2,'m'],[3,1,'f'],[7,11,'x']] },
+{ id: 2, name: 'Crimp and Punishment', setter: 'dwu', sends: 28, g: 6, stars: 2, classic: false, status: null, h: [[3,10,'s'],[3,8,'m'],[5,7,'m'],[4,5,'m'],[6,3,'m'],[7,1,'f'],[1,9,'x'],[9,6,'x']] },
+{ id: 1, name: 'Low Tide', setter: 'sbrandt', sends: 233, g: 1, stars: 2, classic: false, status: null, h: [[2,11,'s'],[3,10,'s'],[5,9,'m'],[7,8,'m'],[9,7,'m'],[10,5,'f'],[6,11,'x']] }
+];
+const clamp = (v) => Math.max(0, Math.min(10, v));
+const GB = (n) => {
+if (n <= 0) return { bg: '#F49AC2', fg: '#101416', bd: '#F49AC2' };
+if (n <= 2) return { bg: '#5AA9FF', fg: '#101416', bd: '#5AA9FF' };
+if (n <= 4) return { bg: '#4FD08A', fg: '#101416', bd: '#4FD08A' };
+if (n <= 6) return { bg: '#F2F0EA', fg: '#101416', bd: '#F2F0EA' };
+if (n <= 8) return { bg: '#F2554D', fg: '#101416', bd: '#F2554D' };
+return { bg: '#050607', fg: '#EDEBE4', bd: '#EDEBE4' };
+};
+let list = data.map((c) => Object.assign({}, c, { gs: clamp(c.g + shift) }));
+list = list.filter((c) => {
+if (!S.boulders) return false;
+if (S.gMin !== null && c.gs < S.gMin) return false;
+if (S.gMax !== null && c.gs > S.gMax) return false;
+if (S.classic && !c.classic) return false;
+if (S.progress === 'sent' && c.status !== 'sent') return false;
+if (S.progress === 'tried' && c.status !== 'tried') return false;
+if (S.progress === 'new' && c.status !== null) return false;
+return true;
+});
+const sorts = {
+best: (a, b) => b.stars * 1000 + b.sends - (a.stars * 1000 + a.sends),
+newest: (a, b) => b.id - a.id,
+hardest: (a, b) => b.gs - a.gs,
+easiest: (a, b) => a.gs - b.gs,
+repeats: (a, b) => b.sends - a.sends,
+random: (a, b) => (a.id * 7) % 5 - (b.id * 7) % 5
+};
+list.sort(sorts[S.sort]);
+const rows = list.map((c) => ({
+name: c.name, setter: c.setter, sends: c.sends, classic: c.classic,
+grade: 'V' + c.gs, font: FONT[c.gs], gbg: GB(c.gs).bg, gfg: GB(c.gs).fg, gbd: GB(c.gs).bd,
+starsOn: '★'.repeat(c.stars), starsOff: '★'.repeat(3 - c.stars),
+status: c.status === 'sent' ? 'Sent' : c.status === 'tried' ? 'Tried' : '',
+stColor: c.status === 'sent' ? '#EDEBE4' : '#A3ABA9',
+dots: c.h.map((p) => ({ l: ((p[0] + 0.5) / 12 * 100) + '%', t: ((p[1] + 0.5) / 12 * 100) + '%', c: SC[p[2]] }))
+}));
+const count = list.length * 35 + (list.length ? 4 : 0);
+const resetAll = () => set({ gMin: null, gMax: null, progress: 'any', classic: false, sort: 'best', t: {}, boulders: true });
+const progressNames = { sent: 'Sent', tried: 'Tried', new: 'Not tried' };
+const sortNames = { best: 'Best', newest: 'Newest', hardest: 'Hardest', easiest: 'Easiest', repeats: 'Most repeats', random: 'Random' };
+const chips = [];
+if (S.gMin !== null) chips.push({ label: S.gMax !== null ? 'V' + S.gMin + ' to V' + S.gMax : 'V' + S.gMin + ' and up', removable: true, tap: () => set({ gMin: null, gMax: null }) });
+if (S.progress !== 'any') chips.push({ label: progressNames[S.progress], removable: true, tap: () => set({ progress: 'any' }) });
+if (S.classic) chips.push({ label: 'Classic', removable: true, tap: () => set({ classic: false }) });
+const chipOut = chips.map((c) => Object.assign({}, c, { bg: '#EDEBE4', fg: '#121618', bd: '#EDEBE4' }));
+chipOut.push({ label: 'Sort: ' + sortNames[S.sort], removable: false, bg: '#1A2023', fg: '#EDEBE4', bd: '#2F383D', tap: () => set({ sheet: 'filters' }) });
+const activeCount = chips.length;
+const gradeBtns = [];
+for (let g = 0; g <= 10; g++) {
+const hi = S.gMax !== null ? S.gMax : S.gMin;
+const inR = S.gMin !== null && g >= S.gMin && g <= hi;
+const gb = GB(g);
+gradeBtns.push({ label: 'V' + g, bg: inR ? gb.bg : '#232A2E', fg: inR ? gb.fg : '#EDEBE4', bd: gb.bd, tap: () => {
+if (S.gMin === null || S.gMax !== null) set({ gMin: g, gMax: null });
+else if (g < S.gMin) set({ gMin: g });
+else set({ gMax: g });
+} });
+}
+const gradeLabel = S.gMin === null ? 'All grades' : S.gMax !== null ? 'V' + S.gMin + ' to V' + S.gMax : 'V' + S.gMin + ' and up';
+const progressOpts = [['any', 'Any'], ['new', 'Not tried'], ['tried', 'Tried'], ['sent', 'Sent']].map((o) => {
+const on = S.progress === o[0];
+return { label: o[1], bg: on ? '#EDEBE4' : '#232A2E', fg: on ? '#121618' : '#EDEBE4', tap: () => set({ progress: o[0] }) };
+});
+const tg = (key, label) => { const on = !!S.t[key]; const st = style(on); return { label, on: on, bg: st.bg, fg: st.fg, bd: st.bd, tap: () => set({ t: Object.assign({}, S.t, { [key]: !on }) }) }; };
+const toggleChips = [
+(() => { const st = style(S.classic); return { label: 'Classic only', on: S.classic, bg: st.bg, fg: st.fg, bd: st.bd, tap: () => set({ classic: !S.classic }) }; })(),
+tg('liked', 'Liked'), tg('beta', 'Has beta video'), tg('tall', 'Tall'), tg('side', 'Side climbs'),
+(() => { const st = style(S.boulders); return { label: 'Boulders', on: S.boulders, bg: st.bg, fg: st.fg, bd: st.bd, tap: () => set({ boulders: !S.boulders }) }; })()
+];
+const alsoChips = [tg('proj', 'Open projects'), tg('draft', 'My drafts'), tg('blocked', 'Blocked')];
+const sortChips = Object.keys(sortNames).map((k) => { const st = style(S.sort === k); return { label: sortNames[k], on: S.sort === k, bg: st.bg, fg: st.fg, bd: st.bd, tap: () => set({ sort: k }) }; });
+const boardRows = boards.map((b, i) => ({ name: b.name, detail: b.detail, mark: S.board === i ? 'Current' : '', bg: S.board === i ? '#232A2E' : '#1A2023', bd: S.board === i ? '#EDEBE4' : '#3A454A', tap: () => set({ board: i, sheet: null }) }));
+const angleBtns = [];
+for (let a = 0; a <= 65; a += 5) { const st = style(a === angle); angleBtns.push({ label: a + '°', bg: st.bg, fg: st.fg, bd: st.bd, tap: () => set({ angle: a, sheet: null }) }); }
+return {
+board, angle, count, rows, chips: chipOut, hasActive: activeCount > 0, activeCount,
+isEmpty: list.length === 0,
+angleCaption: board.fixed ? 'FIXED' : 'ANGLE',
+angleLabel: board.fixed ? 'Board angle is fixed at ' + angle + ' degrees' : 'Change angle, currently ' + angle + ' degrees',
+openBoard: () => set({ sheet: 'board' }),
+openAngle: () => { if (!board.fixed) set({ sheet: 'angle' }); },
+openFilters: () => set({ sheet: 'filters' }),
+closeSheet: () => set({ sheet: null }),
+resetAll,
+hasSheet: S.sheet !== null,
+isFilters: S.sheet === 'filters', isBoard: S.sheet === 'board', isAngle: S.sheet === 'angle',
+gradeBtns, gradeLabel, progressOpts, toggleChips, alsoChips, sortChips, boardRows, angleBtns,
+ctaLabel: list.length ? 'Show ' + count + ' climbs' : 'No climbs match',
+ctaBg: list.length ? '#EDEBE4' : '#2F383D', ctaFg: list.length ? '#121618' : '#A3ABA9'
+};
+}
+}
+</script>
+</body>
+</html>

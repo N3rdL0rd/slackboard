@@ -1,0 +1,120 @@
+{
+  "expo": {
+    "name": "Slackboard",
+    "slug": "slackboard",
+    "scheme": "slackboard",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#121618",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.slackboard.client",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.slackboard.client",
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "tensionboardapp2.com",
+              "pathPrefix": "/climbs"
+            },
+            {
+              "scheme": "https",
+              "host": "tensionboardapp2.com",
+              "pathPrefix": "/circuits"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon-foreground.png",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png",
+        "backgroundColor": "#121618"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-sharing",
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "Slackboard saves the images you make of climbs and sends to your photos.",
+          "photosPermission": false,
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": [
+            "photo"
+          ]
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#121618",
+          "imageWidth": 220
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Slackboard uses your location once, to centre the gym map and list the gyms nearest you."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Slackboard reads a photo you pick to use as your profile picture.",
+          "cameraPermission": "Slackboard uses the camera to take a profile picture."
+        }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "neverForLocation": true,
+          "bluetoothAlwaysPermission": "Slackboard uses Bluetooth to find your board's controller and light up climbs on it."
+        }
+      ],
+      "expo-dev-client",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false
+          }
+        }
+      ],
+      "./plugins/withReleaseSigning",
+      "expo-background-task"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "icon": "./assets/icon.png"
+  }
+}

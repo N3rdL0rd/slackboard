@@ -1,0 +1,30 @@
+name: iOS build
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  archive:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck && npm test
+      # The native project is generated, never committed: app.json and plugins/ are its source.
+      - run: npx expo prebuild --platform ios
+      - name: Archive without signing
+        working-directory: ios
+        run: |
+          xcodebuild -workspace Slackboard.xcworkspace -scheme Slackboard -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Slackboard.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO archive
+      - name: Package the unsigned archive
+        run: cd "$RUNNER_TEMP" && zip -qr Slackboard.xcarchive.zip Slackboard.xcarchive
+      - uses: actions/upload-artifact@v4
+        with:
+          name: slackboard-ios-unsigned-archive
+          path: ${{ runner.temp }}/Slackboard.xcarchive.zip

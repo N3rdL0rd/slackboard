@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slackboard - Log</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #121618; color: #EDEBE4; font-family: 'Barlow', system-ui, sans-serif; display: flex; flex-direction: column">
+
+<div style="flex: none; padding: 14px 20px 0 20px; display: flex; align-items: baseline; justify-content: space-between">
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 36px">Log</h1>
+<span style="font-size: 14px; color: #A3ABA9">All boards</span>
+</div>
+
+<div style="flex: none; padding: 12px 16px 0 16px">
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid #3A454A; border-radius: 12px; overflow: hidden">
+<sc-for list="{{ranges}}" as="r" hint-placeholder-count="5">
+<button type="button" onClick="{{r.tap}}" aria-pressed="{{r.on}}" style="height: 46px; border: 0; background: {{r.bg}}; color: {{r.fg}}; font-size: 15px; font-weight: 600; cursor: pointer">{{r.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="flex: 1; overflow-y: auto; padding-bottom: 100px">
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 16px 16px 0 16px">
+<div style="padding: 12px 14px; border-radius: 14px; background: #1A2023; border: 1px solid #2F383D"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 38px; line-height: 1">{{sessions}}</div><div style="font-size: 13.5px; color: #A3ABA9; margin-top: 4px">Sessions</div></div>
+<div style="padding: 12px 14px; border-radius: 14px; background: #1A2023; border: 1px solid #2F383D"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 38px; line-height: 1">{{sends}}</div><div style="font-size: 13.5px; color: #A3ABA9; margin-top: 4px">Sends</div></div>
+<div style="padding: 12px 14px; border-radius: 14px; background: #1A2023; border: 1px solid #2F383D"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 38px; line-height: 1">{{climbs}}</div><div style="font-size: 13.5px; color: #A3ABA9; margin-top: 4px">Climbs</div></div>
+</div>
+
+<div style="margin: 14px 16px 0 16px; padding: 14px 14px 10px 14px; border-radius: 14px; background: #1A2023; border: 1px solid #2F383D">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #A3ABA9; margin-bottom: 8px">Sends by grade</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="7">
+<div style="display: flex; align-items: center; gap: 10px; height: 20px">
+<span style="width: 28px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 16px; color: #C5CBC9">{{b.label}}</span>
+<span style="flex: 1; height: 12px; display: flex"><span style="width: {{b.w}}; min-width: {{b.min}}; height: 12px; box-sizing: border-box; border-radius: 3px; border: 1.5px solid {{b.bd}}; background: {{b.bg}}"></span></span>
+<span style="width: 22px; text-align: right; font-size: 13.5px; color: #C5CBC9">{{b.n}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<div style="padding: 20px 20px 6px 20px; display: flex; justify-content: space-between; align-items: baseline">
+<span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px">{{g.label}}</span>
+<span style="font-size: 13.5px; color: #A3ABA9">{{g.sub}}</span>
+</div>
+<sc-for list="{{g.items}}" as="e" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 20px; min-height: 64px; border-top: 1px solid #1E2528">
+<div style="width: 58px; flex: none; font-size: 13.5px; color: #A3ABA9">{{e.time}}</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 21px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{e.name}}</div>
+<div style="font-size: 13.5px; color: #A3ABA9; display: flex; align-items: center; gap: 8px"><span>{{e.meta}}</span><sc-if value="{{e.flash}}" hint-placeholder-val="{{ false }}"><span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #EDEBE4; border: 1px solid #5A666B; border-radius: 4px; padding: 2px 5px">Flash</span></sc-if></div>
+</div>
+<div style="text-align: right; min-width: 52px">
+<sc-if value="{{e.hasGrade}}" hint-placeholder-val="{{ true }}"><div style="margin-left: auto; min-width: 52px; height: 34px; box-sizing: border-box; padding: 0 8px; border-radius: 9px; border: 1.5px solid {{e.gbd}}; background: {{e.gbg}}; color: {{e.gfg}}; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; line-height: 1">{{e.grade}}</div></sc-if>
+<div style="font-size: 12.5px; color: #E8C766; letter-spacing: 1px">{{e.stars}}</div>
+</div>
+<button type="button" aria-label="Edit or delete this entry" style="width: 44px; height: 44px; flex: none; border: 0; background: transparent; color: #A3ABA9; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
+</div>
+</sc-for>
+</sc-for>
+
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 48px 32px; text-align: center; display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Caveat Brush', cursive; font-size: 30px">No sessions yet</div>
+<div style="font-size: 15px; color: #A3ABA9; line-height: 1.4">Nothing logged in this range. Open a climb and tap Log send after your next one.</div>
+</div>
+</sc-if>
+</div>
+
+<nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 0; height: 76px; box-sizing: border-box; padding: 6px 8px 14px 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #121618; border-top: 1px solid #2F383D">
+<a href="Climbs.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="9" cy="8" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="9" cy="16" r="1.3"/></svg>Climb</a>
+<a href="Discover.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Discover</a>
+<a href="Log.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #EDEBE4; font-size: 12px; font-weight: 600"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 9h6M9 13h6"/></svg>Log</a>
+<a href="Me.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #A3ABA9; font-size: 12px; font-weight: 500"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-4 4-5.5 7-5.5s6 1.5 7 5.5"/></svg>You</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { range: 'month' };
+}
+renderVals() {
+const S = this.state;
+const set = (o) => this.setState(o);
+const GB = (n) => {
+if (n <= 0) return { bg: '#F49AC2', fg: '#101416', bd: '#F49AC2' };
+if (n <= 2) return { bg: '#5AA9FF', fg: '#101416', bd: '#5AA9FF' };
+if (n <= 4) return { bg: '#4FD08A', fg: '#101416', bd: '#4FD08A' };
+if (n <= 6) return { bg: '#F2F0EA', fg: '#101416', bd: '#F2F0EA' };
+if (n <= 8) return { bg: '#F2554D', fg: '#101416', bd: '#F2554D' };
+return { bg: '#050607', fg: '#EDEBE4', bd: '#EDEBE4' };
+};
+const limits = { day: 0, week: 6, month: 30, year: 365, all: 99999 };
+const E = [
+{ off: 0, day: 'Sat, Oct 31', time: '2:10 PM', name: 'Hollow Earth', type: 'send', g: 4, stars: 3, att: 2, angle: 40, mir: false },
+{ off: 0, day: 'Sat, Oct 31', time: '1:45 PM', name: 'Slab Fever', type: 'send', g: 2, stars: 2, att: 1, angle: 40, mir: false },
+{ off: 0, day: 'Sat, Oct 31', time: '2:30 PM', name: 'Night Shift', type: 'try', att: 3, angle: 40, mir: false },
+{ off: 3, day: 'Wed, Oct 28', time: '7:20 PM', name: 'Pinch Me Twice', type: 'send', g: 3, stars: 3, att: 1, angle: 40, mir: true },
+{ off: 3, day: 'Wed, Oct 28', time: '7:05 PM', name: 'Low Tide', type: 'send', g: 1, stars: 2, att: 1, angle: 40, mir: false },
+{ off: 3, day: 'Wed, Oct 28', time: '7:50 PM', name: 'Crimp and Punishment', type: 'try', att: 4, angle: 40, mir: false },
+{ off: 10, day: 'Wed, Oct 21', time: '6:40 PM', name: 'Hollow Earth', type: 'send', g: 4, stars: 3, att: 5, angle: 35, mir: false },
+{ off: 10, day: 'Wed, Oct 21', time: '6:10 PM', name: 'Slab Fever', type: 'send', g: 2, stars: 2, att: 1, angle: 35, mir: true },
+{ off: 40, day: 'Mon, Sep 21', time: '5:55 PM', name: 'Pinch Me Twice', type: 'send', g: 3, stars: 3, att: 3, angle: 40, mir: false },
+{ off: 200, day: 'Sun, Apr 12', time: '4:30 PM', name: 'Low Tide', type: 'send', g: 1, stars: 2, att: 2, angle: 30, mir: false }
+];
+const inR = E.filter((e) => e.off <= limits[S.range]);
+const sendsL = inR.filter((e) => e.type === 'send');
+const days = []; inR.forEach((e) => { if (days.indexOf(e.day) < 0) days.push(e.day); });
+const names = []; sendsL.forEach((e) => { if (names.indexOf(e.name) < 0) names.push(e.name); });
+const counts = {}; sendsL.forEach((e) => { counts[e.g] = (counts[e.g] || 0) + 1; });
+const max = Math.max(1, ...Object.keys(counts).map((k) => counts[k]));
+const bars = []; for (let g = 1; g <= 7; g++) { const n = counts[g] || 0; bars.push({ label: 'V' + g, n, w: (n / max * 100) + '%', min: n ? '6px' : '0px', bg: GB(g).bg, bd: n ? GB(g).bd : 'transparent' }); }
+const groups = days.map((d) => {
+const items = inR.filter((e) => e.day === d);
+const sn = items.filter((e) => e.type === 'send').length;
+const at = items.reduce((a, e) => a + (e.type === 'try' ? e.att : (e.att > 1 ? e.att - 1 : 0)), 0);
+return { label: d, sub: sn + ' send' + (sn === 1 ? '' : 's') + (at ? ' · ' + at + ' failed attempt' + (at === 1 ? '' : 's') : ''),
+items: items.map((e) => ({
+time: e.time, name: e.name,
+meta: e.angle + '°' + (e.mir ? ' · Mirrored' : '') + (e.type === 'try' ? ' · ' + e.att + ' attempts, no send' : (e.att > 1 ? ' · ' + e.att + ' attempts' : '')),
+flash: e.type === 'send' && e.att === 1,
+grade: e.type === 'send' ? 'V' + e.g : '', hasGrade: e.type === 'send', gbg: GB(e.g || 0).bg, gfg: GB(e.g || 0).fg, gbd: GB(e.g || 0).bd,
+stars: e.type === 'send' ? '★'.repeat(e.stars) : ''
+})) };
+});
+const ranges = [['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year'], ['all', 'All']].map((o) => { const on = S.range === o[0]; return { label: o[1], bg: on ? '#EDEBE4' : '#1A2023', fg: on ? '#121618' : '#EDEBE4', on, tap: () => set({ range: o[0] }) }; });
+return { ranges, sessions: days.length, sends: sendsL.length, climbs: names.length, bars, groups, empty: inR.length === 0 };
+}
+}
+</script>
+</body>
+</html>

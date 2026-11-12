@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slackboard: one logbook for every climbing board</title>
+<meta name="description" content="A free, open-source climbing app for Tension, Decoy, Grasshopper and MoonBoard. Log your sends once and see your stats across every board you climb on.">
+<meta name="theme-color" content="#121618">
+<meta property="og:title" content="slackboard: one logbook for every climbing board">
+<meta property="og:url" content="https://n3rdl0rd.github.io/slackboard/">
+<link rel="canonical" href="https://n3rdl0rd.github.io/slackboard/">
+<meta property="og:description" content="A free, open-source climbing app for Tension, Decoy, Grasshopper and MoonBoard. Your climbs stay on your phone.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://n3rdl0rd.github.io/slackboard/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/BarlowCondensed_700Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css?v=17">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- The board used in the mockups: drawn here, not copied from any board maker. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="board" viewBox="0 0 220 300">
+<rect width="220" height="300" rx="10" fill="#343436"/>
+<ellipse cx="15.9" cy="12.9" rx="4.9" ry="4.7" transform="rotate(39 15.9 12.9)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="15.9" cy="12.9" r="1.1" fill="#25292c"/>
+<ellipse cx="40.1" cy="13.3" rx="4.9" ry="4.3" transform="rotate(-52 40.1 13.3)" fill="#7C8388" opacity=".92"/>
+<circle cx="40.1" cy="13.3" r="1.1" fill="#25292c"/>
+<rect x="56.0" y="9.1" width="8.4" height="7.3" rx="3.1" transform="rotate(10 60.2 12.7)" fill="#6B7176" opacity=".92"/>
+<circle cx="60.2" cy="12.7" r="1.1" fill="#25292c"/>
+<polygon points="81.0,11.5 75.6,17.7 71.7,10.8" fill="#5C6368" opacity=".92" stroke="#5C6368" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="76.1" cy="13.3" r="1.1" fill="#25292c"/>
+<rect x="91.4" y="11.0" width="11.4" height="5.8" rx="2.4" transform="rotate(-48 97.1 13.9)" fill="#8F9499" opacity=".92"/>
+<circle cx="97.1" cy="13.9" r="1.1" fill="#25292c"/>
+<ellipse cx="117.6" cy="16.3" rx="7.2" ry="4.3" transform="rotate(-35 117.6 16.3)" fill="#5C6368" opacity=".92"/>
+<circle cx="117.6" cy="16.3" r="1.1" fill="#25292c"/>
+<ellipse cx="139.5" cy="15.5" rx="5.2" ry="5.3" transform="rotate(-30 139.5 15.5)" fill="#A19A84" opacity=".92"/>
+<circle cx="139.5" cy="15.5" r="1.1" fill="#25292c"/>
+<polygon points="163.9,16.0 153.7,16.3 158.5,9.1" fill="#A19A84" opacity=".92" stroke="#A19A84" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="158.7" cy="13.8" r="1.1" fill="#25292c"/>
+<ellipse cx="184.7" cy="12.7" rx="8.2" ry="4.3" transform="rotate(-19 184.7 12.7)" fill="#A19A84" opacity=".92"/>
+<circle cx="184.7" cy="12.7" r="1.1" fill="#25292c"/>
+<rect x="200.2" y="8.6" width="9.9" height="7.8" rx="3.2" transform="rotate(45 205.2 12.5)" fill="#5C6368" opacity=".92"/>
+<circle cx="205.2" cy="12.5" r="1.1" fill="#25292c"/>
+<ellipse cx="22.6" cy="35.7" rx="5.6" ry="5.1" transform="rotate(-49 22.6 35.7)" fill="#A19A84" opacity=".92"/>
+<circle cx="22.6" cy="35.7" r="1.1" fill="#25292c"/>
+<rect x="33.5" y="33.5" width="12.9" height="6.1" rx="2.6" transform="rotate(59 40.0 36.6)" fill="#8A8470" opacity=".92"/>
+<circle cx="40.0" cy="36.6" r="1.1" fill="#25292c"/>
+<polygon points="69.0,34.6 61.0,41.5 57.5,32.5" fill="#7C8388" opacity=".92" stroke="#7C8388" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="62.5" cy="36.2" r="1.1" fill="#25292c"/>
+<ellipse cx="83.8" cy="33.5" rx="6.1" ry="5.6" transform="rotate(-30 83.8 33.5)" fill="#8A8470" opacity=".92"/>
+<circle cx="83.8" cy="33.5" r="1.1" fill="#25292c"/>
+<ellipse cx="101.9" cy="34.9" rx="6.2" ry="4.7" transform="rotate(-44 101.9 34.9)" fill="#5C6368" opacity=".92"/>
+<circle cx="101.9" cy="34.9" r="1.1" fill="#25292c"/>
+<polygon points="129.3,41.7 120.8,38.5 128.6,34.2" fill="#B9B5A8" opacity=".92" stroke="#B9B5A8" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="126.2" cy="38.1" r="1.1" fill="#25292c"/>
+<ellipse cx="143.7" cy="33.6" rx="5.2" ry="3.8" transform="rotate(40 143.7 33.6)" fill="#6B7176" opacity=".92"/>
+<circle cx="143.7" cy="33.6" r="1.1" fill="#25292c"/>
+<rect x="158.0" y="31.9" width="12.1" height="7.1" rx="2.9" transform="rotate(54 164.1 35.4)" fill="#5C6368" opacity=".92"/>
+<circle cx="164.1" cy="35.4" r="1.1" fill="#25292c"/>
+<rect x="180.6" y="32.4" width="13.7" height="7.7" rx="3.2" transform="rotate(45 187.5 36.3)" fill="#7C8388" opacity=".92"/>
+<circle cx="187.5" cy="36.3" r="1.1" fill="#25292c"/>
+<ellipse cx="16.4" cy="55.3" rx="5.3" ry="3.5" transform="rotate(-52 16.4 55.3)" fill="#A19A84" opacity=".92"/>
+<circle cx="16.4" cy="55.3" r="1.1" fill="#25292c"/>
+<rect x="29.8" y="49.0" width="13.7" height="7.5" rx="3.1" transform="rotate(4 36.6 52.7)" fill="#7C8388" opacity=".92"/>
+<circle cx="36.6" cy="52.7" r="1.1" fill="#25292c"/>
+<ellipse cx="55.6" cy="53.6" rx="5.9" ry="4.1" transform="rotate(-30 55.6 53.6)" fill="#A19A84" opacity=".92"/>
+<circle cx="55.6" cy="53.6" r="1.1" fill="#25292c"/>
+<rect x="72.1" y="53.5" width="8.9" height="8.0" rx="3.3" transform="rotate(-23 76.5 57.5)" fill="#A19A84" opacity=".92"/>
+<circle cx="76.5" cy="57.5" r="1.1" fill="#25292c"/>
+<ellipse cx="100.8" cy="55.3" rx="8.3" ry="4.6" transform="rotate(-57 100.8 55.3)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="100.8" cy="55.3" r="1.1" fill="#25292c"/>
+<rect x="112.0" y="53.0" width="11.9" height="5.4" rx="2.2" transform="rotate(-24 117.9 55.7)" fill="#7C8388" opacity=".92"/>
+<circle cx="117.9" cy="55.7" r="1.1" fill="#25292c"/>
+<ellipse cx="142.7" cy="55.5" rx="6.7" ry="4.5" transform="rotate(-33 142.7 55.5)" fill="#6B7176" opacity=".92"/>
+<circle cx="142.7" cy="55.5" r="1.1" fill="#25292c"/>
+<polygon points="167.5,60.1 154.9,57.8 163.7,50.3" fill="#8F9499" opacity=".92" stroke="#8F9499" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="162.0" cy="56.1" r="1.1" fill="#25292c"/>
+<ellipse cx="183.7" cy="56.8" rx="7.4" ry="6.0" transform="rotate(-1 183.7 56.8)" fill="#6B7176" opacity=".92"/>
+<circle cx="183.7" cy="56.8" r="1.1" fill="#25292c"/>
+<rect x="198.8" y="50.9" width="10.7" height="8.7" rx="3.6" transform="rotate(55 204.1 55.2)" fill="#6B7176" opacity=".92"/>
+<circle cx="204.1" cy="55.2" r="1.1" fill="#25292c"/>
+<ellipse cx="24.9" cy="78.3" rx="6.4" ry="4.0" transform="rotate(-48 24.9 78.3)" fill="#8A8470" opacity=".92"/>
+<circle cx="24.9" cy="78.3" r="1.1" fill="#25292c"/>
+<polygon points="49.4,78.3 39.2,83.4 38.8,73.8" fill="#5C6368" opacity=".92" stroke="#5C6368" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="42.5" cy="78.5" r="1.1" fill="#25292c"/>
+<ellipse cx="65.0" cy="73.1" rx="7.3" ry="3.6" transform="rotate(-13 65.0 73.1)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="65.0" cy="73.1" r="1.1" fill="#25292c"/>
+<ellipse cx="86.1" cy="75.2" rx="8.4" ry="4.2" transform="rotate(36 86.1 75.2)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="86.1" cy="75.2" r="1.1" fill="#25292c"/>
+<ellipse cx="103.8" cy="78.3" rx="4.6" ry="4.8" transform="rotate(59 103.8 78.3)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="103.8" cy="78.3" r="1.1" fill="#25292c"/>
+<polygon points="128.5,81.3 117.8,76.7 128.1,71.6" fill="#5C6368" opacity=".92" stroke="#5C6368" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="124.8" cy="76.5" r="1.1" fill="#25292c"/>
+<ellipse cx="144.7" cy="75.9" rx="7.4" ry="3.3" transform="rotate(36 144.7 75.9)" fill="#6B7176" opacity=".92"/>
+<circle cx="144.7" cy="75.9" r="1.1" fill="#25292c"/>
+<ellipse cx="167.7" cy="73.4" rx="4.6" ry="3.6" transform="rotate(45 167.7 73.4)" fill="#8F9499" opacity=".92"/>
+<circle cx="167.7" cy="73.4" r="1.1" fill="#25292c"/>
+<ellipse cx="186.8" cy="77.2" rx="5.0" ry="5.7" transform="rotate(-10 186.8 77.2)" fill="#8A8470" opacity=".92"/>
+<circle cx="186.8" cy="77.2" r="1.1" fill="#25292c"/>
+<polygon points="21.3,101.3 12.3,99.3 19.0,94.1" fill="#A19A84" opacity=".92" stroke="#A19A84" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="17.5" cy="98.2" r="1.1" fill="#25292c"/>
+<ellipse cx="35.5" cy="95.9" rx="4.5" ry="5.4" transform="rotate(-38 35.5 95.9)" fill="#8F9499" opacity=".92"/>
+<circle cx="35.5" cy="95.9" r="1.1" fill="#25292c"/>
+<ellipse cx="56.2" cy="95.6" rx="7.2" ry="4.6" transform="rotate(-53 56.2 95.6)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="56.2" cy="95.6" r="1.1" fill="#25292c"/>
+<ellipse cx="78.7" cy="97.5" rx="4.7" ry="3.3" transform="rotate(-37 78.7 97.5)" fill="#5C6368" opacity=".92"/>
+<circle cx="78.7" cy="97.5" r="1.1" fill="#25292c"/>
+<ellipse cx="99.1" cy="93.0" rx="6.5" ry="4.5" transform="rotate(14 99.1 93.0)" fill="#7C8388" opacity=".92"/>
+<circle cx="99.1" cy="93.0" r="1.1" fill="#25292c"/>
+<polygon points="126.9,95.6 118.2,99.4 118.4,91.5" fill="#5C6368" opacity=".92" stroke="#5C6368" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="121.2" cy="95.5" r="1.1" fill="#25292c"/>
+<polygon points="144.5,101.4 135.3,99.0 142.5,93.8" fill="#8A8470" opacity=".92" stroke="#8A8470" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="140.7" cy="98.1" r="1.1" fill="#25292c"/>
+<ellipse cx="160.9" cy="95.3" rx="5.5" ry="3.2" transform="rotate(-51 160.9 95.3)" fill="#A19A84" opacity=".92"/>
+<circle cx="160.9" cy="95.3" r="1.1" fill="#25292c"/>
+<ellipse cx="182.8" cy="97.5" rx="7.1" ry="3.4" transform="rotate(26 182.8 97.5)" fill="#8F9499" opacity=".92"/>
+<circle cx="182.8" cy="97.5" r="1.1" fill="#25292c"/>
+<rect x="198.0" y="95.8" width="13.3" height="5.7" rx="2.4" transform="rotate(-49 204.7 98.6)" fill="#6B7176" opacity=".92"/>
+<circle cx="204.7" cy="98.6" r="1.1" fill="#25292c"/>
+<ellipse cx="23.0" cy="114.3" rx="5.9" ry="3.6" transform="rotate(2 23.0 114.3)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="23.0" cy="114.3" r="1.1" fill="#25292c"/>
+<ellipse cx="41.5" cy="117.3" rx="7.3" ry="4.2" transform="rotate(-5 41.5 117.3)" fill="#7C8388" opacity=".92"/>
+<circle cx="41.5" cy="117.3" r="1.1" fill="#25292c"/>
+<ellipse cx="63.3" cy="114.8" rx="5.4" ry="5.6" transform="rotate(50 63.3 114.8)" fill="#7C8388" opacity=".92"/>
+<circle cx="63.3" cy="114.8" r="1.1" fill="#25292c"/>
+<ellipse cx="81.3" cy="114.6" rx="7.8" ry="5.5" transform="rotate(31 81.3 114.6)" fill="#8F9499" opacity=".92"/>
+<circle cx="81.3" cy="114.6" r="1.1" fill="#25292c"/>
+<ellipse cx="105.5" cy="118.7" rx="6.8" ry="5.1" transform="rotate(50 105.5 118.7)" fill="#A19A84" opacity=".92"/>
+<circle cx="105.5" cy="118.7" r="1.1" fill="#25292c"/>
+<ellipse cx="122.5" cy="113.3" rx="5.6" ry="3.1" transform="rotate(47 122.5 113.3)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="122.5" cy="113.3" r="1.1" fill="#25292c"/>
+<polygon points="147.8,109.8 146.0,120.2 135.6,113.7" fill="#5C6368" opacity=".92" stroke="#5C6368" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="143.1" cy="114.6" r="1.1" fill="#25292c"/>
+<ellipse cx="165.9" cy="115.0" rx="7.0" ry="3.1" transform="rotate(50 165.9 115.0)" fill="#5C6368" opacity=".92"/>
+<circle cx="165.9" cy="115.0" r="1.1" fill="#25292c"/>
+<ellipse cx="188.1" cy="118.6" rx="8.2" ry="4.9" transform="rotate(-38 188.1 118.6)" fill="#6B7176" opacity=".92"/>
+<circle cx="188.1" cy="118.6" r="1.1" fill="#25292c"/>
+<ellipse cx="16.7" cy="137.2" rx="5.5" ry="3.0" transform="rotate(-58 16.7 137.2)" fill="#8A8470" opacity=".92"/>
+<circle cx="16.7" cy="137.2" r="1.1" fill="#25292c"/>
+<rect x="33.7" y="132.7" width="10.7" height="7.6" rx="3.2" transform="rotate(-31 39.0 136.5)" fill="#6B7176" opacity=".92"/>
+<circle cx="39.0" cy="136.5" r="1.1" fill="#25292c"/>
+<polygon points="65.5,136.0 57.1,142.1 54.7,133.3" fill="#5C6368" opacity=".92" stroke="#5C6368" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="59.1" cy="137.1" r="1.1" fill="#25292c"/>
+<ellipse cx="79.9" cy="139.1" rx="7.4" ry="3.4" transform="rotate(46 79.9 139.1)" fill="#8A8470" opacity=".92"/>
+<circle cx="79.9" cy="139.1" r="1.1" fill="#25292c"/>
+<ellipse cx="102.3" cy="139.1" rx="7.5" ry="3.8" transform="rotate(-52 102.3 139.1)" fill="#8F9499" opacity=".92"/>
+<circle cx="102.3" cy="139.1" r="1.1" fill="#25292c"/>
+<ellipse cx="118.0" cy="133.7" rx="8.4" ry="4.8" transform="rotate(1 118.0 133.7)" fill="#8F9499" opacity=".92"/>
+<circle cx="118.0" cy="133.7" r="1.1" fill="#25292c"/>
+<ellipse cx="141.8" cy="133.5" rx="5.6" ry="5.9" transform="rotate(-7 141.8 133.5)" fill="#6B7176" opacity=".92"/>
+<circle cx="141.8" cy="133.5" r="1.1" fill="#25292c"/>
+<ellipse cx="164.0" cy="136.5" rx="5.4" ry="3.5" transform="rotate(46 164.0 136.5)" fill="#6B7176" opacity=".92"/>
+<circle cx="164.0" cy="136.5" r="1.1" fill="#25292c"/>
+<rect x="175.3" y="131.2" width="11.0" height="5.0" rx="2.1" transform="rotate(-36 180.8 133.7)" fill="#8A8470" opacity=".92"/>
+<circle cx="180.8" cy="133.7" r="1.1" fill="#25292c"/>
+<rect x="196.1" y="130.0" width="9.8" height="7.5" rx="3.1" transform="rotate(-13 201.0 133.7)" fill="#A19A84" opacity=".92"/>
+<circle cx="201.0" cy="133.7" r="1.1" fill="#25292c"/>
+<rect x="13.4" y="154.9" width="12.3" height="8.5" rx="3.5" transform="rotate(19 19.5 159.1)" fill="#8F9499" opacity=".92"/>
+<circle cx="19.5" cy="159.1" r="1.1" fill="#25292c"/>
+<ellipse cx="41.9" cy="155.4" rx="7.1" ry="3.1" transform="rotate(27 41.9 155.4)" fill="#A19A84" opacity=".92"/>
+<circle cx="41.9" cy="155.4" r="1.1" fill="#25292c"/>
+<ellipse cx="65.2" cy="158.8" rx="6.5" ry="5.7" transform="rotate(24 65.2 158.8)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="65.2" cy="158.8" r="1.1" fill="#25292c"/>
+<polygon points="90.5,160.2 79.0,158.7 86.5,151.5" fill="#8F9499" opacity=".92" stroke="#8F9499" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="85.3" cy="156.8" r="1.1" fill="#25292c"/>
+<rect x="102.6" y="153.7" width="8.3" height="7.5" rx="3.1" transform="rotate(-50 106.8 157.5)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="106.8" cy="157.5" r="1.1" fill="#25292c"/>
+<rect x="121.9" y="151.8" width="11.8" height="7.7" rx="3.2" transform="rotate(15 127.8 155.7)" fill="#A19A84" opacity=".92"/>
+<circle cx="127.8" cy="155.7" r="1.1" fill="#25292c"/>
+<ellipse cx="145.5" cy="153.4" rx="8.1" ry="3.3" transform="rotate(52 145.5 153.4)" fill="#8F9499" opacity=".92"/>
+<circle cx="145.5" cy="153.4" r="1.1" fill="#25292c"/>
+<ellipse cx="166.4" cy="157.9" rx="5.6" ry="5.2" transform="rotate(-51 166.4 157.9)" fill="#A19A84" opacity=".92"/>
+<circle cx="166.4" cy="157.9" r="1.1" fill="#25292c"/>
+<rect x="179.6" y="154.0" width="10.9" height="7.7" rx="3.2" transform="rotate(-14 185.0 157.8)" fill="#A19A84" opacity=".92"/>
+<circle cx="185.0" cy="157.8" r="1.1" fill="#25292c"/>
+<ellipse cx="17.9" cy="174.1" rx="7.3" ry="4.9" transform="rotate(18 17.9 174.1)" fill="#6B7176" opacity=".92"/>
+<circle cx="17.9" cy="174.1" r="1.1" fill="#25292c"/>
+<ellipse cx="35.4" cy="176.5" rx="7.3" ry="5.0" transform="rotate(21 35.4 176.5)" fill="#A19A84" opacity=".92"/>
+<circle cx="35.4" cy="176.5" r="1.1" fill="#25292c"/>
+<rect x="50.0" y="173.1" width="14.0" height="7.2" rx="3.0" transform="rotate(32 56.9 176.7)" fill="#A19A84" opacity=".92"/>
+<circle cx="56.9" cy="176.7" r="1.1" fill="#25292c"/>
+<ellipse cx="77.7" cy="174.1" rx="7.8" ry="5.9" transform="rotate(-5 77.7 174.1)" fill="#A19A84" opacity=".92"/>
+<circle cx="77.7" cy="174.1" r="1.1" fill="#25292c"/>
+<polygon points="102.3,178.5 93.9,175.8 101.1,171.4" fill="#6B7176" opacity=".92" stroke="#6B7176" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="99.1" cy="175.2" r="1.1" fill="#25292c"/>
+<polygon points="122.9,173.9 119.3,183.9 110.4,176.4" fill="#8A8470" opacity=".92" stroke="#8A8470" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="117.5" cy="178.1" r="1.1" fill="#25292c"/>
+<ellipse cx="140.7" cy="178.9" rx="8.0" ry="4.2" transform="rotate(-0 140.7 178.9)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="140.7" cy="178.9" r="1.1" fill="#25292c"/>
+<rect x="154.7" y="176.1" width="8.8" height="6.4" rx="2.7" transform="rotate(-24 159.2 179.3)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="159.2" cy="179.3" r="1.1" fill="#25292c"/>
+<ellipse cx="180.7" cy="178.6" rx="6.1" ry="5.8" transform="rotate(-19 180.7 178.6)" fill="#7C8388" opacity=".92"/>
+<circle cx="180.7" cy="178.6" r="1.1" fill="#25292c"/>
+<ellipse cx="200.6" cy="173.7" rx="6.1" ry="6.0" transform="rotate(-15 200.6 173.7)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="200.6" cy="173.7" r="1.1" fill="#25292c"/>
+<rect x="17.7" y="193.4" width="9.7" height="5.2" rx="2.2" transform="rotate(43 22.5 196.0)" fill="#A19A84" opacity=".92"/>
+<circle cx="22.5" cy="196.0" r="1.1" fill="#25292c"/>
+<ellipse cx="43.6" cy="197.6" rx="6.5" ry="3.6" transform="rotate(-28 43.6 197.6)" fill="#6B7176" opacity=".92"/>
+<circle cx="43.6" cy="197.6" r="1.1" fill="#25292c"/>
+<polygon points="69.9,201.2 56.9,203.8 60.6,193.5" fill="#7C8388" opacity=".92" stroke="#7C8388" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="62.4" cy="199.5" r="1.1" fill="#25292c"/>
+<ellipse cx="86.4" cy="197.1" rx="6.1" ry="4.8" transform="rotate(52 86.4 197.1)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="86.4" cy="197.1" r="1.1" fill="#25292c"/>
+<ellipse cx="102.2" cy="199.0" rx="5.0" ry="4.4" transform="rotate(51 102.2 199.0)" fill="#A19A84" opacity=".92"/>
+<circle cx="102.2" cy="199.0" r="1.1" fill="#25292c"/>
+<rect x="118.8" y="192.6" width="10.4" height="6.0" rx="2.5" transform="rotate(18 124.1 195.6)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="124.1" cy="195.6" r="1.1" fill="#25292c"/>
+<ellipse cx="145.5" cy="197.8" rx="5.3" ry="5.7" transform="rotate(-41 145.5 197.8)" fill="#7C8388" opacity=".92"/>
+<circle cx="145.5" cy="197.8" r="1.1" fill="#25292c"/>
+<polygon points="171.6,194.7 164.0,199.1 163.0,191.6" fill="#8A8470" opacity=".92" stroke="#8A8470" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="166.2" cy="195.1" r="1.1" fill="#25292c"/>
+<rect x="179.8" y="190.2" width="10.2" height="8.2" rx="3.4" transform="rotate(-22 185.0 194.3)" fill="#8A8470" opacity=".92"/>
+<circle cx="185.0" cy="194.3" r="1.1" fill="#25292c"/>
+<ellipse cx="205.6" cy="193.9" rx="6.6" ry="4.1" transform="rotate(-10 205.6 193.9)" fill="#8F9499" opacity=".92"/>
+<circle cx="205.6" cy="193.9" r="1.1" fill="#25292c"/>
+<rect x="10.0" y="210.8" width="12.1" height="7.1" rx="3.0" transform="rotate(-17 16.0 214.4)" fill="#8A8470" opacity=".92"/>
+<circle cx="16.0" cy="214.4" r="1.1" fill="#25292c"/>
+<ellipse cx="39.3" cy="219.1" rx="6.1" ry="4.3" transform="rotate(-30 39.3 219.1)" fill="#7C8388" opacity=".92"/>
+<circle cx="39.3" cy="219.1" r="1.1" fill="#25292c"/>
+<polygon points="65.4,215.5 62.5,223.9 54.9,217.7" fill="#8F9499" opacity=".92" stroke="#8F9499" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="60.9" cy="219.1" r="1.1" fill="#25292c"/>
+<rect x="73.6" y="214.5" width="13.6" height="8.7" rx="3.6" transform="rotate(-51 80.4 218.8)" fill="#5C6368" opacity=".92"/>
+<circle cx="80.4" cy="218.8" r="1.1" fill="#25292c"/>
+<ellipse cx="99.6" cy="216.8" rx="5.1" ry="4.6" transform="rotate(-47 99.6 216.8)" fill="#A19A84" opacity=".92"/>
+<circle cx="99.6" cy="216.8" r="1.1" fill="#25292c"/>
+<rect x="114.4" y="217.0" width="13.4" height="5.3" rx="2.2" transform="rotate(42 121.1 219.6)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="121.1" cy="219.6" r="1.1" fill="#25292c"/>
+<ellipse cx="142.3" cy="214.0" rx="7.1" ry="3.9" transform="rotate(50 142.3 214.0)" fill="#6B7176" opacity=".92"/>
+<circle cx="142.3" cy="214.0" r="1.1" fill="#25292c"/>
+<ellipse cx="159.0" cy="215.5" rx="4.9" ry="3.9" transform="rotate(32 159.0 215.5)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="159.0" cy="215.5" r="1.1" fill="#25292c"/>
+<ellipse cx="184.5" cy="215.2" rx="4.5" ry="3.9" transform="rotate(12 184.5 215.2)" fill="#8A8470" opacity=".92"/>
+<circle cx="184.5" cy="215.2" r="1.1" fill="#25292c"/>
+<polygon points="207.8,217.0 202.3,225.0 196.4,217.2" fill="#B9B5A8" opacity=".92" stroke="#B9B5A8" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="202.2" cy="219.8" r="1.1" fill="#25292c"/>
+<rect x="18.2" y="230.9" width="8.1" height="7.0" rx="2.9" transform="rotate(-23 22.3 234.4)" fill="#A19A84" opacity=".92"/>
+<circle cx="22.3" cy="234.4" r="1.1" fill="#25292c"/>
+<ellipse cx="43.6" cy="236.7" rx="6.0" ry="4.5" transform="rotate(-9 43.6 236.7)" fill="#8A8470" opacity=".92"/>
+<circle cx="43.6" cy="236.7" r="1.1" fill="#25292c"/>
+<rect x="58.0" y="234.5" width="12.8" height="8.0" rx="3.3" transform="rotate(-36 64.4 238.5)" fill="#8A8470" opacity=".92"/>
+<circle cx="64.4" cy="238.5" r="1.1" fill="#25292c"/>
+<ellipse cx="83.8" cy="235.4" rx="5.4" ry="3.7" transform="rotate(38 83.8 235.4)" fill="#6B7176" opacity=".92"/>
+<circle cx="83.8" cy="235.4" r="1.1" fill="#25292c"/>
+<rect x="101.3" y="232.6" width="9.3" height="6.7" rx="2.8" transform="rotate(-38 106.0 236.0)" fill="#5C6368" opacity=".92"/>
+<circle cx="106.0" cy="236.0" r="1.1" fill="#25292c"/>
+<polygon points="129.0,236.6 128.0,243.6 121.0,239.4" fill="#6B7176" opacity=".92" stroke="#6B7176" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="126.0" cy="239.9" r="1.1" fill="#25292c"/>
+<ellipse cx="146.2" cy="236.7" rx="8.1" ry="5.7" transform="rotate(-13 146.2 236.7)" fill="#B9B5A8" opacity=".92"/>
+<circle cx="146.2" cy="236.7" r="1.1" fill="#25292c"/>
+<ellipse cx="167.6" cy="240.2" rx="8.2" ry="5.2" transform="rotate(-38 167.6 240.2)" fill="#6B7176" opacity=".92"/>
+<circle cx="167.6" cy="240.2" r="1.1" fill="#25292c"/>
+<polygon points="187.3,242.5 177.7,238.3 187.1,233.8" fill="#A19A84" opacity=".92" stroke="#A19A84" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="184.0" cy="238.2" r="1.1" fill="#25292c"/>
+<ellipse cx="205.1" cy="234.7" rx="5.0" ry="5.9" transform="rotate(55 205.1 234.7)" fill="#7C8388" opacity=".92"/>
+<circle cx="205.1" cy="234.7" r="1.1" fill="#25292c"/>
+<ellipse cx="15.2" cy="256.5" rx="4.9" ry="5.1" transform="rotate(36 15.2 256.5)" fill="#8F9499" opacity=".92"/>
+<circle cx="15.2" cy="256.5" r="1.1" fill="#25292c"/>
+<ellipse cx="35.8" cy="257.6" rx="8.1" ry="3.1" transform="rotate(-16 35.8 257.6)" fill="#A19A84" opacity=".92"/>
+<circle cx="35.8" cy="257.6" r="1.1" fill="#25292c"/>
+<ellipse cx="57.7" cy="259.3" rx="6.4" ry="5.4" transform="rotate(-15 57.7 259.3)" fill="#8F9499" opacity=".92"/>
+<circle cx="57.7" cy="259.3" r="1.1" fill="#25292c"/>
+<polygon points="81.7,254.0 75.1,260.1 71.8,252.5" fill="#7C8388" opacity=".92" stroke="#7C8388" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="76.2" cy="255.6" r="1.1" fill="#25292c"/>
+<rect x="95.4" y="255.0" width="13.5" height="6.2" rx="2.6" transform="rotate(23 102.1 258.1)" fill="#8A8470" opacity=".92"/>
+<circle cx="102.1" cy="258.1" r="1.1" fill="#25292c"/>
+<rect x="117.3" y="255.0" width="8.1" height="5.9" rx="2.5" transform="rotate(53 121.3 258.0)" fill="#8F9499" opacity=".92"/>
+<circle cx="121.3" cy="258.0" r="1.1" fill="#25292c"/>
+<ellipse cx="140.5" cy="260.1" rx="6.2" ry="4.5" transform="rotate(-30 140.5 260.1)" fill="#8F9499" opacity=".92"/>
+<circle cx="140.5" cy="260.1" r="1.1" fill="#25292c"/>
+<polygon points="170.2,253.2 163.0,261.1 158.1,252.1" fill="#8F9499" opacity=".92" stroke="#8F9499" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="163.8" cy="255.5" r="1.1" fill="#25292c"/>
+<ellipse cx="179.7" cy="255.8" rx="7.6" ry="3.2" transform="rotate(-17 179.7 255.8)" fill="#8F9499" opacity=".92"/>
+<circle cx="179.7" cy="255.8" r="1.1" fill="#25292c"/>
+<ellipse cx="200.6" cy="258.9" rx="6.4" ry="4.6" transform="rotate(18 200.6 258.9)" fill="#6B7176" opacity=".92"/>
+<circle cx="200.6" cy="258.9" r="1.1" fill="#25292c"/>
+<polygon points="24.6,275.2 19.8,281.4 15.5,274.9" fill="#7C8388" opacity=".92" stroke="#7C8388" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="20.0" cy="277.2" r="1.1" fill="#25292c"/>
+<polygon points="44.3,274.8 41.0,281.9 35.1,276.0" fill="#B9B5A8" opacity=".92" stroke="#B9B5A8" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="40.2" cy="277.6" r="1.1" fill="#25292c"/>
+<rect x="57.0" y="277.2" width="12.0" height="5.5" rx="2.3" transform="rotate(42 63.0 279.9)" fill="#6B7176" opacity=".92"/>
+<circle cx="63.0" cy="279.9" r="1.1" fill="#25292c"/>
+<ellipse cx="85.8" cy="276.4" rx="5.5" ry="4.3" transform="rotate(-30 85.8 276.4)" fill="#5C6368" opacity=".92"/>
+<circle cx="85.8" cy="276.4" r="1.1" fill="#25292c"/>
+<polygon points="108.4,276.8 98.7,279.7 100.5,271.5" fill="#8A8470" opacity=".92" stroke="#8A8470" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="102.5" cy="276.0" r="1.1" fill="#25292c"/>
+<rect x="120.1" y="277.1" width="8.6" height="6.9" rx="2.9" transform="rotate(18 124.4 280.6)" fill="#5C6368" opacity=".92"/>
+<circle cx="124.4" cy="280.6" r="1.1" fill="#25292c"/>
+<ellipse cx="142.8" cy="274.6" rx="6.0" ry="5.6" transform="rotate(-6 142.8 274.6)" fill="#8F9499" opacity=".92"/>
+<circle cx="142.8" cy="274.6" r="1.1" fill="#25292c"/>
+<polygon points="172.3,276.0 159.6,279.7 162.0,269.0" fill="#5C6368" opacity=".92" stroke="#5C6368" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="164.6" cy="274.9" r="1.1" fill="#25292c"/>
+<rect x="180.0" y="277.3" width="12.0" height="5.0" rx="2.1" transform="rotate(33 186.0 279.8)" fill="#A19A84" opacity=".92"/>
+<circle cx="186.0" cy="279.8" r="1.1" fill="#25292c"/>
+<circle cx="76.2" cy="255.6" r="11" fill="none" stroke="#34D17D" stroke-opacity=".28" stroke-width="5"/><circle cx="76.2" cy="255.6" r="9" fill="#000" fill-opacity=".38" stroke="#34D17D" stroke-width="2.4"/>
+<circle cx="121.3" cy="258.0" r="11" fill="none" stroke="#34D17D" stroke-opacity=".28" stroke-width="5"/><circle cx="121.3" cy="258.0" r="9" fill="#000" fill-opacity=".38" stroke="#34D17D" stroke-width="2.4"/>
+<circle cx="145.5" cy="197.8" r="11" fill="none" stroke="#4C8DFF" stroke-opacity=".28" stroke-width="5"/><circle cx="145.5" cy="197.8" r="9" fill="#000" fill-opacity=".38" stroke="#4C8DFF" stroke-width="2.4"/>
+<circle cx="79.9" cy="139.1" r="11" fill="none" stroke="#4C8DFF" stroke-opacity=".28" stroke-width="5"/><circle cx="79.9" cy="139.1" r="9" fill="#000" fill-opacity=".38" stroke="#4C8DFF" stroke-width="2.4"/>
+<circle cx="140.7" cy="98.1" r="11" fill="none" stroke="#4C8DFF" stroke-opacity=".28" stroke-width="5"/><circle cx="140.7" cy="98.1" r="9" fill="#000" fill-opacity=".38" stroke="#4C8DFF" stroke-width="2.4"/>
+<circle cx="185.0" cy="157.8" r="11" fill="none" stroke="#4C8DFF" stroke-opacity=".28" stroke-width="5"/><circle cx="185.0" cy="157.8" r="9" fill="#000" fill-opacity=".38" stroke="#4C8DFF" stroke-width="2.4"/>
+<circle cx="126.2" cy="38.1" r="11" fill="none" stroke="#FF5A52" stroke-opacity=".28" stroke-width="5"/><circle cx="126.2" cy="38.1" r="9" fill="#000" fill-opacity=".38" stroke="#FF5A52" stroke-width="2.4"/>
+<circle cx="43.6" cy="236.7" r="11" fill="none" stroke="#E357D9" stroke-opacity=".28" stroke-width="5"/><circle cx="43.6" cy="236.7" r="9" fill="#000" fill-opacity=".38" stroke="#E357D9" stroke-width="2.4"/>
+<circle cx="164.6" cy="274.9" r="11" fill="none" stroke="#E357D9" stroke-opacity=".28" stroke-width="5"/><circle cx="164.6" cy="274.9" r="9" fill="#000" fill-opacity=".38" stroke="#E357D9" stroke-width="2.4"/>
+    </symbol>
+    <!-- The wordmark, outlined from Caveat Brush (SIL OFL) so it draws the same in every browser and size. -->
+    <symbol id="wordmark" viewBox="32 -702 3738 781"><path d="M78 -388Q105 -421 152 -423Q229 -426 266.5 -385Q304 -344 306.5 -304Q309 -264 286 -261Q253 -260 243 -270Q234 -269 220 -283Q214 -286 204 -306L193 -331Q185 -349 173 -351Q158 -345 158 -321Q162 -274 203 -231Q203 -231 204.5 -228.5Q206 -226 219 -212Q298 -125 301 -72Q301 -38 287 -27Q244 24 175 26Q106 28 61 -17Q49 -29 49 -40Q43 -59 45 -65Q42 -93 45 -107Q51 -139 92 -140Q107 -140 111 -122Q124 -71 135.5 -55Q147 -39 173 -40Q206 -42 204.5 -77Q203 -112 171 -142Q161 -154 151.5 -160.5Q142 -167 139 -170Q138 -173 134 -176Q114 -192 83.5 -229Q53 -266 51 -298Q47 -355 78 -388Z M418 -535 425 -594 426 -625Q426 -638 431 -645L441 -659Q468 -680 476 -683Q484 -686 499.5 -682.5Q515 -679 518 -676L529 -667Q538 -662 538 -651Q543 -645 541 -642Q535 -635 521 -524L513 -388L508 -361Q508 -348 509 -346V-328Q507 -308 505 -303Q505 -298 503 -292Q505 -290 505 -276.5Q505 -263 502 -260Q500 -244 500 -229.5Q500 -215 502.5 -199.5Q505 -184 504 -169L508 -131V-116Q510 -98 510 -87L515 -35L519 -8Q522 9 516.5 25Q511 41 500 45Q469 58 432 28H424Q417 20 413 6Q405 2 406 -8Q407 -18 402 -26Q397 -34 397 -40Q397 -53 395 -63L396 -71Q393 -74 393 -80L391 -98V-106Q391 -114 390.5 -117Q390 -120 393 -127Q390 -131 392 -156Q398 -233 398 -262L399 -286V-315Q400 -339 400.5 -376Q401 -413 404 -416L403 -425Q403 -449 410.5 -490.5Q418 -532 418 -535Z M818 -287Q817 -309 808 -320.5Q799 -332 775 -334Q768 -329 756.5 -300.5Q745 -272 742 -240Q732 -192 732 -144Q733 -95 748 -72Q750 -68 752 -69Q757 -69 768 -89Q821 -185 818 -287ZM849 -96 834 -57Q834 -55 805 -14Q796 5 771.5 7Q747 9 724 2Q693 -9 677 -24Q661 -39 645.5 -74.5Q630 -110 629 -133Q624 -166 624 -175V-199Q624 -235 627 -241Q628 -245 632 -262Q637 -304 656 -342Q693 -415 732 -417H737Q739 -416 743 -416H756Q791 -413 799 -410Q814 -406 825 -406L851 -401Q863 -402 882.5 -396Q902 -390 903.5 -387Q905 -384 909 -365Q913 -346 914.5 -337.5Q916 -329 917 -320Q925 -247 943 -184Q944 -181 945 -175Q946 -169 952 -151.5Q958 -134 961 -122Q964 -110 972 -90Q978 -75 990 -55Q1012 -24 967 -7Q961 -5 946 -5Q943 -5 927 -15Q917 -15 908 -26L900 -28Q893 -35 888 -35Q886 -37 852 -116Q849 -105 849 -96Z M1082 -334Q1082 -347 1095 -356Q1095 -357 1095 -358Q1095 -365 1110.5 -383Q1126 -401 1128 -405Q1150 -418 1157 -420Q1165 -418 1168 -418H1170Q1199 -425 1236.5 -416Q1274 -407 1289 -384Q1297 -369 1305 -344Q1317 -309 1317 -293Q1323 -267 1318 -245L1317 -235Q1317 -231 1312 -227Q1307 -223 1300.5 -223.5Q1294 -224 1289 -218.5Q1284 -213 1268.5 -213Q1253 -213 1252 -222Q1249 -223 1242.5 -229Q1236 -235 1236 -238L1231 -245Q1231 -247 1227 -251Q1218 -269 1220 -279Q1225 -305 1223 -307Q1223 -322 1213 -337Q1212 -338 1209.5 -338.5Q1207 -339 1203 -340Q1201 -347 1199 -347Q1192 -345 1184 -336Q1170 -297 1167 -284L1161 -223V-177Q1163 -141 1169 -133Q1169 -129 1173 -119Q1174 -106 1194 -73L1199 -67Q1204 -53 1216 -53Q1228 -53 1250 -81Q1249 -84 1263 -105Q1277 -124 1307 -120Q1320 -118 1320 -105Q1321 -96 1314 -60Q1304 -50 1304 -40Q1297 -22 1297 -20Q1294 -20 1291 -17L1286 -7Q1282 -7 1281 -3Q1270 10 1266 10Q1263 13 1250 13Q1231 21 1222 21L1205 22L1194 18L1185 17Q1173 12 1166.5 12.5Q1160 13 1157 11.5Q1154 10 1149 6Q1137 -4 1133.5 -4Q1130 -4 1122 -10Q1114 -12 1109 -17L1105 -27Q1107 -34 1103 -35Q1090 -35 1088 -40L1082 -48Q1082 -56 1074 -69L1062 -105Q1060 -107 1062 -112V-130L1050 -208V-222Q1059 -255 1059 -256Q1058 -278 1069 -295Q1069 -314 1082 -334Z M1435 -371 1432 -384Q1432 -385 1432.5 -392.5Q1433 -400 1431 -411Q1431 -436 1430 -448Q1427 -452 1427 -487Q1424 -522 1428 -554Q1428 -564 1439 -607Q1450 -629 1450 -632Q1455 -642 1470 -656L1490 -666Q1505 -672 1542 -663L1564 -658Q1564 -641 1560 -615Q1559 -587 1552 -536Q1538 -434 1538 -315L1542 -299Q1571 -321 1594.5 -344Q1618 -367 1625 -371Q1626 -372 1648 -390Q1674 -411 1677 -416Q1696 -441 1723 -454Q1741 -454 1755 -445Q1771 -431 1771 -421Q1771 -411 1768.5 -405.5Q1766 -400 1760 -392Q1754 -384 1749 -374Q1736 -351 1695 -310Q1667 -280 1652 -267Q1643 -257 1608 -234Q1609 -232 1612.5 -226.5Q1616 -221 1620 -213Q1662 -167 1692 -151Q1704 -139 1717 -136Q1717 -135 1728 -128L1734 -126Q1756 -115 1763 -115Q1795 -109 1795 -93.5Q1795 -78 1779 -70Q1779 -68 1749 -50Q1745 -51 1732 -44Q1695 -32 1647 -54Q1620 -66 1602 -92L1579 -110Q1578 -113 1545 -148L1549 -117L1554 -87Q1554 -55 1558 -36Q1562 -17 1550.5 -9Q1539 -1 1509.5 0Q1480 1 1465 -14Q1461 -17 1457.5 -39.5Q1454 -62 1451 -71Q1431 -132 1435 -176L1434 -206Q1435 -210 1435 -229Q1445 -284 1435 -371Z M2058 -314 2055 -315Q2057 -314 2058 -314ZM1932 -58V-49Q1955 -18 1956 -18Q1961 -18 1979 -24Q1980 -24 1989.5 -33.5Q1999 -43 2003 -46Q2015 -53 2019 -55Q2019 -63 2026 -71.5Q2033 -80 2038.5 -88.5Q2044 -97 2046 -101Q2052 -109 2050 -109Q2052 -113 2056 -126L2066 -149L2077 -199Q2079 -206 2072 -243V-252Q2070 -255 2070 -258V-259L2069 -269Q2069 -274 2066 -286Q2064 -295 2054 -315H2043Q2025 -306 2016 -296Q2005 -282 1988 -246Q1971 -210 1965 -181L1959 -157Q1946 -130 1942 -95L1937 -81ZM2160 -345Q2180 -302 2180 -273Q2180 -215 2170 -185Q2170 -174 2168 -168Q2159 -102 2145 -70Q2140 -63 2134 -48Q2128 -31 2104 -9Q2104 -6 2089 9.5Q2074 25 2042 35Q2005 47 1994 47Q1937 56 1911 30L1910 31Q1890 66 1862 52Q1845 43 1842.5 40Q1840 37 1839 27Q1832 9 1834 -15L1839 -48Q1836 -65 1838 -78V-85Q1840 -105 1841 -161.5Q1842 -218 1844.5 -230.5Q1847 -243 1847 -254Q1859 -391 1860.5 -400.5Q1862 -410 1862 -465V-520Q1862 -536 1861.5 -544Q1861 -552 1865 -555Q1857 -578 1862 -607V-619Q1860 -638 1870 -655Q1877 -664 1898 -672Q1919 -680 1933 -681H1938Q1951 -681 1961 -674Q1973 -669 1973 -650Q1975 -644 1973 -637Q1974 -630 1963.5 -495.5Q1953 -361 1953 -348.5Q1953 -336 1952.5 -332.5Q1952 -329 1952 -328Q1957 -330 1958 -335Q1959 -340 1962 -342Q1979 -354 1979 -359Q1979 -360 1984 -364Q1989 -368 1990 -368Q1992 -371 1997 -372L2015 -381Q2016 -387 2044 -386.5Q2072 -386 2078 -382Q2088 -377 2091.5 -375.5Q2095 -374 2098.5 -373.5Q2102 -373 2126 -365Q2137 -365 2137 -362Q2141 -360 2143 -360Q2160 -350 2160 -345Z M2447 -295Q2440 -335 2408 -332Q2390 -331 2377 -308Q2359 -273 2361.5 -217.5Q2364 -162 2369.5 -137.5Q2375 -113 2389 -95Q2397 -81 2413 -82Q2441 -82 2454 -129L2462 -153Q2467 -158 2464 -163Q2474 -188 2475 -222Q2465 -229 2463 -235Q2457 -252 2457 -258Q2450 -263 2449 -277Q2448 -291 2447 -295ZM2264 -201 2268 -252Q2275 -321 2310 -370Q2344 -411 2406 -412H2412Q2470 -412 2496 -387Q2524 -365 2537.5 -339Q2551 -313 2555 -301Q2559 -289 2560 -266Q2562 -223 2543 -217Q2557 -122 2526 -66Q2516 -43 2497 -16Q2483 2 2447 4Q2411 4 2384.5 0Q2358 -4 2326 -25.5Q2294 -47 2281 -96Q2267 -143 2264 -201Z M2840 -287Q2839 -309 2830 -320.5Q2821 -332 2797 -334Q2790 -329 2778.5 -300.5Q2767 -272 2764 -240Q2754 -192 2754 -144Q2755 -95 2770 -72Q2772 -68 2774 -69Q2779 -69 2790 -89Q2843 -185 2840 -287ZM2871 -96 2856 -57Q2856 -55 2827 -14Q2818 5 2793.5 7Q2769 9 2746 2Q2715 -9 2699 -24Q2683 -39 2667.5 -74.5Q2652 -110 2651 -133Q2646 -166 2646 -175V-199Q2646 -235 2649 -241Q2650 -245 2654 -262Q2659 -304 2678 -342Q2715 -415 2754 -417H2759Q2761 -416 2765 -416H2778Q2813 -413 2821 -410Q2836 -406 2847 -406L2873 -401Q2885 -402 2904.5 -396Q2924 -390 2925.5 -387Q2927 -384 2931 -365Q2935 -346 2936.5 -337.5Q2938 -329 2939 -320Q2947 -247 2965 -184Q2966 -181 2967 -175Q2968 -169 2974 -151.5Q2980 -134 2983 -122Q2986 -110 2994 -90Q3000 -75 3012 -55Q3034 -24 2989 -7Q2983 -5 2968 -5Q2965 -5 2949 -15Q2939 -15 2930 -26L2922 -28Q2915 -35 2910 -35Q2908 -37 2874 -116Q2871 -105 2871 -96Z M3085 -295Q3085 -304 3083 -316V-323Q3084 -330 3082 -338Q3082 -348 3084 -356Q3084 -376 3089 -382Q3089 -387 3103 -405Q3107 -409 3118 -418Q3134 -423 3140 -424Q3144 -428 3167 -421Q3177 -420 3198 -414Q3205 -412 3216 -398Q3214 -394 3209.5 -368.5Q3205 -343 3206 -327Q3212 -332 3227 -348Q3242 -364 3243 -365Q3269 -377 3294 -382Q3330 -385 3341 -377Q3350 -374 3355 -368Q3364 -360 3370 -340.5Q3376 -321 3369 -316Q3363 -311 3329 -308Q3327 -308 3315 -300L3263 -259Q3247 -251 3241 -245L3222 -210Q3221 -208 3220 -184Q3219 -160 3220 -149.5Q3221 -139 3220 -82V-39Q3220 -4 3219 1.5Q3218 7 3211 21Q3208 26 3192 26Q3153 55 3142 23L3129 15Q3121 11 3119 5Q3111 -6 3111 -8L3107 -22L3101 -34Q3098 -35 3096 -72.5Q3094 -110 3094 -118.5Q3094 -127 3092 -137Q3099 -144 3098.5 -161Q3098 -178 3096 -187.5Q3094 -197 3096 -199.5Q3098 -202 3095 -227Q3092 -231 3094 -242Z M3621 -254 3619 -269Q3616 -273 3615.5 -279.5Q3615 -286 3612 -300Q3612 -318 3603 -332Q3600 -340 3579 -337Q3565 -323 3546 -258Q3546 -257 3543 -250Q3539 -241 3535 -220.5Q3531 -200 3530 -197Q3528 -191 3528 -186Q3526 -182 3526 -173L3522 -154Q3518 -148 3520 -139V-125Q3521 -122 3519 -108V-94L3521 -60Q3521 -48 3541 -21Q3549 -19 3551 -22Q3571 -42 3573 -63L3576 -76Q3581 -81 3584 -106L3589 -123Q3589 -132 3593 -142Q3597 -152 3598 -157Q3598 -165 3611 -197Q3610 -200 3610 -203V-210Q3621 -253 3621 -254ZM3748 -577Q3748 -542 3744 -534L3737 -469V-435Q3736 -418 3736 -384Q3736 -350 3737.5 -327.5Q3739 -305 3735 -290Q3737 -288 3737 -283L3738 -275L3737 -252V-210Q3738 -199 3738 -172Q3740 -149 3740 -135Q3740 -121 3743 -107V-94L3747 -53V-19Q3749 -12 3749 -5.5Q3749 1 3753.5 16.5Q3758 32 3757 45Q3729 78 3686 61Q3677 60 3667.5 51Q3658 42 3656 33L3655 13Q3650 12 3649 -4Q3645 -10 3646 -14Q3649 -19 3641 -31L3630 -12Q3625 -4 3619 -2L3615 10Q3601 25 3594 35L3582 47Q3558 52 3516 43Q3506 43 3500 41H3493Q3491 43 3471 32Q3454 25 3453 19L3459 20Q3445 14 3449 1Q3437 -4 3434 -21L3425 -55Q3423 -68 3426 -83Q3424 -87 3431 -110L3428 -119L3426 -137Q3423 -141 3427 -155L3421 -165Q3421 -205 3424 -214L3425 -227Q3420 -235 3428 -261L3442 -307Q3442 -309 3445 -325Q3450 -350 3457 -357L3475 -387Q3480 -392 3486 -402Q3496 -420 3528 -420Q3561 -425 3634 -412V-447L3631 -489Q3631 -519 3629.5 -544Q3628 -569 3630 -584Q3631 -585 3640 -625Q3649 -665 3670 -685Q3677 -689 3695.5 -690Q3714 -691 3718 -688Q3722 -685 3729 -683Q3757 -675 3757 -632Z"/></symbol>
+    <symbol id="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.5 6 20.9l1.3-6.7-5-4.7 6.8-.8L12 2.5Z"/></symbol>
+  </defs>
+</svg>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="slackboard, home"><svg class="wm" aria-hidden="true"><use href="#wordmark"/></svg></a>
+  <nav aria-label="Main">
+    <a href="#boards">Boards</a>
+    <a href="#features">Features</a>
+    <a href="#yours">Your data</a>
+    <a class="btn btn-small" href="https://github.com/N3rdL0rd/slackboard">GitHub</a>
+  </nav>
+</header>
+
+<div class="spectrum" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="hero-copy">
+      <p class="eyebrow">Less tension. More sending.</p>
+      <h1>One logbook for <span class="gold">every climbing board.</span></h1>
+      <ul class="pills" aria-label="Boards it works with">
+        <li>Tension</li><li>Decoy</li><li>Grasshopper</li><li>MoonBoard</li>
+      </ul>
+      <p class="lede">Slackboard is a free, open-source app for climbing boards. Log your sends once and see your stats across every board you climb on.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/N3rdL0rd/slackboard/releases">Download the app</a>
+        <a class="btn btn-ghost" href="https://github.com/N3rdL0rd/slackboard">Browse the source</a>
+      </div>
+      <p class="platform">Android and iOS builds are on the releases page.</p>
+      <ul class="facts" aria-label="At a glance">
+        <li>Works offline</li>
+        <li>Free and MIT licensed</li>
+        <li>No ads, no tracking</li>
+      </ul>
+      <p class="art-note">Board images on this page are drawn for illustration.</p>
+    </div>
+
+    <div class="hero-art" aria-hidden="true">
+      <svg class="phone" viewBox="0 0 300 620">
+        <rect x="2" y="2" width="296" height="616" rx="44" fill="#0b0e0f" stroke="#2F383D" stroke-width="2"/>
+        <rect x="12" y="12" width="276" height="596" rx="34" fill="#121618"/>
+        <text x="36" y="38" class="ui" font-size="12" fill="#C5CBC9">9:41</text>
+        <rect x="244" y="28" width="22" height="10" rx="3" fill="none" stroke="#C5CBC9" stroke-width="1.2"/><rect x="246" y="30" width="15" height="6" rx="1.5" fill="#C5CBC9"/>
+        <g fill="none" stroke="#EDEBE4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M42 62l-7 7 7 7" transform="translate(-2 0)"/>
+          <path d="M198 78s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 198 65.5 4.3 4.3 0 0 1 205.5 68C205.5 73.4 198 78 198 78Z" transform="translate(0 -4)"/>
+          <path d="M234 71V62M229.500 66.500 234 62l4.500 4.500M227 71v5h14v-5" transform="translate(-1 -1)"/>
+          <path d="M261 69h.01M268 69h.01M275 69h.01" transform="translate(-6 0)"/>
+        </g>
+        <text x="30" y="118" class="display" font-size="31" font-weight="700" fill="#EDEBE4">Slack Line</text>
+        <text x="30" y="138" class="ui" font-size="11.5" fill="#C5CBC9">Set by chalkdust · 40°</text>
+        <g fill="#E8C766"><use href="#star" x="29" y="147" width="15" height="15"/><use href="#star" x="46" y="147" width="15" height="15"/><use href="#star" x="63" y="147" width="15" height="15"/></g>
+        <rect x="88" y="148" width="54" height="15" rx="4" fill="none" stroke="#6B5D2E"/><text x="115" y="159" text-anchor="middle" class="ui" font-size="8.5" font-weight="600" letter-spacing=".8" fill="#E8C766">CLASSIC</text>
+        <rect x="212" y="90" width="64" height="46" rx="9" fill="#4FD08A"/><text x="244" y="125" text-anchor="middle" class="display" font-size="36" font-weight="700" fill="#101416">V4</text>
+        <text x="276" y="150" text-anchor="end" class="ui" font-size="10.5" fill="#A3ABA9">6b</text>
+        <use href="#board" x="24" y="176" width="252" height="344"/>
+        <rect x="12" y="536" width="276" height="72" fill="#1A2023"/><path d="M12 536h276" stroke="#2F383D"/>
+        <rect x="26" y="550" width="40" height="40" rx="12" fill="none" stroke="#3A454A" stroke-width="1.5"/>
+        <path transform="translate(34 558)" d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z" fill="none" stroke="#EDEBE4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="74" y="550" width="82" height="40" rx="12" fill="none" stroke="#3A454A" stroke-width="1.5"/><text x="115" y="577" text-anchor="middle" class="display" font-size="17" font-weight="700" letter-spacing=".8" fill="#EDEBE4">ATTEMPT</text>
+        <rect x="164" y="550" width="110" height="40" rx="12" fill="#EDEBE4"/><text x="219" y="577" text-anchor="middle" class="display" font-size="17" font-weight="700" letter-spacing=".8" fill="#121618">LOG SEND</text>
+      </svg>
+
+      <div class="share">
+        <div class="share-info">
+          <p class="share-hero">Flashed!</p>
+          <p class="share-name">Slack Line</p>
+          <p class="share-sub">Set by chalkdust · 40°</p>
+          <div class="share-row">
+            <span class="chip g-green">V4</span>
+            <span class="stars"><svg viewBox="0 0 24 24"><use href="#star"/></svg><svg viewBox="0 0 24 24"><use href="#star"/></svg><svg viewBox="0 0 24 24"><use href="#star"/></svg></span>
+          </div>
+          <p class="share-mark"><svg class="wm" aria-hidden="true"><use href="#wordmark"/></svg></p>
+        </div>
+        <svg class="share-board" viewBox="0 0 220 300"><use href="#board"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="cross" id="boards" aria-labelledby="cross-title">
+    <p class="eyebrow">Climb on more than one board?</p>
+    <h2 id="cross-title">Your stats cover <span class="gold">every board.</span></h2>
+    <p class="cross-lede">If you climb on a board at home and another at the gym, Slackboard keeps one logbook for both.</p>
+
+    <div class="flow">
+      <ul class="board-tiles" aria-label="Boards it works with">
+        <li style="--board: #EDEBE4"><div><p class="tile-name"><i class="dot"></i>Tension Board</p><p class="tile-meta">TB1 and TB2 · adjustable 0 to 70°</p></div></li>
+        <li style="--board: #A3ABA9"><div><p class="tile-name"><i class="dot"></i>Decoy Board</p><p class="tile-meta">Adjustable 0 to 65°</p></div></li>
+        <li style="--board: #6F7A7D"><div><p class="tile-name"><i class="dot"></i>Grasshopper Board</p><p class="tile-meta">Adjustable -5 to 60°</p></div></li>
+        <li style="--board: #3A454A"><div><p class="tile-name"><i class="dot"></i>MoonBoard</p><p class="tile-meta">11 x 18 grid · works without an account</p></div></li>
+      </ul>
+
+      <svg class="merge" viewBox="0 0 120 320" aria-hidden="true" preserveAspectRatio="none">
+        <g fill="none" stroke-width="2.5" stroke-linecap="round">
+          <path d="M0 40 C60 40 60 160 120 160" stroke="#EDEBE4" vector-effect="non-scaling-stroke"/><path d="M0 120 C60 120 60 160 120 160" stroke="#A3ABA9" vector-effect="non-scaling-stroke"/>
+          <path d="M0 200 C60 200 60 160 120 160" stroke="#6F7A7D" vector-effect="non-scaling-stroke"/><path d="M0 280 C60 280 60 160 120 160" stroke="#3A454A" vector-effect="non-scaling-stroke"/>
+        </g>
+      </svg>
+      <p class="merge-note" aria-hidden="true">= one logbook</p>
+
+      <div class="panel">
+        <p class="panel-label">Illustrative example · numbers invented</p>
+        <div class="panel-top">
+          <span class="chip g-green">V4</span>
+          <span class="panel-note">V4 working grade, from every board</span>
+        </div>
+        <svg class="spark" viewBox="0 0 240 64" aria-hidden="true" preserveAspectRatio="none"><path d="M0 52 C20 50 30 46 48 44 S78 38 96 34 S130 30 150 22 S190 14 240 8" fill="none" stroke="#EDEBE4" stroke-width="3" stroke-linecap="round"/></svg>
+        <div class="split" aria-hidden="true"><i style="flex:46;background:#EDEBE4"></i><i style="flex:22;background:#A3ABA9"></i><i style="flex:18;background:#6F7A7D"></i><i style="flex:14;background:#3A454A"></i></div>
+        <ul class="legend" aria-label="Sends by board">
+          <li><i style="background:#EDEBE4"></i>Tension</li><li><i style="background:#A3ABA9"></i>Decoy</li><li><i style="background:#6F7A7D"></i>Grasshopper</li><li><i style="background:#3A454A"></i>MoonBoard</li>
+        </ul>
+        <p class="panel-foot">Sends by board. A V4 on any of them counts the same.</p>
+      </div>
+    </div>
+
+    <ul class="points">
+      <li><h3>One set of stats</h3><p>Grades from every board are converted to one scale, so your progress and working grade cover all of them.</p></li>
+      <li><h3>Suggestions from all boards</h3><p>Suggested climbs come from every board you use, and no single board fills more than about 60% of the list.</p></li>
+      <li><h3>Circuits with any climb</h3><p>A circuit can hold climbs from any board. Climbs a board's service can't store stay on your phone.</p></li>
+      <li><h3>Quick board switching</h3><p>Boards in the same place are grouped, and each one keeps its own angle and filters.</p></li>
+    </ul>
+    <p class="cross-foot">Each brand keeps its own account, and nothing is shared between services: the combining happens on your phone. MoonBoard works without an account.</p>
+  </section>
+
+  <section class="band" id="features" aria-labelledby="features-title">
+    <h2 id="features-title">Everything it does</h2>
+    <div class="grid">
+      <article class="card a-blue">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20 L9.5 8 L13 14 L16 9.5 L21 20 Z"/></svg>
+        <h3>See the board</h3>
+        <p>Board photos from your board's own service, mirrored boards, multi-frame routes with playback, pinch to zoom, and swipe to the next climb.</p>
+      </article>
+      <article class="card a-green">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/></svg>
+        <h3>Light up the board</h3>
+        <p>Send any climb to your board over Bluetooth, with auto-connect and a tray that opens from the climb screen. Works with Tension and MoonBoard controllers; Decoy and Grasshopper use the same protocol.</p>
+      </article>
+      <article class="card a-amber">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 12h14M5 19h9"/></svg>
+        <h3>Log offline</h3>
+        <p>Sends and attempts are saved on your phone and uploaded when you are back online. Edit or delete them any time.</p>
+      </article>
+      <article class="card a-pink">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3ZM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></svg>
+        <h3>Get suggestions</h3>
+        <p>Climbs picked from your own sends across all your boards: a warm-up, climbs at your level, one to reach for, and a target to try on the gym wall.</p>
+      </article>
+      <article class="card a-violet">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <h3>Set a climb</h3>
+        <p>Set your own boulders and routes, save drafts, publish, or copy someone else's climb as a starting point. MoonBoard problems are set locally.</p>
+      </article>
+      <article class="card a-lime">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        <h3>Log gym and outdoor climbs</h3>
+        <p>Log gym problems and outdoor boulders with wall angle, style and grade, or repeat a recent one in a single tap. Pick any V grade from V0 up, coloured the way the app colours grades.</p>
+      </article>
+      <article class="card a-blue">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>
+        <h3>See your progress</h3>
+        <p>Working grade, hardest send, sends per week and a progression chart, with a widget on the Climb tab.</p>
+      </article>
+      <article class="card a-green">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/></svg>
+        <h3>Look back at what you lit</h3>
+        <p>Every climb you light up is kept in a lit history, by day and by board, so you can find that climb again.</p>
+      </article>
+      <article class="card a-amber">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <h3>Circuits and workouts</h3>
+        <p>Build circuits with climbs from any board, follow people and browse theirs, and generate a workout from templates.</p>
+      </article>
+      <article class="card a-pink">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11ZM12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+        <h3>Find your gym</h3>
+        <p>Pick your gym on a map and its board is added with the right size, holds and angle. Boards in the same place group together.</p>
+      </article>
+      <article class="card a-violet">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 13v6h14v-6"/></svg>
+        <h3>Share a climb</h3>
+        <p>Save a clean image of any climb, or a Flashed! card after a first-try send, with confetti for a new hardest grade.</p>
+      </article>
+      <article class="card a-lime">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM12 9v4l2 1M9 2h6"/></svg>
+        <h3>Training timer</h3>
+        <p>Rest and interval timers with a get-ready countdown, and haptic feedback on swipes, sends and the angle dial.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="yours" id="yours" aria-labelledby="yours-title">
+    <h2 id="yours-title">Your data</h2>
+    <div class="three">
+      <div><h3>Stored on your phone</h3><p>Your climbs and logs live in a database on your phone and work without a signal. Sign-in tokens stay in the phone's keystore.</p></div>
+      <div><h3>No tracking</h3><p>No analytics, no ads, and no Slackboard account. It talks to the service of the board you sign in to. The only other requests are the gym map's tiles and board photos.</p></div>
+      <div><h3>Open source</h3><p>MIT licensed. Back everything up to one file and restore it, or export your logbook as a spreadsheet.</p></div>
+    </div>
+    <p class="center"><a class="btn btn-primary" href="https://github.com/N3rdL0rd/slackboard">Read the code</a></p>
+  </section>
+</main>
+
+<div class="spectrum" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<footer>
+  <p class="wordmark small"><svg class="wm" role="img" aria-label="slackboard"><use href="#wordmark"/></svg></p>
+  <nav aria-label="Project">
+    <a href="https://github.com/N3rdL0rd/slackboard">Source</a>
+    <a href="https://github.com/N3rdL0rd/slackboard/tree/main/docs">Docs</a>
+    <a href="https://github.com/N3rdL0rd/slackboard/blob/main/LICENSE">MIT license</a>
+    <a href="https://github.com/N3rdL0rd/slackboard/blob/main/CONTRIBUTING.md">Contribute</a>
+    <a href="privacy.html">Privacy</a>
+  </nav>
+  <p class="disclaimer">Slackboard is an independent project. It is not affiliated with, endorsed by, or sponsored by Tension Climbing, Aurora Climbing, Moon Climbing or any other board maker. Brand names belong to their owners. Board images on this page are drawn for illustration.</p>
+</footer>
+</body>
+</html>
