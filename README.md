@@ -20,14 +20,15 @@ combining happens on your phone.
 - Browse every climb for your board with the board drawn properly: real hold art, role colours, mirrored boards, multi-frame routes
   with playback, and a pinch-to-zoom view.
 - Filter by grade range, progress, classics, likes, setter, circuits, beta videos and more. Sort by best, newest, hardest and others.
-- Swipe between climbs in a list, a circuit, a workout or search results.
+- Swipe between climbs in a list, a circuit, a climb workout or search results.
 - An angle dial for adjustable boards.
 - Set your own climbs (boulders and routes), save drafts, publish, edit and delete.
 
 **Logging and progress**
 - Log sends and attempts with grade, stars, angle and notes. Offline logs queue on the phone and upload when you are back online.
 - Stats: progression of your working grade, weekly volume, grade pyramid, flash rate, streaks.
-- Circuits, likes and blocked climbs. A training timer with intervals and vibration cues.
+- Circuits, likes and blocked climbs. A rest timer in the top bar of every climb, and a **Train** tab (turn it off in Settings) that
+  opens the interval timer, with vibration cues.
 
 **Beyond the boards**
 - Log gym problems and outdoor boulders as sends, flashes or attempts, with wall angle, V or Font grade, style tags, and for
@@ -108,5 +109,5 @@ Bug reports, fixes and new features are welcome. Please read [CONTRIBUTING.md](C
 
 [MIT](LICENSE). Third-party fonts, libraries and data sources are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Climbs you light up on a board are kept in a local **Lit history** (You > Lit history), by day, for every board, and included in the backup. Gym climbs can be logged from the Climb tab with a one-tap repeat of recent combinations and a grade strip in each grade's colour.
+Climbs you light up on a board are kept in a local **Lit history** (You > Lit history), by day, for every board, and included in the backup. Gym climbs can be logged from the round **+** button on the Climb tab, which also sets climbs, opens Suggested and builds a climb workout, with a one-tap repeat of recent combinations and a grade strip in each grade's colour.
 

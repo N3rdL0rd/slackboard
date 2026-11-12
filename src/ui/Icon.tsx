@@ -34,6 +34,8 @@ const PATHS = {
   dice: "M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3ZM8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01",
   trash: "M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13",
   edit: "M4 20l1-4L16 5l3 3L8 19l-4 1Z",
+  // Lucide "biceps-flexed" (ISC licence, lucide-static 1.72.0). See THIRD_PARTY_NOTICES.md.
+  muscle: "M12.409 13.017A5 5 0 0 1 22 15c0 3.866-4 7-9 7-4.077 0-8.153-.82-10.371-2.462-.426-.316-.631-.832-.62-1.362C2.118 12.723 2.627 2 10 2a3 3 0 0 1 3 3 2 2 0 0 1-2 2c-1.105 0-1.64-.444-2-1M15 14a5 5 0 0 0-7.584 2M9.964 6.825C8.019 7.977 9.5 13 8 15",
 } as const;
 export type IconName = keyof typeof PATHS;
 

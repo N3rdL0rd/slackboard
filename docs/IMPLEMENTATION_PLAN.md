@@ -200,7 +200,7 @@ Shared pieces extracted from `outside.tsx` so roped and gym logging use the same
 | # | Milestone | Done when |
 |---|---|---|
 | M0 | F1 to F5: migrations, activity model, days, load model, settings and store version | Existing screens behave identically; all existing tests pass; new foundations tested. **Built.** The activity model has adapters but the Log tab still reads the old lists; it moves to it in M3 |
-| M1 | Rename to Climb workout, `muscle` icon, Train tab shell | The tab is there, hideable, and empty states render |
+| M1 | Rename to Climb workout, `muscle` icon, Train tab shell | The tab is there, hideable, and empty states render. **Built.** The shell holds one working action, the interval timer, which is also under You. The Climb tab's top block and Timer entry changed in the same pass: a round **+** menu, one summary line, and the rest timer moved to the climb screen's top bar |
 | M2 | Roped: grades, log form, quick repeat, stats, backup and CSV | A roped climb can be logged, edited, backed up and restored |
 | M3 | Unified Log timeline, streak, default motivation, day notes and nudge | The Log tab shows every kind; streak and the motivation line appear on the Climb tab |
 | M4 | Training log and the exercise library, the session runner (manual, without a plan) | A hangboard session can be run with the timer and logged |

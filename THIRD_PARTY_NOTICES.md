@@ -14,6 +14,11 @@ Bundled in the app and on the landing page.
 
 The license text is at <https://openfontlicense.org/>. The fonts reach the app through the `@expo-google-fonts` packages (MIT).
 
+## Icons
+
+The Train tab's `muscle` icon is Lucide's `biceps-flexed`: ISC License, Copyright (c) 2026 Lucide Icons and Contributors, taken from
+`lucide-static` 1.72.0. The license text is at <https://github.com/lucide-icons/lucide/blob/main/LICENSE>.
+
 ## Map
 
 The gym map is drawn with [Leaflet](https://leafletjs.com/) (BSD 2-Clause), loaded when the map opens, on map tiles from

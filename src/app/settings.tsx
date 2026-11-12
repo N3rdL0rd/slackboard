@@ -48,6 +48,7 @@ export default function Settings() {
         <SwitchRow label="High contrast" help="Chalk-white holds, shapes forced on" value={s.highContrast} onChange={(highContrast) => patch({ highContrast })} />
         <SwitchRow label="Haptics" help="Taps you can feel when swiping, turning the angle dial, logging and during the timer" value={s.haptics !== false} onChange={(haptics) => patch({ haptics })} />
         <SwitchRow label="Auto connect" value={s.autoConnect} onChange={(autoConnect) => patch({ autoConnect })} />
+        <SwitchRow label="Train tab" help="A tab for training. Hide it if you only climb; the interval timer stays under You." value={s.trainTab} onChange={(trainTab) => patch({ trainTab })} />
 
         <SectionLabel>Auto disconnect</SectionLabel>
         <Segmented<string> options={[{ value: "0", label: "Off" }, { value: "30", label: "30 sec" }, { value: "60", label: "1 min" }, { value: "300", label: "5 min" }]}
