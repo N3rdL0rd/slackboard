@@ -21,11 +21,11 @@ import { useBoard, useStore } from "../../state/store";
 import { ClimbThumb } from "../../ui/ClimbThumb";
 import { Button, Chip, GradeChip, IconButton, Sheet, SwitchRow } from "../../ui/parts";
 import { Text } from "../../ui/Text";
-import { workoutRequest } from "../workouts";
+import { workoutRequest } from "../climb-workouts";
 import { c, r } from "../../theme";
 
-/** One generated workout: a chart of the climbs by difficulty, then the climbs in order with their sections. */
-export default function Workout() {
+/** One generated climb workout: a chart of the climbs by difficulty, then the climbs in order with their sections. */
+export default function ClimbWorkout() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -50,7 +50,7 @@ export default function Workout() {
     setLoading(true); setError(""); setSaved("");
     const res = await submit(s, workoutReq(workoutRequest(board), t.name, k, regen));
     setLoading(false);
-    if (res.status !== "ok") { setError(res.status === "retry" ? "Couldn't reach the server. Check your connection." : "The server couldn't build that workout."); return; }
+    if (res.status !== "ok") { setError(res.status === "retry" ? "Couldn't reach the server. Check your connection." : "The server couldn't build that climb workout."); return; }
     const list = parseWorkout(res.body);
     if (!list) { setError("The server sent something unexpected."); return; }
     setResult(list);
@@ -63,7 +63,7 @@ export default function Workout() {
     if (!s || !board) return;
     void get(s, workoutTemplatesPath(workoutRequest(board))).then((j) => {
       const t = parseWorkoutTemplates(j).find((x) => x.name === name);
-      if (!t) { setError("That workout isn't available for this board."); return; }
+      if (!t) { setError("That climb workout isn't available for this board."); return; }
       setTemplate(t);
       const k = defaultKnobs(t);
       setKnobs(k);
@@ -88,12 +88,12 @@ export default function Workout() {
     <View style={{ flex: 1, backgroundColor: c.ground, paddingTop: insets.top }}>
       <View style={{ flexDirection: "row", alignItems: "center", height: 56, paddingHorizontal: 4 }}>
         <IconButton icon="back" label="Back" onPress={() => router.back()} />
-        <Text v="sheetTitle" style={{ flex: 1 }} numberOfLines={1}>{template?.title ?? "Workout"}</Text>
-        {template && template.knobs.length > 0 && <IconButton icon="filter" label="Workout options" onPress={() => setOptions(true)} />}
-        <IconButton icon="undo" label="Build a new workout" onPress={() => setConfirmRegen(true)} />
+        <Text v="sheetTitle" style={{ flex: 1 }} numberOfLines={1}>{template?.title ?? "Climb workout"}</Text>
+        {template && template.knobs.length > 0 && <IconButton icon="filter" label="Climb workout options" onPress={() => setOptions(true)} />}
+        <IconButton icon="undo" label="Build a new climb workout" onPress={() => setConfirmRegen(true)} />
       </View>
       {error ? <View style={{ padding: 16, gap: 10 }}><Text v="secondary" style={{ color: c.danger }} aria-live="polite">{error}</Text>{template && <Button label="Try again" onPress={() => void generate(template, knobs, false)} />}</View> : null}
-      {loading && !result ? <Text v="secondary" style={{ padding: 16 }}>Building your workout</Text> : null}
+      {loading && !result ? <Text v="secondary" style={{ padding: 16 }}>Building your climb workout</Text> : null}
       {result && (
         <JumpList
           data={result}
@@ -140,8 +140,8 @@ export default function Workout() {
         footer={<Button label="Build with these options" onPress={() => { setOptions(false); if (template) void generate(template, knobs, true); }} />}>
         {template?.knobs.map((k) => <KnobRow key={k.name} knob={k} value={knobs[k.name]} onChange={(v) => setKnobs((cur) => ({ ...cur, [k.name]: v }))} />)}
       </Sheet>
-      <Sheet visible={confirmRegen} onClose={() => setConfirmRegen(false)} title="Build a new workout?"
-        footer={<View style={{ gap: 8 }}><Button label="Build new workout" onPress={() => { setConfirmRegen(false); if (template) void generate(template, knobs, true); }} /><Button variant="secondary" label="Keep this one" onPress={() => setConfirmRegen(false)} /></View>}>
+      <Sheet visible={confirmRegen} onClose={() => setConfirmRegen(false)} title="Build a new climb workout?"
+        footer={<View style={{ gap: 8 }}><Button label="Build new climb workout" onPress={() => { setConfirmRegen(false); if (template) void generate(template, knobs, true); }} /><Button variant="secondary" label="Keep this one" onPress={() => setConfirmRegen(false)} /></View>}>
         <Text v="secondary">This replaces the list with a new one, using the same options.</Text>
       </Sheet>
     </View>

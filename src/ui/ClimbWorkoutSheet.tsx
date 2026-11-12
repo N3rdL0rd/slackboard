@@ -16,8 +16,8 @@ import { c, r } from "../theme";
 const request = (b: { spec: { layoutId: number; hsm: number; edges: { left: number; right: number; bottom: number; top: number } }; angle: number }) =>
   ({ layoutId: b.spec.layoutId, edges: b.spec.edges, hsm: b.spec.hsm, angle: b.angle });
 
-/** Workout AI without leaving the Climbs tab: pick a template and the server builds the session for this board and angle. */
-export function WorkoutSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/** Climb workouts without leaving the Climb tab: pick a template and the server builds the session for this board and angle. */
+export function ClimbWorkoutSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const router = useRouter();
   const board = useBoard();
   const me = useUserId();
@@ -33,17 +33,17 @@ export function WorkoutSheet({ visible, onClose }: { visible: boolean; onClose: 
   useEffect(() => { if (visible) load(); }, [visible, key]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!board) return null;
   return (
-    <Sheet visible={visible} onClose={onClose} title="Workout">
+    <Sheet visible={visible} onClose={onClose} title="Climb workout">
       <Text v="secondary" style={{ marginBottom: 12 }}>For {board.name} at {board.angle}°. Pick a session and the server builds the list of climbs.</Text>
       {failed ? (
         <View style={{ gap: 12 }}>
-          <Text v="secondary" style={{ color: c.danger }}>Couldn't load workouts. Check your connection.</Text>
+          <Text v="secondary" style={{ color: c.danger }}>Couldn't load climb workouts. Check your connection.</Text>
           <Button label="Try again" onPress={load} />
         </View>
       ) : templates == null ? <Text v="secondary">Loading</Text> : (
         <View style={{ gap: 10 }}>
           {templates.map((t) => (
-            <Tap key={t.name} accessibilityRole="button" onPress={() => { onClose(); router.push({ pathname: "/workout/[name]", params: { name: t.name } }); }}
+            <Tap key={t.name} accessibilityRole="button" onPress={() => { onClose(); router.push({ pathname: "/climb-workout/[name]", params: { name: t.name } }); }}
               style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.line }}>
               <Image source={{ uri: getProvider(board.spec.provider).links.workoutImage(t.name) }} accessibilityIgnoresInvertColors style={{ width: 44, height: 44, borderRadius: r.thumb }} />
               <View style={{ flex: 1 }}>

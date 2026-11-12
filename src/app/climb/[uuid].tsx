@@ -284,6 +284,7 @@ export default function ClimbView() {
       <View style={{ flexDirection: "row", alignItems: "center", height: 56, paddingHorizontal: 4 }}>
         <IconButton icon="back" label="Back" onPress={() => router.back()} />
         <View style={{ flex: 1 }} />
+        <TimerButton end={timerEnd} onPress={() => setSheet("timer")} />
         <IconButton icon="heart" label={isLiked ? "Unlike" : "Like"} filled={isLiked} color={isLiked ? c.danger : c.text} onPress={() => void setTag(current, "~flag", !isLiked)} />
         {getProvider(board?.spec.provider).links.climb(climb.uuid) ? <IconButton icon="share" label="Share" onPress={() => Share.share({ message: `${climb.name}: ${getProvider(board?.spec.provider).links.climb(climb.uuid)}` }).catch(() => {})} /> : null}
         <IconButton icon="more" label="More" onPress={() => setSheet("more")} />
@@ -408,7 +409,7 @@ export default function ClimbView() {
 
       <LogSheet visible={sheet === "log"} onClose={() => setSheet(null)} mode={mode} setMode={setMode} climbUuid={current} climbName={climb.name} angle={viewAngle}
         isMirrored={spec.isMirrored} mirror={mirror} setMirror={setMirror} saving={saving} error={saveError} stat={stat} onSave={save} />
-      <MoreSheet visible={sheet === "more"} onClose={() => setSheet(null)} climb={climb} blocked={blocked.has(current)} onTimer={() => { setSheet(null); setSheet("timer"); }} onShare={(k) => { if (k === "send") shareMySend(); else openShare("climb"); }} canShareSend={mySend} />
+      <MoreSheet visible={sheet === "more"} onClose={() => setSheet(null)} climb={climb} blocked={blocked.has(current)} onShare={(k) => { if (k === "send") shareMySend(); else openShare("climb"); }} canShareSend={mySend} />
       <ShareSheet facts={share} onClose={() => setShare(null)} />
       {confetti > 0 ? <Confetti key={confetti} onDone={() => setConfetti(0)} /> : null}
       <TimerSheet visible={sheet === "timer"} onClose={() => setSheet(null)} running={timerEnd != null} onStart={(sec) => { setSheet(null); setTimerEnd(Date.now() + sec * 1000); setTimerLen(sec); }} onStop={() => { setSheet(null); setTimerEnd(null); }} />
@@ -492,7 +493,29 @@ function TimerBar({ end, length, onExpire }: { end: number; length: number; onEx
   );
 }
 
-function MoreSheet({ visible, onClose, climb, blocked, onTimer, onShare, canShareSend }: { visible: boolean; onClose: () => void; climb: Climb; blocked: boolean; onTimer: () => void; onShare: (kind: ShareKind) => void; canShareSend: boolean }) {
+const clock = (ms: number) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+
+/** The timer's place in the top bar: a clock, or while it runs a pill with the time left. Either way it opens the timer sheet. */
+function TimerButton({ end, onPress }: { end: number | null; onPress: () => void }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (end == null) return;
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(t);
+  }, [end]);
+  if (end == null) return <IconButton icon="timer" label="Timer" onPress={onPress} />;
+  const left = clock(end - now);
+  return (
+    <Tap accessibilityRole="button" accessibilityLabel={`Timer running, ${left} left. Change or stop`} onPress={onPress}
+      style={{ height: 40, minWidth: 48, paddingHorizontal: 12, borderRadius: 20, backgroundColor: c.btn, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginHorizontal: 4 }}>
+      <Icon name="timer" size={20} color={c.btnText} />
+      <Text v="bodyStrong" style={{ color: c.btnText, fontVariant: ["tabular-nums"] }}>{left}</Text>
+    </Tap>
+  );
+}
+
+function MoreSheet({ visible, onClose, climb, blocked, onShare, canShareSend }: { visible: boolean; onClose: () => void; climb: Climb; blocked: boolean; onShare: (kind: ShareKind) => void; canShareSend: boolean }) {
   const router = useRouter();
   const username = useUsername();
   const board = useBoard();
@@ -526,7 +549,6 @@ function MoreSheet({ visible, onClose, climb, blocked, onTimer, onShare, canShar
           <Item label={blocked ? "Unblock this climb" : "Block this climb"} onPress={() => { void setTag(climb.uuid, "~block", !blocked); onClose(); }} />
           <Item label="Share image" onPress={() => { onClose(); onShare("climb"); }} />
 {canShareSend && <Item label="Share your send" onPress={() => { onClose(); onShare("send"); }} />}
-<Item label="Timer" onPress={onTimer} />
           {others.length > 0 && <Item label="Show on another board" onPress={() => setMode("boards")} />}
           {!local && <Item label="Report" onPress={() => setMode("report")} />}
           {canCopy && <Item label="Copy to a new climb" onPress={() => { onClose(); router.push({ pathname: "/set-climb", params: { from: climb.uuid, type: isRoute(climb) ? "route" : "boulder" } }); }} />}

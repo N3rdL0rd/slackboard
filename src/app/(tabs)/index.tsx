@@ -2,23 +2,24 @@ import { doneKey } from "../../core/mergedLog";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { Placement, Role } from "../../core/types";
-import { Animated, PanResponder, ScrollView, TextInput, View } from "react-native";
+import { Animated, PanResponder, TextInput, View } from "react-native";
 import { useSpaceFor } from "../../state/spaces";
 import { boardColor, neighbourBoard } from "../../core/boards";
 import { JumpList } from "../../ui/JumpToTop";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { activeChips, clearChip, DEFAULT_FILTER, sortLabel } from "../../core/filters";
-import { Icon, type IconName } from "../../ui/Icon";
+import { activeChips, DEFAULT_FILTER } from "../../core/filters";
+import { Icon } from "../../ui/Icon";
 import { QuickGymLog } from "../../ui/QuickGymLog";
 import { showBluetooth } from "../../state/bluetoothTray";
 import { useProblems } from "../../state/moonboard";
 import { MoonProblemsBanner } from "../../ui/MoonProblemsBanner";
 import { ClimbRow } from "../../ui/ClimbRow";
-import { StatsWidget } from "../../ui/StatsWidget";
-import { WorkoutSheet } from "../../ui/WorkoutSheet";
+import { ClimbSummary } from "../../ui/ClimbSummary";
+import { SpeedDial } from "../../ui/SpeedDial";
+import { ClimbWorkoutSheet } from "../../ui/ClimbWorkoutSheet";
 import { Button, Chip, IconButton, Spinner, Tap } from "../../ui/parts";
 import { AngleSheet, BoardSheet, FilterSheet } from "../../ui/climbSheets";
-import { ArrivalChip, SpaceBar } from "../../ui/SpaceBar";
+import { ArrivalChip } from "../../ui/SpaceBar";
 import { Text } from "../../ui/Text";
 import { useData } from "../../state/data";
 import { useBoard, useFilter, useStore } from "../../state/store";
@@ -92,7 +93,8 @@ export default function ClimbTab() {
     );
   }
   const chips = activeChips(filter);
-  const dirty = chips.length > 0 || filter.sort !== "best" || filter.search !== "";
+  // Sort counts as a filter once it is not the default.
+  const filterCount = chips.length + (filter.sort !== "best" ? 1 : 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.ground, paddingTop: insets.top }}>
@@ -112,17 +114,17 @@ export default function ClimbTab() {
             <ArrivalChip board={board} />
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, gap: 8 }}>
         <Animated.View style={{ flex: 1, transform: [{ translateX: nudge }] }} {...flip.panHandlers}>
-          <Tap accessibilityRole="button" accessibilityLabel={hasPills ? `${space!.name}, showing ${board.name}. Boards and spaces` : `Board: ${board.name}. Change board`} onPress={() => setSheet("board")}
+          <Tap accessibilityRole="button" accessibilityLabel={hasPills ? `${board.name}, in ${space!.name}. Boards and spaces` : `Board: ${board.name}. Change board`} onPress={() => setSheet("board")}
             accessibilityActions={boards.length > 1 ? [{ name: "increment", label: "Next board" }, { name: "decrement", label: "Previous board" }] : undefined}
             onAccessibilityAction={(e) => switchBoard(e.nativeEvent.actionName === "increment" ? 1 : -1)}
             onLongPress={() => router.push({ pathname: "/edit-board", params: { uuid: board.id } })}
             style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: c.card, borderRadius: r.card, padding: 10, borderWidth: 1, borderColor: c.line }}>
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: boardColor(board.id) }} />
             <View style={{ flex: 1 }}>
-              <Text v="bodyStrong" numberOfLines={1}>{hasPills ? space!.name : board.name}</Text>
-              <Text v="caption" numberOfLines={1}>{board.spec.sizeName} · {board.isAdjustable ? "adjustable" : `fixed ${board.angle}°`}</Text>
+              <Text v="bodyStrong" numberOfLines={1}>{board.name}</Text>
+              <Text v="caption" numberOfLines={1}>{hasPills ? `${space!.name} · ` : ""}{board.spec.sizeName} · {board.isAdjustable ? "adjustable" : `fixed ${board.angle}°`}</Text>
             </View>
-            {boards.length > 1 && !hasPills ? (
+            {boards.length > 1 ? (
               <View style={{ flexDirection: "row", gap: 4 }} accessibilityElementsHidden>
                 {boards.map((b) => <View key={b.id} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: b.id === board.id ? c.text : c.dim }} />)}
               </View>
@@ -132,7 +134,6 @@ export default function ClimbTab() {
         </Animated.View>
         <IconButton icon="bulb" label={led.label} color={c.text} dot={led.dot} onPress={() => showBluetooth()} />
       </View>
-      <SpaceBar board={board} />
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingTop: 10 }}>
         <Tap accessibilityRole="button" accessibilityLabel={board.isAdjustable ? `Angle ${board.angle} degrees. Change` : `Fixed angle ${board.angle} degrees`}
@@ -141,46 +142,26 @@ export default function ClimbTab() {
           <Text v="caption" style={{ fontSize: 10.5, letterSpacing: 0.8 }}>{board.isAdjustable ? "ANGLE" : "FIXED"}</Text>
           <Text v="numeral" style={{ fontSize: 24 }}>{board.angle}°</Text>
         </Tap>
-        <View style={{ flex: 1, height: 48, borderRadius: r.input, backgroundColor: c.card, borderWidth: 1, borderColor: c.line, flexDirection: "row", alignItems: "center", paddingLeft: 12, gap: 8 }}>
+        <View style={{ flex: 1, height: 48, borderRadius: r.input, backgroundColor: c.card, borderWidth: 1, borderColor: c.line, flexDirection: "row", alignItems: "center", paddingLeft: 12 }}>
           <Icon name="search" size={20} color={c.muted} />
           <TextInput value={filter.search} onChangeText={(search) => setFilter({ ...filter, search })} placeholder="Search climbs" placeholderTextColor={c.placeholder}
-            accessibilityLabel="Search climbs by name" style={{ flex: 1, color: c.text, fontSize: 16, fontFamily: "Barlow_400Regular", height: 48 }} />
-        </View>
-        <View>
-          <IconButton icon="filter" label={`Filters, ${chips.length} active`} onPress={() => setSheet("filter")} />
-          {chips.length > 0 && (
-            <View style={{ position: "absolute", top: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: c.text, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: c.btnText, fontSize: 11, fontFamily: "Barlow_600SemiBold" }}>{chips.length}</Text>
-            </View>
-          )}
+            accessibilityLabel="Search climbs by name" style={{ flex: 1, marginLeft: 8, color: c.text, fontSize: 16, fontFamily: "Barlow_400Regular", height: 48 }} />
+          <View>
+            <IconButton icon="filter" label={`Filters, ${filterCount} active`} onPress={() => setSheet("filter")} />
+            {filterCount > 0 && (
+              <View style={{ position: "absolute", top: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: c.text, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ color: c.btnText, fontSize: 11, fontFamily: "Barlow_600SemiBold" }}>{filterCount}</Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0, height: 52 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 10, alignItems: "center" }}>
-        {getProvider(board.spec.provider).capabilities.workouts ? <QuickAction icon="bolt" label="Workout" onPress={() => setSheet("workout")} /> : null}
-        <QuickAction icon="plus" label="Gym climb" onPress={() => setQuickLog(true)} />
-        <QuickAction icon="spark" label="Suggested" onPress={() => router.push("/suggestions")} />
-        <QuickAction icon="bulb" label="Lit history" onPress={() => router.push("/lit-history")} />
-        <QuickAction icon="timer" label="Timer" onPress={() => router.push("/timer")} />
-      </ScrollView>
-      <StatsWidget />
-
-      {(chips.length > 0 || filter.sort !== "best") && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0, height: 54 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 10, alignItems: "center" }}>
-          {chips.map((ch) => <Chip key={ch.key} label={ch.label} onRemove={() => setFilter(clearChip(filter, ch.key))} />)}
-          <Chip label={`Sort: ${sortLabel(filter.sort, getProvider(board.spec.provider).kind === "local")}`} onPress={() => setSheet("filter")} />
-          {dirty && <Chip label="Reset" onPress={() => setFilter(DEFAULT_FILTER)} />}
-        </ScrollView>
-      )}
-
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, minHeight: 40 }}>
-        {pending && <Spinner />}
-        <Text v="caption">{loading ? " " : pending ? "Updating" : `${list.length} climbs at ${angle}°`}</Text>
-      </View>
+      <ClimbSummary total={list.length} loading={loading} pending={pending} filterCount={filterCount} onFilters={() => setSheet("filter")} onReset={() => setFilter(DEFAULT_FILTER)} />
 
           </View>
         }
-        fabBottom={canSet.any ? 84 : 16}
+        fabBottom={84}
         data={list}
         style={{ opacity: pending ? 0.5 : 1 }}
         keyExtractor={(x) => x.uuid}
@@ -202,28 +183,17 @@ export default function ClimbTab() {
           </View>
         )}
       />
-      {canSet.any && (
-        <Tap accessibilityRole="button" accessibilityLabel="Set a climb" onPress={() => router.push("/set-climb")}
-          style={{ position: "absolute", right: 16, bottom: 16, height: 56, paddingHorizontal: 20, borderRadius: 28, backgroundColor: c.btn, flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Icon name="plus" size={22} color={c.btnText} stroke={2.5} />
-          <Text v="button" style={{ color: c.btnText, fontSize: 18 }}>Set a climb</Text>
-        </Tap>
-      )}
+      <SpeedDial bottom={16} items={[
+        ...(canSet.any ? [{ icon: "edit" as const, label: "Set a climb", primary: true, onPress: () => router.push("/set-climb") }] : []),
+        { icon: "log" as const, label: "Log gym climb", primary: !canSet.any, onPress: () => setQuickLog(true) },
+        { icon: "spark" as const, label: "Suggested", onPress: () => router.push("/suggestions") },
+        ...(getProvider(board.spec.provider).capabilities.workouts ? [{ icon: "bolt" as const, label: "Climb workout", onPress: () => setSheet("workout") }] : []),
+      ]} />
       <BoardSheet visible={sheet === "board"} onClose={() => setSheet(null)} />
       <QuickGymLog visible={quickLog} onClose={() => setQuickLog(false)} />
       <AngleSheet visible={sheet === "angle"} onClose={() => setSheet(null)} />
-      <WorkoutSheet visible={sheet === "workout"} onClose={() => setSheet(null)} />
+      <ClimbWorkoutSheet visible={sheet === "workout"} onClose={() => setSheet(null)} />
       <FilterSheet visible={sheet === "filter"} onClose={() => setSheet(null)} count={list.length} />
     </View>
-  );
-}
-
-function QuickAction({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  return (
-    <Tap accessibilityRole="button" onPress={onPress}
-      style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 40, paddingHorizontal: 14, borderRadius: r.pill, backgroundColor: c.card, borderWidth: 1, borderColor: c.line }}>
-      <Icon name={icon} size={18} color={c.text} />
-      <Text v="bodyStrong" style={{ fontSize: 14 }}>{label}</Text>
-    </Tap>
   );
 }

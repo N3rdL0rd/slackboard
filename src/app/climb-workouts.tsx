@@ -18,7 +18,7 @@ export const workoutRequest = (b: { spec: { layoutId: number; hsm: number; edges
   ({ layoutId: b.spec.layoutId, edges: b.spec.edges, hsm: b.spec.hsm, angle: b.angle });
 
 /** Ready-made sessions for your board: pick one and the server builds a list of climbs at the right grades. */
-export default function Workouts() {
+export default function ClimbWorkouts() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const board = useBoard();
@@ -37,15 +37,15 @@ export default function Workouts() {
       <View style={{ flexDirection: "row", alignItems: "center", height: 56, paddingHorizontal: 4 }}>
         <IconButton icon="back" label="Back" onPress={() => router.back()} />
         <View style={{ flex: 1 }}>
-          <Text v="sheetTitle">Workouts</Text>
+          <Text v="sheetTitle">Climb workouts</Text>
           {board ? <Text v="caption">{board.name} · {board.angle}°</Text> : null}
         </View>
       </View>
       <JumpList data={templates ?? []} keyExtractor={(t) => t.name} contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: insets.bottom + 16 }}
         ListHeaderComponent={<Text v="secondary" style={{ marginBottom: 6 }}>Pick a session. The server builds a list of climbs for your board and angle, with a warm-up and a main set at the grades you choose.</Text>}
-        ListEmptyComponent={failed ? <View style={{ gap: 12 }}><Text v="secondary" style={{ color: c.danger }}>Couldn't load workouts. Check your connection.</Text><Button label="Try again" onPress={load} /></View> : <Text v="secondary">{templates ? "No workouts for this board." : "Loading"}</Text>}
+        ListEmptyComponent={failed ? <View style={{ gap: 12 }}><Text v="secondary" style={{ color: c.danger }}>Couldn't load climb workouts. Check your connection.</Text><Button label="Try again" onPress={load} /></View> : <Text v="secondary">{templates ? "No climb workouts for this board." : "Loading"}</Text>}
         renderItem={({ item }) => (
-          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: "/workout/[name]", params: { name: item.name } })}
+          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: "/climb-workout/[name]", params: { name: item.name } })}
             style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.line }}>
             <Image source={{ uri: getProvider(board?.spec.provider).links.workoutImage(item.name) }} accessibilityIgnoresInvertColors style={{ width: 48, height: 48, borderRadius: r.thumb, backgroundColor: c.raised }} />
             <View style={{ flex: 1 }}>

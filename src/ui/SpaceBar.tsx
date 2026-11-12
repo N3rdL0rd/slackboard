@@ -1,32 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import * as Location from "expo-location";
-import { AppState, ScrollView, View } from "react-native";
+import { AppState, View } from "react-native";
 import { boardColor } from "../core/boards";
 import { nearestSpace, SPACE_RADIUS_KM } from "../core/spaces";
-import { setBoardPlace, useSpaces, useSpaceFor } from "../state/spaces";
+import { setBoardPlace, useSpaces } from "../state/spaces";
 import { useStore } from "../state/store";
 import type { Board } from "../core/types";
 import { c, r } from "../theme";
-import { Chip, Tap } from "./parts";
+import { Tap } from "./parts";
 import { Text } from "./Text";
 
 const LOCATION_INTERVAL_MS = 5 * 60 * 1000;
 let lastLocationRead = 0;
-
-/** One tap changes boards; angles and filters stay with their own board. */
-export function SpaceBar({ board }: { board: Board }) {
-  const space = useSpaceFor(board.id);
-  const setBoard = useStore((s) => s.setBoard);
-  if (!space || space.boards.length < 2) return null;
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }}
-      contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 8 }}>
-      {space.boards.map((b) => (
-        <Chip key={b.id} label={b.name} selected={b.id === board.id} onPress={() => setBoard(b.id)} />
-      ))}
-    </ScrollView>
-  );
-}
 
 interface Nearby {
   spaceId: string;
