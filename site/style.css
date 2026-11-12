@@ -180,3 +180,12 @@ footer nav a:hover { color: var(--text); text-decoration: underline; }
 .doc ul { margin: 12px 0 0; padding-left: 22px; display: grid; gap: 10px; }
 .doc strong { color: var(--text); font-weight: 600; }
 .doc a { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 3px; }
+
+/* Download section */
+.grid.two { grid-template-columns: repeat(2, 1fr); }
+.card-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.card .small, #download > .small { color: var(--muted); font-size: 14px; margin-top: 14px; word-break: break-word; }
+#download > .small { margin-top: 20px; max-width: 46em; }
+.card code { font-size: 13px; color: var(--text2); }
+.link { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 3px; }
+@media (max-width: 900px) { .grid.two { grid-template-columns: 1fr; } }

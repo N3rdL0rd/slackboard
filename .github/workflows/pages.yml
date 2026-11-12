@@ -5,9 +5,15 @@ on:
     branches: [main]
     paths: ["site/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
+  # Republish when a new iOS nightly exists, so the AltStore source points at it.
+  workflow_run:
+    workflows: ["iOS build"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -19,11 +25,29 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      # The latest iOS nightly is served from the site as a plain .ipa, which AltStore can download directly.
+      - name: Add the latest iOS build and the AltStore source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(gh run list --workflow ios.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$id" ] && gh run download "$id" --name slackboard-ios --dir ipa; then
+            cp ipa/*.ipa site/Slackboard.ipa
+            gh run view "$id" --json number,createdAt > ipa/run.json
+            npx tsx scripts/make-altstore.ts site/altstore.json ipa/run.json site/Slackboard.ipa
+          else
+            echo "No iOS build to publish; the source will list no versions."
+            npx tsx scripts/make-altstore.ts site/altstore.json
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

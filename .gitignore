@@ -59,3 +59,7 @@ live-sync.db
 
 # Local notes (not part of the repository)
 research/
+
+# Generated when the site is deployed (see .github/workflows/pages.yml)
+site/Slackboard.ipa
+site/altstore.json

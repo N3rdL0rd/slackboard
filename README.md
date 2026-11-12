@@ -73,7 +73,7 @@ See [PRIVACY.md](PRIVACY.md) for what stays on your phone and what is sent where
 
 ## Getting started
 
-Android and iOS builds are on the [releases page](https://github.com/N3rdL0rd/slackboard/releases). To build it yourself, follow the steps below.
+Nightly builds are linked from the [project site](https://n3rdl0rd.github.io/slackboard/#download): an APK for Android, and an AltStore source for iOS. To build it yourself, follow the steps below.
 
 ```sh
 npm install

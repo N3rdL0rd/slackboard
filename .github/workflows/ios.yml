@@ -1,5 +1,8 @@
 name: iOS build
+# Every night, on tags, and by hand. The site links to the latest nightly through nightly.link, and pages.yml publishes the AltStore source.
 on:
+  schedule:
+    - cron: "30 7 * * *"
   workflow_dispatch:
   push:
     tags: ["v*"]
@@ -14,6 +17,9 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run typecheck && npm test
+      # Each build gets a higher build number than the last.
+      - run: node -e "const f='app.json',a=JSON.parse(require('fs').readFileSync(f));a.expo.ios.buildNumber=process.env.N;require('fs').writeFileSync(f,JSON.stringify(a,null,2)+'\n')"
+        env: { N: "${{ github.run_number }}" }
       # The native project is generated, never committed: app.json and plugins/ are its source.
       - run: npx expo prebuild --platform ios
       - name: Archive without signing
@@ -22,9 +28,16 @@ jobs:
           xcodebuild -workspace Slackboard.xcworkspace -scheme Slackboard -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Slackboard.xcarchive" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO archive
-      - name: Package the unsigned archive
-        run: cd "$RUNNER_TEMP" && zip -qr Slackboard.xcarchive.zip Slackboard.xcarchive
+      # An unsigned .ipa is what AltStore and Sideloadly want: they sign it with the installer's own Apple ID.
+      - name: Package an unsigned .ipa
+        run: |
+          cd "$RUNNER_TEMP"
+          mkdir -p ipa/Payload
+          cp -R Slackboard.xcarchive/Products/Applications/Slackboard.app ipa/Payload/
+          (cd ipa && zip -qry ../Slackboard-unsigned.ipa Payload)
+          ls -la Slackboard-unsigned.ipa
       - uses: actions/upload-artifact@v4
         with:
-          name: slackboard-ios-unsigned-archive
-          path: ${{ runner.temp }}/Slackboard.xcarchive.zip
+          name: slackboard-ios
+          retention-days: 90
+          path: ${{ runner.temp }}/Slackboard-unsigned.ipa

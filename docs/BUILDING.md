@@ -65,7 +65,7 @@ open ios/Slackboard.xcworkspace       # choose your team under Signing & Capabil
 ```
 
 Installing on a device needs an Apple Developer account and a signing identity. The iOS build has been run on a device.
-Prebuilt Android and iOS builds are published on the GitHub releases page.
+Nightly Android and iOS builds are linked from the project site.
 
 ## Background sync
 
@@ -78,13 +78,25 @@ connection. iOS background tasks are opportunistic and are untested here. Foregr
 | Workflow | Runs on | Output |
 |---|---|---|
 | `ci.yml` | pushes to `main`, pull requests | typecheck and unit tests |
-| `android.yml` | manual, `v*` tags | release APK and AAB (or a debug APK) as workflow artifacts |
-| `ios.yml` | manual, `v*` tags | unsigned `.xcarchive` |
-| `pages.yml` | pushes to `main` that touch `site/` | the landing page, on GitHub Pages |
+| `android.yml` | nightly at 07:00 UTC, `v*` tags, manual | a release APK (or a debug APK) as a workflow artifact |
+| `ios.yml` | nightly at 07:30 UTC, `v*` tags, manual | an unsigned `.ipa` as a workflow artifact |
+| `pages.yml` | pushes to `main` that touch `site/`, and after each successful iOS build | the landing page on GitHub Pages, with the latest iOS nightly as `Slackboard.ipa` and the AltStore source `altstore.json` |
 
 For a signed Android release, add repository secrets `ANDROID_KEYSTORE_BASE64` (`base64 -w0 release.jks`),
 `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. Without them the workflow still builds, signed with
-the debug key.
+the debug key. The iOS build is an unsigned `.ipa`, so it needs no secrets. Install it with AltStore or Sideloadly, which sign it with
+your own Apple ID (a free account works, but the app must be refreshed every 7 days), or sign it with your own Apple team. Every build gets a higher version code (Android) or build number (iOS) from the run number.
+
+### Nightly downloads
+
+The site links to the latest nightly artifacts through [nightly.link](https://nightly.link), which serves the newest successful run
+without a GitHub login. Install its [GitHub App](https://github.com/apps/nightly-link) on the repository so downloads do not share
+the global rate limit. Artifacts are kept for 90 days, so a quiet repository would eventually have nothing to download; the nightly
+schedule prevents that. Scheduled runs happen only on the default branch, and GitHub pauses them after 60 days without activity.
+
+AltStore needs a plain `.ipa` URL, which an artifact zip is not, so `pages.yml` also serves the newest iOS build from the site at
+`/Slackboard.ipa`, with the source at `/altstore.json`. Add `https://n3rdl0rd.github.io/slackboard/altstore.json` in AltStore. A new
+build is offered as an update when its build number changes.
 
 ## EAS (optional)
 

@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/BarlowCondensed_700Bold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -315,6 +315,7 @@
   <a class="brand" href="#top" aria-label="slackboard, home"><svg class="wm" aria-hidden="true"><use href="#wordmark"/></svg></a>
   <nav aria-label="Main">
     <a href="#boards">Boards</a>
+    <a href="#download">Download</a>
     <a href="#features">Features</a>
     <a href="#yours">Your data</a>
     <a class="btn btn-small" href="https://github.com/N3rdL0rd/slackboard">GitHub</a>
@@ -333,10 +334,10 @@
       </ul>
       <p class="lede">Slackboard is a free, open-source app for climbing boards. Log your sends once and see your stats across every board you climb on.</p>
       <div class="cta">
-        <a class="btn btn-primary" href="https://github.com/N3rdL0rd/slackboard/releases">Download the app</a>
+        <a class="btn btn-primary" href="#download">Download the app</a>
         <a class="btn btn-ghost" href="https://github.com/N3rdL0rd/slackboard">Browse the source</a>
       </div>
-      <p class="platform">Android and iOS builds are on the releases page.</p>
+      <p class="platform">Nightly builds for Android, and for iOS through AltStore.</p>
       <ul class="facts" aria-label="At a glance">
         <li>Works offline</li>
         <li>Free and MIT licensed</li>
@@ -430,6 +431,24 @@
       <li><h3>Quick board switching</h3><p>Boards in the same place are grouped, and each one keeps its own angle and filters.</p></li>
     </ul>
     <p class="cross-foot">Each brand keeps its own account, and nothing is shared between services: the combining happens on your phone. MoonBoard works without an account.</p>
+  </section>
+
+  <section class="band" id="download" aria-labelledby="download-title">
+    <h2 id="download-title">Get the app</h2>
+    <div class="grid two">
+      <article class="card a-green">
+        <h3>Android</h3>
+        <p>Download the latest nightly build. It comes as a zip: unzip it and open the .apk to install. Your phone may ask you to allow installs from your browser.</p>
+        <p class="card-actions"><a class="btn btn-primary" href="https://nightly.link/N3rdL0rd/slackboard/workflows/android/main/slackboard-android.zip">Download for Android</a></p>
+      </article>
+      <article class="card a-blue">
+        <h3>iPhone</h3>
+        <p>Add the Slackboard source in <a class="link" href="https://altstore.io/">AltStore</a>, then install Slackboard from it. AltStore signs the app with your own Apple ID.</p>
+        <p class="card-actions"><a class="btn btn-primary" href="altstore://source?url=https%3A%2F%2Fn3rdl0rd.github.io%2Fslackboard%2Faltstore.json">Add to AltStore</a><a class="btn btn-ghost" href="https://nightly.link/N3rdL0rd/slackboard/workflows/ios/main/slackboard-ios.zip">Download the .ipa</a></p>
+        <p class="small">Source address: <code>https://n3rdl0rd.github.io/slackboard/altstore.json</code></p>
+      </article>
+    </div>
+    <p class="small">Nightly builds are made every night from the latest code and may be unstable. You can also <a class="link" href="https://github.com/N3rdL0rd/slackboard/blob/main/docs/BUILDING.md">build it yourself</a>.</p>
   </section>
 
   <section class="band" id="features" aria-labelledby="features-title">

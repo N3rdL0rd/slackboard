@@ -1,5 +1,8 @@
 name: Android build
+# Every night, on tags, and by hand. The site links to the latest nightly through nightly.link.
 on:
+  schedule:
+    - cron: "0 7 * * *"
   workflow_dispatch:
     inputs:
       variant:
@@ -24,6 +27,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: npm ci
       - run: npm run typecheck && npm test
+      # Each build gets a higher version code than the last, so a newer build installs over an older one.
+      - run: node -e "const f='app.json',a=JSON.parse(require('fs').readFileSync(f));a.expo.android.versionCode=+process.env.N;require('fs').writeFileSync(f,JSON.stringify(a,null,2)+'\n')"
+        env: { N: "${{ github.run_number }}" }
       # The native project is generated, never committed: app.json and plugins/ are its source.
       - run: npx expo prebuild --platform android --no-install
       - name: Restore the signing key, if one is configured
@@ -43,10 +49,9 @@ jobs:
           SLACKBOARD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           SLACKBOARD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ "${{ inputs.variant || 'release' }}" = debug ]; then ./gradlew assembleDebug; else ./gradlew assembleRelease bundleRelease; fi
+          if [ "${{ inputs.variant || 'release' }}" = debug ]; then ./gradlew assembleDebug; else ./gradlew assembleRelease; fi
       - uses: actions/upload-artifact@v4
         with:
           name: slackboard-android
-          path: |
-            android/app/build/outputs/apk/**/*.apk
-            android/app/build/outputs/bundle/**/*.aab
+          retention-days: 90
+          path: android/app/build/outputs/apk/**/*.apk
