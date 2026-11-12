@@ -14,7 +14,7 @@ import { c, r } from "../theme";
 import { GradeStrip } from "./GradeStrip";
 import { haptic } from "./haptics";
 import { Icon } from "./Icon";
-import { Button, Chip, LinkButton, Segmented, Sheet, Tap } from "./parts";
+import { Button, Chip, Segmented, Sheet, Tap } from "./parts";
 import { Text } from "./Text";
 
 const RESULTS: { value: OutsideResult; label: string }[] = [{ value: "flash", label: "Flash" }, { value: "send", label: "Sent" }, { value: "attempt", label: "Tried" }];
@@ -74,8 +74,15 @@ export function QuickGymLog({ visible, onClose }: { visible: boolean; onClose: (
       footer={
         <View style={{ gap: 8 }}>
           {error || (problem && saved === "") ? <Text v="caption" style={{ textAlign: "center", color: error ? c.danger : c.text2 }} aria-live="polite">{error || problem}</Text> : null}
-          <Button label={busy ? "Saving" : "Save"} disabled={busy || !!problem} onPress={() => void save(draft)} />
-          <LinkButton label="More options" icon="chevR" onPress={more} />
+          {/* Save is the main action and takes the width; More options is a small link beside it, on the same row. */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Button label={busy ? "Saving" : "Save"} disabled={busy || !!problem} onPress={() => void save(draft)} style={{ flex: 1 }} />
+            <Tap accessibilityRole="button" accessibilityLabel="More options" onPress={more}
+              style={{ minHeight: 48, paddingLeft: 10, paddingRight: 6, flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <Text v="secondary" style={{ fontSize: 14 }}>More</Text>
+              <Icon name="chevR" size={16} color={c.muted} />
+            </Tap>
+          </View>
         </View>
       }>
       {saved ? (

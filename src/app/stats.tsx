@@ -69,7 +69,7 @@ export default function Stats() {
 
             {offCount > 0 ? (
               <View style={{ marginTop: 12, paddingHorizontal: 14, borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.line }}>
-                <SwitchRow label="Include gym and outdoor climbs" help="Counted with your board sends. Outdoor counts +1 V and gym \u22120.5 V." value={includeOff} onChange={(v) => patchSettings({ statsOffBoard: v })} />
+                <SwitchRow label="Include gym and outdoor climbs" help={"Counted with your board sends. Outdoor counts +1 V and gym \u22120.5 V."} value={includeOff} onChange={(v) => patchSettings({ statsOffBoard: v })} />
               </View>
             ) : null}
 

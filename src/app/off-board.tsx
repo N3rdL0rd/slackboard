@@ -73,7 +73,7 @@ export default function OffBoard() {
               );
             })}
             <Text v="secondary">{adviceText(advice, vLabel)}</Text>
-            <Text v="caption">Your three hardest sends per angle, boards and here together. Outdoor counts +1 V, gym \u22120.5 V.</Text>
+            <Text v="caption">Your three hardest sends per angle, boards and here together. Outdoor counts +1 V, gym &minus;0.5 V.</Text>
           </>
         ) : (
           <Text v="secondary">Three sends at each of two wall angles shows where you are strongest.</Text>
