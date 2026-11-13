@@ -65,7 +65,7 @@ export default function RecentlyLit() {
       </View>
       {!board?.serial ? (
         <View style={{ padding: 24, gap: 12 }}>
-          <Text v="secondary">Recently lit shows what has been lit on your board's controller. Add the controller's serial number to this board to turn it on.</Text>
+          <Text v="secondary">Add the board's serial number to turn this on.</Text>
           {board && <Button label="Edit board" onPress={() => router.replace({ pathname: "/edit-board", params: { uuid: board.id } })} />}
         </View>
       ) : (

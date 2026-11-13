@@ -41,7 +41,7 @@ export default function Accounts() {
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 24 }}>
         <SyncBanner />
-        <Text v="secondary">Each board brand has its own account. Boards use the right one automatically, so there is nothing to switch. Slackboard sends data only to the brand it belongs to.</Text>
+        <Text v="secondary">One account per brand. Used automatically.</Text>
         {providers.map((p) => {
           const acc = accounts[p.id];
           const st = by[p.id] ?? IDLE_SYNC;

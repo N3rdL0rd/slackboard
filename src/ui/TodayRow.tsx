@@ -63,7 +63,7 @@ export function TodayRow() {
           <View style={{ gap: 10 }}>
             <Text v="bodyStrong">{info.nudge.text}</Text>
             {info.nudge.why.map((w) => <Text key={w} v="secondary">{w}</Text>)}
-            <Text v="caption">This is general advice from your log, not a rule. Climb how you like. You can turn rest advice off in Settings.</Text>
+            <Text v="caption">General advice, not a rule.</Text>
             <View style={{ gap: 8, marginTop: 6 }}>
               <Button variant="secondary" label="How do you feel today?" onPress={() => setSheet("body")} />
               <Button variant="secondary" label="Not today" onPress={() => { hide(); setSheet(null); }} />

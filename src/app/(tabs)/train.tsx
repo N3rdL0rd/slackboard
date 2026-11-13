@@ -48,7 +48,7 @@ export default function Train() {
               <Icon name="muscle" size={28} color={c.text} />
               <Text style={{ fontFamily: font.wordmark, fontSize: 30, lineHeight: 38, color: c.text }}>Get stronger</Text>
             </View>
-            <Text v="secondary">Hangboard, pulling, core and mobility. Have a plan built around the climbing you already do, or just log what you do. Technique is up to you.</Text>
+            <Text v="secondary">Hangboard, pulling, core, mobility.</Text>
             <Button label="Build me a plan" onPress={() => router.push("/plan-setup")} />
             <Button variant="secondary" label="Just log training" onPress={() => router.push("/session")} />
             <Button variant="secondary" label="Browse exercises" onPress={() => router.push("/exercises")} />

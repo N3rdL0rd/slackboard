@@ -38,7 +38,7 @@ export default function Settings() {
         <Segmented<GradeDisplay> options={[{ value: "both", label: "V and Font" }, { value: "v", label: "V only" }, { value: "font", label: "Font only" }]} value={s.gradeDisplay} onChange={(gradeDisplay) => patch({ gradeDisplay })} />
 
         <SectionLabel>Working grade</SectionLabel>
-        <SwitchRow label="Count roped climbs" help="Roped sends count toward your boulder working grade and stats, using the pair you set below. Grades don't convert reliably, so this is a rough guide, and it is off until you turn it on." value={s.ropedWorking} onChange={(ropedWorking) => patch({ ropedWorking })} />
+        <SwitchRow label="Count roped climbs" help="Counts roped sends toward your boulder grade, using the pair below." value={s.ropedWorking} onChange={(ropedWorking) => patch({ ropedWorking })} />
         {s.ropedWorking ? (
           <View style={{ gap: 4, marginTop: 8 }}>
             <Text v="secondary">I count these as about equal:</Text>
@@ -73,8 +73,8 @@ export default function Settings() {
         <SwitchRow label="Train tab" help="A tab for training. Hide it if you only climb; the interval timer stays under You." value={s.trainTab} onChange={(trainTab) => patch({ trainTab })} />
 
         <SectionLabel>Motivation and rest</SectionLabel>
-        <SwitchRow label="Motivation lines" help="A line on the Climb tab when a milestone is close, such as '3 more V4s until you have 10'. Worked out from your own log only." value={s.motivation} onChange={(motivation) => patch({ motivation })} />
-        <SwitchRow label="Rest advice" help="A line on the Climb tab when your log says you have been going hard. It is advice, never a rule." value={s.nudges !== "off"} onChange={(on) => patch({ nudges: on ? "standard" : "off" })} />
+        <SwitchRow label="Motivation lines" help="A line on the Climb tab when a milestone is close." value={s.motivation} onChange={(motivation) => patch({ motivation })} />
+        <SwitchRow label="Rest advice" help="A line on the Climb tab after hard days." value={s.nudges !== "off"} onChange={(on) => patch({ nudges: on ? "standard" : "off" })} />
         {s.nudges !== "off" ? (
           <>
             <Segmented<NudgeLevel> options={[{ value: "relaxed", label: "Relaxed" }, { value: "standard", label: "Standard" }, { value: "keen", label: "Keen" }]} value={s.nudges} onChange={(nudges) => patch({ nudges })} />

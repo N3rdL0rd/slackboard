@@ -81,7 +81,6 @@ export default function PlanSetup() {
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
         {step === 0 ? (
           <>
-            <Text v="secondary">A block is 6 to 12 weeks of strength work around the climbing you already do. Technique is up to you; the plan only builds strength.</Text>
             <Segmented<"general" | "date"> options={[{ value: "general", label: "Get stronger" }, { value: "date", label: "A dated goal" }]} value={weeks ? "date" : "general"} onChange={(v) => setWeeks(v === "date" ? 8 : null)} />
             {weeks ? (
               <View style={{ gap: 8 }}>
@@ -109,14 +108,14 @@ export default function PlanSetup() {
                 <Chip label="Skip it" onPress={() => set({ bodyKg: null })} />
               </>
             )}
-            <Text v="caption">Used to work out hang loads from a test. Without it the plan uses the added weight alone, which is less exact.</Text>
+            <Text v="caption">Used to set hang loads.</Text>
             <SectionLabel>Finger training so far</SectionLabel>
             <Segmented<Profile["fingerHistory"]> options={[{ value: "new", label: "New to it" }, { value: "some", label: "Some" }, { value: "regular", label: "Regular" }]} value={p.fingerHistory} onChange={(fingerHistory) => set({ fingerHistory })} />
             <Text v="caption">New, or coming back from a break, starts gently: bigger edges, two sets, no added weight.</Text>
             <SectionLabel>Anything to be careful about?</SectionLabel>
             <TextInput value={p.injury} onChangeText={(injury) => set({ injury: injury.slice(0, 500) })} placeholder="An injury or sore spot (optional)" placeholderTextColor={c.placeholder} accessibilityLabel="Injury or sore spot"
               style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: r.input, borderWidth: 1, borderColor: c.line, backgroundColor: c.card, color: c.text, fontSize: 16 }} />
-            <Text v="caption">Anything written here starts the plan gently. Stop at once if something hurts, and see a physio about pain that stays.</Text>
+            <Text v="caption">Starts the plan gently. Stop if it hurts.</Text>
           </>
         ) : null}
 
@@ -147,13 +146,13 @@ export default function PlanSetup() {
             </View>
             <SectionLabel>That's not right? Say what you need</SectionLabel>
             <Segmented<"logs" | Emphasis> options={[{ value: "logs", label: "Go by my log" }, { value: "strength", label: "Strength" }, { value: "endurance", label: "Endurance" }, { value: "balanced", label: "Balance" }]} value={p.emphasis ?? "logs"} onChange={(v) => set({ emphasis: v === "logs" ? null : v })} />
-            <Text v="caption">What you say outranks the log. This only chooses what the block emphasises; it never changes a grade anywhere.</Text>
+            <Text v="caption">Overrides what the log suggests.</Text>
           </>
         ) : null}
 
         {step === 4 ? (
           <>
-            <Text v="secondary">Tests are optional. They let the plan use real loads instead of safe defaults, and they show your progress at the end of a block.</Text>
+            <Text v="secondary">Optional. Gives real loads and shows progress.</Text>
             <View style={{ borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.line, overflow: "hidden" }}>
               {TESTS.map((t, i) => (
                 <View key={t.kind} style={{ padding: 14, gap: 2, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.divider }}>

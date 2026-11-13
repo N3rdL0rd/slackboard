@@ -46,10 +46,10 @@ export function ClimbSummary({ total, loading, pending, filterCount, onFilters, 
       )}
       {filterCount > 0 ? (
         <View style={{ flexDirection: "row", alignItems: "center", height: 36, borderRadius: 999, borderWidth: 1, borderColor: c.line, backgroundColor: c.card }}>
-          <Tap accessibilityRole="button" accessibilityLabel={`${filterCount} filters on. Change`} onPress={onFilters} style={{ height: 36, justifyContent: "center", paddingLeft: 12, paddingRight: 6 }}>
+          <Tap accessibilityRole="button" accessibilityLabel={`${filterCount} filters on. Change`} onPress={onFilters} hitSlop={{ top: 6, bottom: 6 }} style={{ height: 36, justifyContent: "center", paddingLeft: 12, paddingRight: 6, minWidth: 44 }}>
             <Text v="bodyStrong" style={{ fontSize: 14 }}>{filterCount} {filterCount === 1 ? "filter" : "filters"}</Text>
           </Tap>
-          <Tap accessibilityRole="button" accessibilityLabel="Reset filters" onPress={onReset} style={{ height: 36, width: 32, alignItems: "center", justifyContent: "center", marginRight: 2 }}>
+          <Tap accessibilityRole="button" accessibilityLabel="Reset filters" onPress={onReset} hitSlop={{ top: 6, bottom: 6 }} style={{ height: 36, width: 44, alignItems: "center", justifyContent: "center" }}>
             <Icon name="close" size={14} color={c.text} />
           </Tap>
         </View>

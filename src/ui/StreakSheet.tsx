@@ -54,7 +54,7 @@ export function StreakSheet({ visible, onClose, streak, days, today }: { visible
           <View key={m} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Dot mark={m} size={12} /><Text v="caption">{m === "climbed" ? "Climbed" : m === "rest" ? "Rest day, keeps it going" : "Nothing"}</Text></View>
         ))}
       </View>
-      <Text v="caption" style={{ marginTop: 14 }}>How streaks work: any logged climb or training counts as a climbing day, and one rest day between climbing days keeps the streak going. Two in a row ends it, and your longest is always kept.</Text>
+      <Text v="caption" style={{ marginTop: 14 }}>How streaks work: any logged climb or training counts as a climbing day, and one rest day between climbing days keeps the streak going. Two in a row ends it.</Text>
     </Sheet>
   );
 }

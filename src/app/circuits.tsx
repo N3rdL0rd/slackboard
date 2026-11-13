@@ -35,7 +35,7 @@ export default function Circuits() {
         ListEmptyComponent={
           <View style={{ alignItems: "center", padding: 32, gap: 12 }}>
             <Text style={{ fontFamily: "CaveatBrush_400Regular", fontSize: 30, lineHeight: 40, color: c.text }}>No circuits yet</Text>
-            <Text v="secondary" style={{ textAlign: "center" }}>A circuit is a list of climbs, like a warm-up or a project list. Make one, then add climbs from any climb's Circuits button.</Text>
+            <Text v="secondary" style={{ textAlign: "center" }}>Lists of climbs, like a warm-up.</Text>
             <Button label="New circuit" onPress={() => setCreating(true)} />
           </View>
         }

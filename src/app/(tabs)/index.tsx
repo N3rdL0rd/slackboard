@@ -85,7 +85,7 @@ export default function ClimbTab() {
     return (
       <View style={{ flex: 1, backgroundColor: c.ground, paddingTop: insets.top, padding: 24, justifyContent: "center", gap: 14 }}>
         <Text style={{ fontFamily: "CaveatBrush_400Regular", fontSize: 36, lineHeight: 46, color: c.text }}>{settingUp.length ? `${getProvider(settingUp[0]).name} is still setting up` : boardsLoaded ? "Add your board" : "Loading"}</Text>
-        {settingUp.length ? <Text v="secondary">Your board will appear when the first download finishes. Downloaded pages are saved if you leave or close Slackboard.</Text> : boardsLoaded && (
+        {settingUp.length ? <Text v="secondary">Your board appears when the download finishes.</Text> : boardsLoaded && (
           <>
             <Text v="secondary">Tell Slackboard which board you climb on to see its climbs, grades and holes.</Text>
             <Button label="Add a board" onPress={() => router.push("/add-board")} />

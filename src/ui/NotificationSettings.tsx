@@ -58,7 +58,7 @@ export function NotificationSettings() {
   return (
     <>
       <SectionLabel>Notifications</SectionLabel>
-      <Text v="caption" style={{ marginBottom: 6 }}>Local only: scheduled on this phone, with no server. All are off until you turn them on. At most one a day, never for a missed day or a broken streak. Your phone decides when they arrive, so one can be late when it is saving battery.</Text>
+      <Text v="caption" style={{ marginBottom: 6 }}>Off until you turn them on. At most one a day.</Text>
       {TYPES.map((t) => <SwitchRow key={t.key} label={t.label} help={t.help} value={n[t.key]} onChange={(on) => void toggle(t.key, on)} />)}
       {note ? <Text v="caption" style={{ color: c.danger }}>{note}</Text> : null}
       {n.plan ? (

@@ -475,7 +475,7 @@ const stepLabel = (s: number) => (s < 60 ? `${s} sec` : `${s / 60} min`);
 function TimerSheet({ visible, onClose, running, onStart, onStop }: { visible: boolean; onClose: () => void; running: boolean; onStart: (sec: number) => void; onStop: () => void }) {
   return (
     <Sheet visible={visible} onClose={onClose} title="Timer">
-      <Text v="secondary" style={{ marginBottom: 12 }}>When time is up, the climb flips to the mirrored side (if your board has one), then moves to the next climb in the list.</Text>
+      <Text v="secondary" style={{ marginBottom: 12 }}>Then mirrors, or moves to the next climb.</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {TIMER_STEPS.map((sec) => <Chip key={sec} label={stepLabel(sec)} onPress={() => onStart(sec)} />)}
       </View>

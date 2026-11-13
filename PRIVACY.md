@@ -6,7 +6,7 @@ Slackboard has no server of its own. There is no Slackboard account, and no anal
 
 ## What stays on your phone
 
-Your climbs, logbook, circuits, lit history, settings and backups live in a database on your phone. Sign-in tokens are kept in the
+Your climbs, logbook, training, plans, goals, circuits, lit history, settings and backups live in a database on your phone. Sign-in tokens are kept in the
 phone's secure keystore. Signing out removes that brand's data from the phone, and uninstalling the app removes everything.
 
 ## What is sent, and to whom

@@ -147,7 +147,6 @@ export default function Export() {
         <Text v="screenTitle" style={{ flex: 1 }}>Export and backup</Text>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 100 }}>
-        <Text v="secondary">Make a file of your own data for a spreadsheet or a backup folder, or restore from one. Nothing is uploaded anywhere by this screen.</Text>
         <SectionLabel>Format</SectionLabel>
         <Segmented<ExportFormat> options={[{ value: "json", label: "Full backup" }, { value: "csv", label: "CSV logbook" }]} value={format} onChange={setFormat} />
         <Text v="caption" style={{ marginTop: 8 }}>
