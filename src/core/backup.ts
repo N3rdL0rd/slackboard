@@ -17,14 +17,19 @@ import type { SaveSendInput } from "./api";
 import { loadLogicalCircuits, saveLogicalCircuits, type LogicalCircuit } from "./logicalCircuits";
 import { cleanLink, MAX_ATTEMPTS, STYLE_TAGS, WALL_STYLES, type OutsideGradeSystem, type OutsideLog, type OutsideResult, type OutsideSetting, type WallStyleId } from "./outside";
 import { saveOutside } from "./outsideLocal";
+import { MAX_LENGTH_M, MAX_PITCHES, normaliseTries, RESULTS as ROPED_RESULTS, STYLES as ROPED_STYLES, type RopedLog, type RopedSetting } from "./roped";
+import { saveRoped } from "./ropedLocal";
+import { ropedValue, type RopedSystem } from "../data/ropedGrades";
 import type { LogEntry } from "./types";
 
 /** The newest file format this version of the app writes and reads. */
-export const BACKUP_VERSION = 3;
+export const BACKUP_VERSION = 4;
 
 export interface ParsedBackup {
   exportedAt: string;
   offBoard: OutsideLog[];
+  /** Roped climbs. */
+  roped: RopedLog[];
   /** Sends and attempts on boards that have no service. */
   localLogs: LogEntry[];
   /** Circuits that were never published to a service. */
@@ -43,6 +48,7 @@ export type ParseResult = { ok: true; backup: ParsedBackup } | { ok: false; erro
 
 export interface RestoreSummary {
   offBoard: number;
+  roped: number;
   localLogs: number;
   circuits: number;
   litHistory: number;
@@ -70,6 +76,8 @@ const stamp = (v: unknown): string | null => { const s = str(v, 40); return s &&
 const SETTINGS: OutsideSetting[] = ["gym", "outdoor"];
 const RESULTS: OutsideResult[] = ["flash", "send", "attempt"];
 const SYSTEMS: OutsideGradeSystem[] = ["v", "font"];
+const ROPED_SETTINGS: RopedSetting[] = ["indoor", "outdoor"];
+const ROPED_SYSTEMS: RopedSystem[] = ["yds", "french"];
 
 function outsideOf(v: unknown): OutsideLog | null {
   if (!isObj(v)) return null;
@@ -86,6 +94,29 @@ function outsideOf(v: unknown): OutsideLog | null {
   if (system === undefined || label === undefined || grade === undefined || (grade !== null && (grade < 0 || grade > 40))) return null;
   const tags = Array.isArray(v.tags) ? v.tags.filter((t): t is string => typeof t === "string" && (STYLE_TAGS as readonly string[]).includes(t)) : [];
   return { id, setting, name, venue, link: cleaned, wall, gradeSystem: system, gradeLabel: label, grade, result, attempts: Math.max(1, Math.min(MAX_ATTEMPTS, Math.round(attempts))), tags, note, climbedAt };
+}
+
+/** A roped climb from a file. The grade is read from its label, so a number that disagrees with the label can't put a climb on the wrong step. */
+function ropedOf(v: unknown): RopedLog | null {
+  if (!isObj(v)) return null;
+  const id = str(v.id, 100), name = str(v.name, 200), venue = str(v.venue, 200), link = str(v.link, 2000), note = str(v.note), climbedAt = stamp(v.climbedAt);
+  const attempts = num(v.attempts), pitches = num(v.pitches);
+  const style = ROPED_STYLES.find((s) => s === v.style), setting = ROPED_SETTINGS.find((s) => s === v.setting), result = ROPED_RESULTS.find((s) => s === v.result);
+  const system = ROPED_SYSTEMS.find((s) => s === v.gradeSystem);
+  const label = str(v.gradeLabel, 20);
+  if (!id || name == null || venue == null || link == null || note == null || !climbedAt || attempts == null || pitches == null || !style || !setting || !result || !system || !label) return null;
+  const grade = ropedValue(system, label);
+  const cleaned = cleanLink(link);
+  if (grade === null || cleaned === null) return null;
+  // No length is fine (null, or left out); a length that is there but isn't a usable number is damage, not "none".
+  const given = v.lengthM !== null && v.lengthM !== undefined;
+  const lengthM = given ? num(v.lengthM) : null;
+  if (given && (lengthM === null || lengthM <= 0 || lengthM > MAX_LENGTH_M)) return null;
+  const tries = normaliseTries(style, result, attempts);
+  return {
+    id, style, setting, name, venue, link: cleaned, gradeSystem: system, gradeLabel: label, grade, result: tries.result, attempts: tries.attempts, lengthM,
+    pitches: Math.max(1, Math.min(MAX_PITCHES, Math.round(pitches))), note, climbedAt,
+  };
 }
 
 function logOf(v: unknown): LogEntry | null {
@@ -137,6 +168,7 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
     return out;
   };
   const offBoard = each(raw.offBoard, outsideOf);
+  const roped = each(raw.roped, ropedOf);
   const allLogs = each(raw.logbook, logOf);
   // Entries on services come back by syncing, so they are neither restored nor counted as damaged.
   const localLogs = allLogs.filter((e) => isLocalProvider(e.provider));
@@ -145,7 +177,7 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
   const moon = parseMoon(raw.moon, () => { skipped++; });
   const spaces = parseSpaces(raw.spaces, () => { skipped++; });
   const preferences = parsePreferences(raw.preferences);
-  return { ok: true, backup: { exportedAt, offBoard, localLogs, circuits, litHistory, moon, spaces, preferences, skipped } };
+  return { ok: true, backup: { exportedAt, offBoard, roped, localLogs, circuits, litHistory, moon, spaces, preferences, skipped } };
 }
 
 /**
@@ -160,6 +192,7 @@ function sendInputOf(e: LogEntry): SaveSendInput {
 
 export async function restoreBackup(t: RestoreTargets, b: ParsedBackup): Promise<RestoreSummary> {
   for (const l of b.offBoard) await saveOutside(t.local, l);
+  for (const l of b.roped) await saveRoped(t.local, l);
   for (const e of b.litHistory) await saveLit(t.local, e);
   // Boards first, so the problems, logs and tags that belong to them have somewhere to go.
   if (hasMoon(b.moon)) await restoreMoon(await t.dbFor("moonboard"), b.moon);
@@ -170,6 +203,7 @@ export async function restoreBackup(t: RestoreTargets, b: ParsedBackup): Promise
   const added = b.circuits.filter((c) => !known.has(c.uuid));
   if (added.length) await saveLogicalCircuits(t.local, [...have, ...added], have);
   return {
+    roped: b.roped.length,
     offBoard: b.offBoard.length, localLogs: b.localLogs.length, circuits: added.length, litHistory: b.litHistory.length, moonBoards: b.moon.boards.length,
     moonProblems: b.moon.problems.length, moonTags: b.moon.tags.length, places: b.spaces.places.length, preferences: hasPreferences(b.preferences), skipped: b.skipped,
   };
@@ -181,6 +215,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function describeBackup(b: ParsedBackup): string {
   const parts = [
     b.offBoard.length ? plural(b.offBoard.length, "off-board climb", "off-board climbs") : "",
+    b.roped.length ? plural(b.roped.length, "roped climb", "roped climbs") : "",
     b.localLogs.length ? plural(b.localLogs.length, "MoonBoard log entry", "MoonBoard log entries") : "",
     b.moon.boards.length ? plural(b.moon.boards.length, "MoonBoard", "MoonBoards") : "",
     b.moon.problems.length ? plural(b.moon.problems.length, "problem you set", "problems you set") : "",
@@ -197,6 +232,7 @@ export function describeBackup(b: ParsedBackup): string {
 export function describeRestored(s: RestoreSummary): string {
   const parts = [
     s.offBoard ? plural(s.offBoard, "off-board climb", "off-board climbs") : "",
+    s.roped ? plural(s.roped, "roped climb", "roped climbs") : "",
     s.localLogs ? plural(s.localLogs, "MoonBoard log entry", "MoonBoard log entries") : "",
     s.moonBoards ? plural(s.moonBoards, "MoonBoard", "MoonBoards") : "",
     s.moonProblems ? plural(s.moonProblems, "problem you set", "problems you set") : "",

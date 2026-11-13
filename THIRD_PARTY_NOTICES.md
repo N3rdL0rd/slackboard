@@ -19,6 +19,13 @@ The license text is at <https://openfontlicense.org/>. The fonts reach the app t
 The Train tab's `muscle` icon is Lucide's `biceps-flexed`: ISC License, Copyright (c) 2026 Lucide Icons and Contributors, taken from
 `lucide-static` 1.72.0. The license text is at <https://github.com/lucide-icons/lucide/blob/main/LICENSE>.
 
+## Grade scales
+
+Roped grades are placed on the IRCRA scale proposed by the International Rock Climbing Research Association (Draper et al., 2015,
+"Comparative grading scales, statistical analyses, climber descriptors and ability grouping"). Slackboard uses the scale's idea, a
+single number for each grade step, and pairs YDS and French grades by that number. The pairs were checked against the ones the
+board makers' apps show.
+
 ## Map
 
 The gym map is drawn with [Leaflet](https://leafletjs.com/) (BSD 2-Clause), loaded when the map opens, on map tiles from

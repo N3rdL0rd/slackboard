@@ -16,6 +16,7 @@ import { EMPTY_SPACES, exportSpaces } from "./spacesBackup";
 import { saveBoardPlace, saveLogSpace, saveSpaceLineage, saveSpaceName } from "./spaces";
 import { openNodeDb } from "./nodeDb";
 import type { OutsideLog } from "./outside";
+import type { RopedLog } from "./roped";
 import { loadOutside, saveOutside } from "./outsideLocal";
 import type { LitEntry } from "./litHistory";
 import { loadLit, saveLit } from "./litLocal";
@@ -37,8 +38,8 @@ const circuit = (over: Partial<LogicalCircuit> = {}): LogicalCircuit => ({
 });
 
 const lit = (over: Partial<LitEntry> = {}): LitEntry => ({ id: "t1", provider: "tension", climbUuid: "C1", climbName: "Pizza Box", boardId: "b1", boardName: "Home", angle: 40, litAt: "2026-11-02 18:00:00", ...over });
-const file = (o: { offBoard?: OutsideLog[]; logbook?: LogEntry[]; circuits?: LogicalCircuit[]; litHistory?: LitEntry[]; moon?: typeof EMPTY_MOON; spaces?: typeof EMPTY_SPACES; preferences?: typeof EMPTY_PREFS }) =>
-  exportJson({ now: new Date("2026-11-02T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: o.logbook ?? [], circuits: o.circuits ?? [], offBoard: o.offBoard ?? [], litHistory: o.litHistory ?? [], moon: o.moon ?? EMPTY_MOON, spaces: o.spaces ?? EMPTY_SPACES, preferences: o.preferences ?? EMPTY_PREFS, liked: [], blocked: [], boards: [], gradeOf });
+const file = (o: { offBoard?: OutsideLog[]; roped?: RopedLog[]; logbook?: LogEntry[]; circuits?: LogicalCircuit[]; litHistory?: LitEntry[]; moon?: typeof EMPTY_MOON; spaces?: typeof EMPTY_SPACES; preferences?: typeof EMPTY_PREFS }) =>
+  exportJson({ now: new Date("2026-11-02T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: o.logbook ?? [], circuits: o.circuits ?? [], offBoard: o.offBoard ?? [], roped: o.roped ?? [], litHistory: o.litHistory ?? [], moon: o.moon ?? EMPTY_MOON, spaces: o.spaces ?? EMPTY_SPACES, preferences: o.preferences ?? EMPTY_PREFS, liked: [], blocked: [], boards: [], gradeOf });
 
 /** Restore targets where every provider shares one database, which is all these tests need. */
 const targets = (db: Db): RestoreTargets => ({ dbFor: async () => db, local: db });
@@ -312,10 +313,11 @@ describe("saying what a backup holds", () => {
   });
 
   it("reports a restore, with a count of skipped records", () => {
-    const base = { offBoard: 2, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 1, moonProblems: 3, moonTags: 0, places: 0, preferences: false, skipped: 0 };
+    const base = { offBoard: 2, roped: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 1, moonProblems: 3, moonTags: 0, places: 0, preferences: false, skipped: 0 };
     expect(describeRestored(base)).toBe("Restored 2 off-board climbs, 1 MoonBoard, 3 problems you set.");
     expect(describeRestored({ ...base, skipped: 2 })).toContain("2 records were damaged and skipped.");
-    expect(describeRestored({ offBoard: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Nothing needed restoring.");
+    expect(describeRestored({ ...base, offBoard: 0, moonBoards: 0, moonProblems: 0, roped: 3 })).toBe("Restored 3 roped climbs.");
+    expect(describeRestored({ offBoard: 0, roped: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Nothing needed restoring.");
   });
 });
 

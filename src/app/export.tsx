@@ -20,6 +20,7 @@ import { useLit, useLitHistory } from "../state/litHistory";
 import { MOON, startLocalAccount } from "../state/moonboard";
 import { refreshSpaces } from "../state/spaces";
 import { useOutside, useOutsideLogs } from "../state/outside";
+import { useRoped, useRopedLogs } from "../state/roped";
 import { useStore } from "../state/store";
 import { Button, IconButton, Segmented, SectionLabel } from "../ui/parts";
 import { Text } from "../ui/Text";
@@ -44,6 +45,7 @@ export default function Export() {
   const blocked = useData((d) => d.blocked);
   const boards = useData((d) => d.boards);
   const offBoard = useOutsideLogs();
+  const roped = useRopedLogs();
   const litHistory = useLitHistory();
   const username = useUsername();
   const userId = useUserId();
@@ -55,6 +57,7 @@ export default function Export() {
   const [restored, setRestored] = useState("");
   const rows = useMemo(() => inRange(logbook, range, new Date(), at), [logbook, range]);
   const offRows = useMemo(() => inRange(offBoard, range, new Date(), at), [offBoard, range]);
+  const ropedRows = useMemo(() => inRange(roped, range, new Date(), at), [roped, range]);
   const pending = rows.filter((x) => x.pending).length;
 
   const share = async () => {
@@ -63,13 +66,13 @@ export default function Export() {
       const now = new Date();
       // A backup is always everything; the range only narrows the spreadsheet.
       let body: string;
-      if (format === "csv") body = logbookCsv(rows, gradeOf, offRows, offGradeOf);
+      if (format === "csv") body = logbookCsv(rows, gradeOf, offRows, offGradeOf, ropedRows);
       else {
         const state = useStore.getState();
         const moon = state.accounts[MOON] ? await exportMoon(await getDb(MOON)) : EMPTY_MOON;
         const spaces = await exportSpaces(await getLocalDb());
         body = exportJson({
-          now, user: { id: userId, username }, range: "all", logbook, circuits, offBoard, litHistory, moon, spaces, preferences: preferencesOf(state), liked, blocked, boards, gradeOf,
+          now, user: { id: userId, username }, range: "all", logbook, circuits, offBoard, roped, litHistory, moon, spaces, preferences: preferencesOf(state), liked, blocked, boards, gradeOf,
         });
       }
       const file = new File(Paths.cache, exportFileName(format, now, username));
@@ -111,6 +114,7 @@ export default function Export() {
       if (prefs.restSec !== null) store.setRestSec(prefs.restSec);
       if (Object.keys(prefs.angles).length) useStore.setState((s) => ({ angles: { ...s.angles, ...prefs.angles } }));
       await useOutside.getState().load();
+      await useRoped.getState().load();
       await useLit.getState().load();
       await useData.getState().loadAll(useStore.getState().accounts);
       await refreshSpaces(useData.getState().boards);

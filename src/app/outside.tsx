@@ -1,17 +1,17 @@
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Linking, Platform, ScrollView, TextInput, View } from "react-native";
+import { Linking, ScrollView, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { randomHex } from "../core/api";
 import {
   MAX_ATTEMPTS, RESULT_LABEL, cleanLink, SETTING_LABEL, STYLE_TAGS, WALL_STYLES, draftProblem, gradeOptions, makeOutsideLog, normaliseResult, wallStyle,
   type OutsideDraft, type OutsideGradeSystem, type OutsideLog, type OutsideResult, type OutsideSetting, type WallStyleId,
 } from "../core/outside";
-import { localStamp, shortDate } from "../core/shareCard";
+import { localStamp } from "../core/shareCard";
 import { grades } from "../data/grades";
 import { useOutside, useOutsideLogs } from "../state/outside";
 import { Button, Chip, IconButton, LinkButton, Segmented, SectionLabel, Sheet, Tap } from "../ui/parts";
+import { WhenRow } from "../ui/WhenRow";
 import { GradeStrip } from "../ui/GradeStrip";
 import { Icon } from "../ui/Icon";
 import { haptic } from "../ui/haptics";
@@ -80,25 +80,6 @@ export default function Outside() {
   const setSystem = (gradeSystem: OutsideGradeSystem) => patch({ gradeSystem, gradeLabel: convertGrade(draft.gradeLabel, draft.gradeSystem, gradeSystem) });
   const step = (d: number) => patch({ attempts: normaliseResult("attempt", draft.attempts + d).attempts });
   const toggleTag = (t: string) => patch({ tags: draft.tags.includes(t) ? draft.tags.filter((x) => x !== t) : [...draft.tags, t] });
-
-  const pickWhen = () => {
-    if (Platform.OS !== "android") return;
-    DateTimePickerAndroid.open({
-      value: when, mode: "date", maximumDate: new Date(),
-      onChange: (e, day) => {
-        if (e.type !== "set" || !day) return;
-        DateTimePickerAndroid.open({
-          value: day, mode: "time",
-          onChange: (e2, t) => {
-            if (e2.type !== "set" || !t) return;
-            const next = new Date(day);
-            next.setHours(t.getHours(), t.getMinutes(), 0, 0);
-            setWhen(next > new Date() ? new Date() : next);
-          },
-        });
-      },
-    });
-  };
 
   const save = async () => {
     const p = draftProblem(draft);
@@ -175,11 +156,7 @@ export default function Outside() {
           style={{ ...input, minHeight: 80, textAlignVertical: "top" }} />
 
         <SectionLabel>When</SectionLabel>
-        <Tap accessibilityRole="button" accessibilityLabel="Change date and time" onPress={pickWhen}
-          style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 48, paddingHorizontal: 12, borderRadius: r.input, borderWidth: 1, borderColor: c.line, backgroundColor: c.card }}>
-          <Text v="bodyStrong" style={{ flex: 1 }}>{shortDate(localStamp(when))}, {String(when.getHours()).padStart(2, "0")}:{String(when.getMinutes()).padStart(2, "0")}</Text>
-          <Text v="caption">Change</Text>
-        </Tap>
+        <WhenRow when={when} onChange={setWhen} />
       </ScrollView>
       <View style={{ padding: 16, paddingBottom: 16 + insets.bottom, borderTopWidth: 1, borderTopColor: c.line, backgroundColor: c.card, gap: 8 }}>
         {error || problem ? <Text v="secondary" style={{ color: error ? c.danger : c.text2 }} aria-live="polite">{error || problem}</Text> : null}

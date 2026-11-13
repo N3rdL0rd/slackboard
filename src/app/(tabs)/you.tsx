@@ -8,6 +8,7 @@ import { circuitDisplayColor } from "../../core/circuits";
 import { useData } from "../../state/data";
 import { useLitHistory } from "../../state/litHistory";
 import { useOutsideLogs } from "../../state/outside";
+import { useRopedLogs } from "../../state/roped";
 import { useProfile } from "../../state/social";
 import { useBoard, useStore } from "../../state/store";
 import { Avatar } from "../../ui/Avatar";
@@ -26,6 +27,7 @@ export default function You() {
   const circuits = useData((d) => d.circuits);
   const logbook = useData((d) => d.logbook);
   const outside = useOutsideLogs();
+  const roped = useRopedLogs();
   const lit = useLitHistory();
   const permissions = usePermissions();
   const accounts = useStore((s) => s.accounts);
@@ -39,6 +41,7 @@ export default function You() {
     { label: "Stats", to: () => router.push("/stats") },
     { label: "Log", value: String(logbook.length), to: () => router.navigate("/log") },
     { label: "Off-board climbs", value: String(outside.length), to: () => router.push("/off-board") },
+    { label: "Roped climbs", value: String(roped.length), to: () => router.push("/roped-climbs") },
     { label: "Lit history", value: String(lit.length), to: () => router.push("/lit-history") },
     { label: "Circuits", value: String(circuits.length), to: () => router.push("/circuits") },
     ...(canSet ? [{ label: "Drafts you set", to: () => router.push("/drafts") }] : []),

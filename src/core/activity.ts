@@ -7,6 +7,7 @@
  */
 import { dayOf, type Day } from "./days";
 import { adjustedGrade, SETTING_LABEL, wallStyle, type OutsideLog } from "./outside";
+import { isSend, ropedTitle, type RopedLog } from "./roped";
 import type { LogEntry } from "./types";
 
 export type ActivityKind = "board" | "offBoard" | "roped" | "training";
@@ -75,9 +76,17 @@ export function offBoardActivity(l: OutsideLog): Activity<OutsideLog> {
   };
 }
 
+/** A roped climb. Its grade is on the roped scale (the IRCRA number), not the V scale, and each autobelay lap counts as a try. */
+export function ropedActivity(l: RopedLog): Activity<RopedLog> {
+  return {
+    id: `roped:${l.id}`, kind: "roped", at: l.climbedAt, day: dayOf(l.climbedAt), title: ropedTitle(l), ref: l,
+    facts: { discipline: "roped", send: isSend(l.result), tries: Math.max(1, l.attempts), grade: isSend(l.result) ? l.grade : null, effort: null, fingerIntense: false },
+  };
+}
+
 /** Every kind of entry as one list, newest first. */
-export function activitiesOf(input: { board?: LogEntry[]; offBoard?: OutsideLog[]; extra?: Activity[] }): Activity[] {
-  return [...(input.board ?? []).map(boardActivity), ...(input.offBoard ?? []).map(offBoardActivity), ...(input.extra ?? [])].sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
+export function activitiesOf(input: { board?: LogEntry[]; offBoard?: OutsideLog[]; roped?: RopedLog[]; extra?: Activity[] }): Activity[] {
+  return [...(input.board ?? []).map(boardActivity), ...(input.offBoard ?? []).map(offBoardActivity), ...(input.roped ?? []).map(ropedActivity), ...(input.extra ?? [])].sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
 }
 
 /** Entries grouped by local day. */

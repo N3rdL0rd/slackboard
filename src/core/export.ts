@@ -5,6 +5,8 @@ import type { Preferences } from "./prefsBackup";
 import type { SpacesBackup } from "./spacesBackup";
 import type { LogicalCircuit } from "./logicalCircuits";
 import { RESULT_LABEL, wallStyle, type OutsideLog } from "./outside";
+import { isSend, ropedTitle, type RopedLog } from "./roped";
+import { ropedLabel } from "../data/ropedGrades";
 import type { LogEntry } from "./types";
 
 export type ExportFormat = "csv" | "json";
@@ -35,22 +37,36 @@ export interface GradeText {
   font: string;
 }
 
-export const CSV_HEADER = ["date", "provider", "climb", "climb_uuid", "type", "angle", "mirrored", "attempts", "grade_v", "grade_font", "quality", "comment", "setting", "venue", "wall", "tags", "link"];
+export const CSV_HEADER = [
+  "date", "provider", "climb", "climb_uuid", "type", "angle", "mirrored", "attempts", "grade_v", "grade_font", "quality", "comment", "setting", "venue", "wall", "tags", "link",
+  "kind", "style", "result", "grade_yds", "grade_french", "length_m", "pitches",
+];
 
 /**
- * The logbook as CSV, board entries and off-board climbs together, newest first. Off-board rows have no provider; their `setting` is
- * gym or outdoor, and `angle` is the wall category's angle. The grade columns hold the grade in both notations.
+ * The logbook as CSV, board entries, off-board climbs and roped climbs together, newest first. `kind` says which: board, offBoard or
+ * roped. Off-board rows have no provider; their `setting` is gym or outdoor, and `angle` is the wall category's angle. Roped rows carry
+ * their own columns (style, result, YDS and French grade, length and pitches), because roped grades are not V grades.
  */
-export function logbookCsv(entries: LogEntry[], gradeOf: (e: LogEntry) => GradeText, offBoard: OutsideLog[] = [], offGradeOf: (l: OutsideLog) => GradeText = () => ({ v: "", font: "" })): string {
-  const rows: { at: string; fields: (string | number | boolean | null)[] }[] = [];
+export function logbookCsv(
+  entries: LogEntry[], gradeOf: (e: LogEntry) => GradeText, offBoard: OutsideLog[] = [], offGradeOf: (l: OutsideLog) => GradeText = () => ({ v: "", font: "" }), roped: RopedLog[] = [],
+): string {
+  type Field = string | number | boolean | null;
+  const rows: { at: string; fields: Field[] }[] = [];
+  const none: Field[] = ["", "", "", "", "", ""];
   for (const e of entries) {
     const g = e.difficulty > 0 ? gradeOf(e) : { v: "", font: "" };
-    rows.push({ at: e.climbedAt, fields: [e.climbedAt, e.provider, e.climbName, e.climbUuid, e.isSend ? "send" : "attempts", e.angle, e.isMirror, e.bidCount, g.v, g.font, e.isSend ? e.quality : "", e.comment, "", "", "", "", ""] });
+    rows.push({ at: e.climbedAt, fields: [e.climbedAt, e.provider, e.climbName, e.climbUuid, e.isSend ? "send" : "attempts", e.angle, e.isMirror, e.bidCount, g.v, g.font, e.isSend ? e.quality : "", e.comment, "", "", "", "", "", "board", ...none] });
   }
   for (const o of offBoard) {
     const g = o.gradeLabel ? offGradeOf(o) : { v: "", font: "" };
     const wall = wallStyle(o.wall);
-    rows.push({ at: o.climbedAt, fields: [o.climbedAt, "", o.name || `${wall.label}`, o.id, o.result === "attempt" ? "attempts" : "send", wall.angle, false, o.attempts, g.v, g.font, "", o.note, o.setting, o.venue, wall.label, o.tags.join(";"), o.link] });
+    rows.push({ at: o.climbedAt, fields: [o.climbedAt, "", o.name || `${wall.label}`, o.id, o.result === "attempt" ? "attempts" : "send", wall.angle, false, o.attempts, g.v, g.font, "", o.note, o.setting, o.venue, wall.label, o.tags.join(";"), o.link, "offBoard", ...none] });
+  }
+  for (const l of roped) {
+    rows.push({ at: l.climbedAt, fields: [
+      l.climbedAt, "", ropedTitle(l), l.id, isSend(l.result) ? "send" : "attempts", "", "", l.attempts, "", "", "", l.note, l.setting, l.venue, "", "", l.link,
+      "roped", l.style, l.result, ropedLabel(l.grade, "yds") ?? "", ropedLabel(l.grade, "french") ?? "", l.lengthM ?? "", l.pitches,
+    ] });
   }
   rows.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   // CRLF line ends are what RFC 4180 and Excel expect.
@@ -67,6 +83,8 @@ export interface ExportBundle {
   circuits: { uuid: string; name: string; description: string; color: string; userId: number; createdAt: string; updatedAt: string; isPublic: boolean; climbs: string[]; items: { provider: string; id: string }[]; publishedOn: { provider: string; uuid: string; isPublic: boolean }[] }[];
   /** Gym and outdoor climbs, which exist only on the phone. */
   offBoard: OutsideLog[];
+  /** Roped climbs, which exist only on the phone. */
+  roped: RopedLog[];
   /** Climbs lit up on a board, newest first. */
   litHistory: LitEntry[];
   /** MoonBoard boards, the problems the user set, and their likes and blocks. */
@@ -80,7 +98,7 @@ export interface ExportBundle {
 
 export function exportJson(input: {
   now: Date; user: { id: number | null; username: string }; range: ExportRange; logbook: LogEntry[]; circuits: LogicalCircuit[];
-  offBoard: OutsideLog[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
+  offBoard: OutsideLog[]; roped: RopedLog[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
   gradeOf: (e: LogEntry) => GradeText;
 }): string {
   const bundle: ExportBundle = {
@@ -91,6 +109,7 @@ export function exportJson(input: {
     }),
     circuits: input.circuits.map((c) => ({ uuid: c.uuid, name: c.name, description: c.description, color: c.color, userId: c.userId, createdAt: c.createdAt, updatedAt: c.updatedAt, isPublic: c.isPublic, climbs: c.climbs, items: c.items, publishedOn: c.projections.map((p) => ({ provider: p.provider, uuid: p.remoteUuid, isPublic: p.isPublic })) })),
     offBoard: input.offBoard,
+    roped: input.roped,
     litHistory: input.litHistory,
     moon: input.moon,
     spaces: input.spaces,

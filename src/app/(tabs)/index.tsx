@@ -186,6 +186,7 @@ export default function ClimbTab() {
       <SpeedDial bottom={16} items={[
         ...(canSet.any ? [{ icon: "edit" as const, label: "Set a climb", primary: true, onPress: () => router.push("/set-climb") }] : []),
         { icon: "log" as const, label: "Log gym climb", primary: !canSet.any, onPress: () => setQuickLog(true) },
+        { icon: "climb" as const, label: "Log roped climb", onPress: () => router.push("/roped") },
         { icon: "spark" as const, label: "Suggested", onPress: () => router.push("/suggestions") },
         ...(getProvider(board.spec.provider).capabilities.workouts ? [{ icon: "bolt" as const, label: "Climb workout", onPress: () => setSheet("workout") }] : []),
       ]} />

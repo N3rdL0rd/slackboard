@@ -9,7 +9,7 @@ import type { Db } from "./db";
  * The key of the full backup file that carries a table's records, or `"none"` for a table that is not backed up (with the reason in a
  * comment next to it). A test checks every table names a section the backup really has, so a new table cannot be forgotten.
  */
-export type BackupSection = "circuits" | "offBoard" | "litHistory" | "spaces" | "none";
+export type BackupSection = "circuits" | "offBoard" | "roped" | "litHistory" | "spaces" | "none";
 
 /** A table in the local database. `clearable` tables are emptied when the user removes their data (signs out everywhere). */
 export interface LocalTable {
@@ -40,6 +40,11 @@ CREATE TABLE IF NOT EXISTS l_lit_history (id TEXT PRIMARY KEY, provider TEXT NOT
 CREATE INDEX IF NOT EXISTS l_lit_history_at ON l_lit_history (lit_at);
 `;
 
+const V2 = `
+CREATE TABLE IF NOT EXISTS l_roped_logs (id TEXT PRIMARY KEY, style TEXT NOT NULL, setting TEXT NOT NULL, name TEXT NOT NULL, venue TEXT NOT NULL, link TEXT NOT NULL, grade_system TEXT NOT NULL, grade_label TEXT NOT NULL, grade_value INTEGER NOT NULL, result TEXT NOT NULL, attempts INTEGER NOT NULL, length_m REAL, pitches INTEGER NOT NULL, note TEXT NOT NULL, climbed_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS l_roped_logs_at ON l_roped_logs (climbed_at);
+`;
+
 export const LOCAL_MIGRATIONS: LocalMigration[] = [
   {
     version: 1,
@@ -57,6 +62,14 @@ export const LOCAL_MIGRATIONS: LocalMigration[] = [
       { name: "l_lit_history", clearable: false, backup: "litHistory" },
     ],
     up: (db) => db.exec(V1),
+  },
+  {
+    version: 2,
+    tables: [
+      // Roped climbs are the user's own record, kept like off-board climbs: not tied to an account, so signing out keeps them.
+      { name: "l_roped_logs", clearable: false, backup: "roped" },
+    ],
+    up: (db) => db.exec(V2),
   },
 ];
 

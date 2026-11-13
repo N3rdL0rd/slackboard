@@ -33,6 +33,9 @@ combining happens on your phone.
 **Beyond the boards**
 - Log gym problems and outdoor boulders as sends, flashes or attempts, with wall angle, V or Font grade, style tags, and for
   outdoor boulders a crag and a link (for example Mountain Project). They count in your stats.
+- Log roped climbs (sport, trad, top rope, autobelay) in a gym or outdoors, graded in YDS or French, with the result (onsight, flash,
+  redpoint, fell, hung, project), tries, length and pitches. Repeating a route is two taps, and a session of autobelay laps is one
+  tap each. Roped grades have their own scale and stats and are never mixed into your boulder grades.
 - Suggested climbs from your own history: finish what you tried, warm up, work at your level, push a little past your best,
   climb your main wall angle, or try its opposite. A gym card suggests what style of problem to try next.
 
@@ -62,7 +65,7 @@ See [PRIVACY.md](PRIVACY.md) for what stays on your phone and what is sent where
 - The app talks to the service of the board brand you sign in to, and to nothing else, with two exceptions: the gym map loads
   its library and map tiles from the internet, and board photos load from the brand's image server.
 - There is no analytics, no advertising, and no account with Slackboard itself.
-- Gym and outdoor climbs, MoonBoard logs and unpublished circuits exist only on your phone. Use **You > Export and backup**
+- Gym and outdoor climbs, roped climbs, MoonBoard logs and unpublished circuits exist only on your phone. Use **You > Export and backup**
   to keep a copy. See [docs/BACKUP.md](docs/BACKUP.md).
 
 ## Known limitations
