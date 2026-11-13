@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GRADE_ROWS } from "../core/gradeTable";
-import { findRopedGrade, otherSystem, ROPED_GRADES, ropedGradeAt, ropedLabel, ropedValue } from "./ropedGrades";
+import { findRopedGrade, otherSystem, ROPED_GRADES, ropedBand, ropedGradeAt, ropedLabel, ropedValue } from "./ropedGrades";
 
 describe("roped grades", () => {
   it("is one list of consecutive IRCRA steps with no repeated label in either system", () => {
@@ -32,5 +32,17 @@ describe("roped grades", () => {
     expect(findRopedGrade("yds", "5.12a")?.french).toBe("7a+");
     expect(ropedLabel(2, "yds")).toBeNull();
     expect(otherSystem("yds")).toBe("french");
+  });
+
+  it("draws the grades below the boards' range in their own colour, and from 5.9 in the boards' bands", () => {
+    expect(ropedBand(5).name).toBe("yellow");
+    expect(ropedBand(9).name).toBe("yellow");
+    expect(ropedBand(10).name).toBe("pink");
+    expect(ropedBand(12).name).toBe("pink");
+    expect(ropedBand(13).name).toBe("blue");
+    expect(ropedBand(34).name).toBe(ropedBand(33).name);
+    // Every roped grade has a band, and the easy one differs from the one above it.
+    for (const g of ROPED_GRADES) expect(ropedBand(g.value).fill).toMatch(/^#[0-9A-F]{6}$/);
+    expect(ropedBand(9).fill).not.toBe(ropedBand(10).fill);
   });
 });

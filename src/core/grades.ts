@@ -31,6 +31,13 @@ const BANDS: Record<string, GradeBand> = {
   lime: { name: "lime", fill: "#050607", text: "#C4E04A", border: "#C4E04A", borderWidth: 1.5, bar: "#C4E04A" },
 };
 
+/**
+ * The band below pink, for roped grades easier than the boards' range (YDS 5.8 and below). Boulder grades start at V0 and never use it.
+ * Yellow because it is the colour furthest from every other band: in the CIE Lab measure it is 59 from the nearest band normally, 29
+ * or more under red-green colour blindness and 24 under blue-yellow, where the closest existing pair (pink and white) is 20 apart.
+ */
+export const EASY_BAND: GradeBand = { name: "yellow", fill: "#F2D45C", text: "#101416", border: "#F2D45C", borderWidth: 0, bar: "#F2D45C" };
+
 /** V number -> band: two grades per band, black for V9-V10, then violet, amber and lime. */
 export function bandForV(v: number): GradeBand {
   if (v <= 0) return BANDS.pink;

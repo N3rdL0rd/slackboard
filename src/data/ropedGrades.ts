@@ -5,7 +5,7 @@
  * Where this list overlaps the pairs the app already holds for boards (`route_name` in gradeTable.ts, the same pairs the boards' own
  * app shows) the two agree, and a test checks it. Below IRCRA 5 (YDS 5.4, French 3) nothing is offered: it would be a guess.
  */
-import type { GradeBand } from "../core/grades";
+import { EASY_BAND, type GradeBand } from "../core/grades";
 import { grades } from "./grades";
 
 export type RopedSystem = "yds" | "french";
@@ -48,7 +48,8 @@ export const otherSystem = (system: RopedSystem): RopedSystem => (system === "yd
 
 /**
  * The colour band a roped grade is drawn in, so the strip looks like the boulder one. The IRCRA number is also the board table's
- * difficulty number, so a roped grade takes the band of the board grade on the same step. This is only a colour: it implies no
- * conversion between roped and boulder grades, and nothing is computed from it.
+ * difficulty number, so from 5.9 (IRCRA 10) a roped grade takes the band of the board grade on the same step, and the easier grades
+ * below the boards' range get their own yellow band. This is only a colour: it implies no conversion between roped and boulder
+ * grades, and nothing is computed from it.
  */
-export const ropedBand = (value: number): GradeBand => grades.band(Math.min(33, Math.max(10, value)));
+export const ropedBand = (value: number): GradeBand => (value < 10 ? EASY_BAND : grades.band(Math.min(33, value)));
