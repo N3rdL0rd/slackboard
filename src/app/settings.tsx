@@ -73,9 +73,13 @@ export default function Settings() {
 
         <SectionLabel>Motivation and rest</SectionLabel>
         <SwitchRow label="Motivation lines" help="A line on the Climb tab when a milestone is close, such as '3 more V4s until you have 10'. Worked out from your own log only." value={s.motivation} onChange={(motivation) => patch({ motivation })} />
-        <Text v="bodyStrong" style={{ marginTop: 14, marginBottom: 8 }}>Rest advice</Text>
-        <Segmented<NudgeLevel> options={[{ value: "off", label: "Off" }, { value: "relaxed", label: "Relaxed" }, { value: "standard", label: "Standard" }, { value: "keen", label: "Keen" }]} value={s.nudges} onChange={(nudges) => patch({ nudges })} />
-        <Text v="caption" style={{ marginTop: 6 }}>Relaxed speaks up after 3 days in a row. Standard also after 2 hard days in a row. Keen after any 2 in a row. It is advice, never a rule.</Text>
+        <SwitchRow label="Rest advice" help="A line on the Climb tab when your log says you have been going hard. It is advice, never a rule." value={s.nudges !== "off"} onChange={(on) => patch({ nudges: on ? "standard" : "off" })} />
+        {s.nudges !== "off" ? (
+          <>
+            <Segmented<NudgeLevel> options={[{ value: "relaxed", label: "Relaxed" }, { value: "standard", label: "Standard" }, { value: "keen", label: "Keen" }]} value={s.nudges} onChange={(nudges) => patch({ nudges })} />
+            <Text v="caption" style={{ marginTop: 6 }}>Relaxed speaks up after 3 days in a row. Standard also after 2 hard days in a row. Keen after any 2 in a row.</Text>
+          </>
+        ) : null}
 
         <SectionLabel>Privacy</SectionLabel>
         <SwitchRow label="Log climbs I light up" help={`Each board brand keeps a Recently lit history for each controller. Turn this off and Slackboard won't add the climbs you light up to it.`} value={s.logLit} onChange={(logLit) => patch({ logLit })} />

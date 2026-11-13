@@ -4,11 +4,10 @@ import { View } from "react-native";
 import { streakLabel } from "../core/streak";
 import { MOTIVATION_KEY, NUDGE_KEY, useTodayInfo } from "../state/today";
 import { useDayNotesStore } from "../state/dayNotes";
-import { useStore } from "../state/store";
 import { c, r } from "../theme";
 import { BodySheet } from "./BodySheet";
 import { Icon } from "./Icon";
-import { Button, LinkButton, Sheet, Tap } from "./parts";
+import { Button, Sheet, Tap } from "./parts";
 import { ProgressRing } from "./ProgressRing";
 import { Dot, StreakSheet } from "./StreakSheet";
 import { Text } from "./Text";
@@ -22,7 +21,6 @@ export function TodayRow() {
   const info = useTodayInfo();
   const router = useRouter();
   const [sheet, setSheet] = useState<null | "streak" | "why" | "body">(null);
-  const patchSettings = useStore((s) => s.patchSettings);
   const line = info.nudge ?? info.motivation;
   const showStreak = info.streak.current > 0;
   if (!showStreak && !line && !info.ring) return null;
@@ -55,9 +53,6 @@ export function TodayRow() {
                 </View>
               ) : null}
             </Tap>
-            <Tap accessibilityRole="button" accessibilityLabel={info.nudge ? "Not today" : "Hide this for today"} onPress={hide} style={{ width: 40, height: 44, alignItems: "center", justifyContent: "center" }}>
-              <Icon name="close" size={18} color={c.muted} />
-            </Tap>
           </>
         ) : <View style={{ flex: 1 }} />}
       </View>
@@ -68,11 +63,10 @@ export function TodayRow() {
           <View style={{ gap: 10 }}>
             <Text v="bodyStrong">{info.nudge.text}</Text>
             {info.nudge.why.map((w) => <Text key={w} v="secondary">{w}</Text>)}
-            <Text v="caption">This is general advice from your log, not a rule. Climb how you like.</Text>
+            <Text v="caption">This is general advice from your log, not a rule. Climb how you like. You can turn rest advice off in Settings.</Text>
             <View style={{ gap: 8, marginTop: 6 }}>
               <Button variant="secondary" label="How do you feel today?" onPress={() => setSheet("body")} />
               <Button variant="secondary" label="Not today" onPress={() => { hide(); setSheet(null); }} />
-              <LinkButton label="Don't show rest advice" icon="close" onPress={() => { patchSettings({ nudges: "off" }); setSheet(null); }} />
             </View>
           </View>
         ) : info.motivation ? (
@@ -82,7 +76,6 @@ export function TodayRow() {
             <Text v="caption">Worked out from your own log only. It never compares you with anyone. You can turn these off in Settings.</Text>
             <View style={{ gap: 8, marginTop: 6 }}>
               <Button variant="secondary" label="Hide for today" onPress={() => { hide(); setSheet(null); }} />
-              <LinkButton label="Don't show these" icon="close" onPress={() => { patchSettings({ motivation: false }); setSheet(null); }} />
             </View>
           </View>
         ) : null}
