@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { boardActivity, type Activity } from "./activity";
 import { blankNote, type DayNote } from "./body";
-import { restNudge, type NudgeInput } from "./nudge";
+import { restNudge, withPlan, type NudgeInput } from "./nudge";
 import type { LogEntry } from "./types";
 
 // Monday 2 Nov 2026. "Today" is Wednesday the 4th unless a test says otherwise.
@@ -125,5 +125,21 @@ describe("a big week", () => {
   it("comes after the days-in-a-row lines", () => {
     const threeBig = [...Array.from({ length: 12 }, () => easy("2026-11-02")), easy("2026-11-03"), ...bigDay];
     expect(restNudge(base({ activities: threeBig }))?.id).toBe("three");
+  });
+});
+
+describe("the nudge on a planned light day", () => {
+  const n = { id: "back2back" as const, text: "Two hard days in a row. A lighter day helps.", why: ["Hard days: Tue and Wed."] };
+
+  it("says the plan already has a light day, and keeps the reasons", () => {
+    const r = withPlan(n, true)!;
+    expect(r.text).toBe("Your plan has a light day today, which fits.");
+    expect(r.id).toBe("back2back");
+    expect(r.why).toContain("Hard days: Tue and Wed.");
+  });
+
+  it("changes nothing on other days, or when there is no nudge", () => {
+    expect(withPlan(n, false)).toBe(n);
+    expect(withPlan(null, true)).toBeNull();
   });
 });

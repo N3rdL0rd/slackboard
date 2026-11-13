@@ -7,9 +7,10 @@ import { c } from "../theme";
 import { Button, Chip, LinkButton, SectionLabel, Sheet, SwitchRow } from "./parts";
 import { Text } from "./Text";
 
-type Key = "review" | "streak" | "rest" | "milestone" | "sessionRest";
+type Key = "plan" | "review" | "streak" | "rest" | "milestone" | "sessionRest";
 
 const TYPES: { key: Key; label: string; help: string }[] = [
+  { key: "plan", label: "Today's plan", help: "On days with a planned session, at the time you pick, and not once it is logged or skipped." },
   { key: "review", label: "Weekly review", help: "Monday morning, only when the week before had something in it." },
   { key: "streak", label: "Streak reminder", help: "On the last day that keeps a streak alive, if nothing is logged yet. Only for a streak of 3 days or more." },
   { key: "rest", label: "Rest day reminder", help: "That evening, after a hard day. Advice only." },
@@ -17,6 +18,7 @@ const TYPES: { key: Key; label: string; help: string }[] = [
   { key: "sessionRest", label: "Rest timer alert", help: "A tap on the shoulder when a rest in a training session ends while the app is in the background." },
 ];
 
+const PLAN_TIMES = ["07:00", "12:00", "16:00", "17:30", "19:00"];
 const REVIEW_TIMES = ["07:00", "08:00", "09:00", "10:00", "18:00"];
 const QUIET: { label: string; start: string; end: string }[] = [
   { label: "21:00 to 08:00", start: "21:00", end: "08:00" },
@@ -59,6 +61,14 @@ export function NotificationSettings() {
       <Text v="caption" style={{ marginBottom: 6 }}>Local only: scheduled on this phone, with no server. All are off until you turn them on. At most one a day, never for a missed day or a broken streak. Your phone decides when they arrive, so one can be late when it is saving battery.</Text>
       {TYPES.map((t) => <SwitchRow key={t.key} label={t.label} help={t.help} value={n[t.key]} onChange={(on) => void toggle(t.key, on)} />)}
       {note ? <Text v="caption" style={{ color: c.danger }}>{note}</Text> : null}
+      {n.plan ? (
+        <View style={{ gap: 8, marginTop: 8 }}>
+          <Text v="bodyStrong">Plan reminder time</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {PLAN_TIMES.map((t) => <Chip key={t} label={t} selected={n.planTime === t} onPress={() => set({ planTime: t })} />)}
+          </View>
+        </View>
+      ) : null}
       {n.review ? (
         <View style={{ gap: 8, marginTop: 8 }}>
           <Text v="bodyStrong">Review time</Text>

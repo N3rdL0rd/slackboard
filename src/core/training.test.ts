@@ -5,7 +5,7 @@ import { exerciseById, searchExercises, EXERCISES } from "../data/exercises";
 import type { Units } from "./settings";
 
 const kg: Units = { weight: "kg", length: "m" };
-const set = (over: Partial<TrainingSet> = {}): TrainingSet => ({ position: 0, reps: null, loadKg: 20, timeS: 10, edgeMm: 20, grip: "halfCrimp", restS: 180, done: true, ...over });
+const set = (over: Partial<TrainingSet> = {}): TrainingSet => ({ position: 0, reps: null, loadKg: 20, timeS: 10, edgeMm: 20, grip: "halfCrimp", restS: 180, done: true, feel: null, ...over });
 const entry = (over: Partial<TrainingEntry> = {}): TrainingEntry => ({
   id: "t1", exerciseId: "max-hang", performedAt: "2026-11-02 18:00:00", effort: 7, note: "", sets: [set(), set({ position: 1 })], ...over,
 });
@@ -65,7 +65,7 @@ describe("what a session starts from", () => {
   });
 
   it("repeats last time's sets and values, taking the last done set so a raised weight carries over", () => {
-    const last = entry({ exerciseId: "repeaters", sets: [set({ reps: 6, timeS: 7, loadKg: 10 }), set({ position: 1, reps: 6, timeS: 7, loadKg: 12.5 }), set({ position: 2, done: false, loadKg: 99 })] });
+    const last = entry({ exerciseId: "repeaters", sets: [set({ reps: 6, timeS: 7, loadKg: 10 }), set({ position: 1, reps: 6, timeS: 7, loadKg: 12.5 }), set({ position: 2, done: false, feel: null, loadKg: 99 })] });
     const t = targetsFor(ex, last);
     expect(t).toHaveLength(2);
     expect(t.every((x) => x.loadKg === 12.5 && x.reps === 6 && x.onS === 7 && x.offS === 3)).toBe(true);
@@ -75,7 +75,7 @@ describe("what a session starts from", () => {
     const pull = exerciseById("weighted-pull-up")!;
     const last = entry({ exerciseId: "weighted-pull-up", sets: [set({ reps: 4, timeS: null, edgeMm: null, grip: null, loadKg: 7.5, restS: 120 })] });
     expect(targetsFor(pull, last)[0]).toMatchObject({ reps: 4, onS: null, loadKg: 7.5, restS: 120 });
-    expect(targetsFor(pull, entry({ exerciseId: "weighted-pull-up", sets: [set({ done: false })] }))).toEqual(targetsFromTemplate(pull));
+    expect(targetsFor(pull, entry({ exerciseId: "weighted-pull-up", sets: [set({ done: false, feel: null })] }))).toEqual(targetsFromTemplate(pull));
   });
 });
 
@@ -84,7 +84,7 @@ describe("history of one exercise", () => {
     entry({ id: "a", performedAt: "2026-10-01 10:00:00", sets: [set({ loadKg: 15 })] }),
     entry({ id: "b", performedAt: "2026-10-20 10:00:00", sets: [set({ loadKg: 20 }), set({ position: 1, loadKg: 22.5, timeS: 12 })] }),
     entry({ id: "c", performedAt: "2026-10-25 10:00:00", exerciseId: "plank", sets: [set({ loadKg: null, timeS: 45 })] }),
-    entry({ id: "d", performedAt: "2026-10-27 10:00:00", sets: [set({ loadKg: 99, done: false })] }),
+    entry({ id: "d", performedAt: "2026-10-27 10:00:00", sets: [set({ loadKg: 99, done: false, feel: null })] }),
   ];
 
   it("finds the last time (done sets only) and the bests", () => {
@@ -115,7 +115,7 @@ describe("describing sets", () => {
 
   it("summarises an entry by its done sets", () => {
     expect(entryText(entry(), kg)).toBe("2 sets: 10 s \u00B7 20 mm \u00B7 +20 kg \u00B7 Half crimp");
-    expect(entryText(entry({ sets: [set({ done: false })] }), kg)).toBe("No sets done");
+    expect(entryText(entry({ sets: [set({ done: false, feel: null })] }), kg)).toBe("No sets done");
   });
 });
 
@@ -130,6 +130,6 @@ describe("training as an activity", () => {
   });
 
   it("does not count an entry with no done set as a day of training", () => {
-    expect(activitiesOf({ training: [entry({ sets: [set({ done: false })] })], gradeOf: () => 0 })).toEqual([]);
+    expect(activitiesOf({ training: [entry({ sets: [set({ done: false, feel: null })] })], gradeOf: () => 0 })).toEqual([]);
   });
 });

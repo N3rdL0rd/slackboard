@@ -13,7 +13,7 @@ import { EMPTY_SPACES } from "./spacesBackup";
 const note = (day: string, over: Partial<DayNote> = {}): DayNote => ({ ...blankNote(day), ...over });
 const file = (dayNotes: unknown[]) => {
   const bundle = JSON.parse(exportJson({
-    now: new Date("2026-11-05T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: [], circuits: [], offBoard: [], roped: [], training: [], goals: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON,
+    now: new Date("2026-11-05T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: [], circuits: [], offBoard: [], roped: [], training: [], goals: [], profile: null, tests: [], plans: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON,
     spaces: EMPTY_SPACES, preferences: EMPTY_PREFS, liked: [], blocked: [], boards: [], gradeOf: () => ({ v: "", font: "" }),
   }));
   return JSON.stringify({ ...bundle, dayNotes });

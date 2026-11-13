@@ -4,7 +4,8 @@ import { activitiesOf, climbingDays, type Activity } from "../core/activity";
 import { withDayEfforts, type DayNote } from "../core/body";
 import { dayOf, type Day } from "../core/days";
 import { milestoneCandidates, motivationLine, toastMilestone, type Milestone } from "../core/milestones";
-import { restNudge, type Nudge } from "../core/nudge";
+import { restNudge, withPlan, type Nudge } from "../core/nudge";
+import { todaysSession } from "../core/planner";
 import { ropedWorking } from "../core/roped";
 import type { WorkingGrades } from "../core/load";
 import { streakInfo, weekDots, type StreakInfo, type WeekDot } from "../core/streak";
@@ -12,6 +13,7 @@ import { useData } from "./data";
 import { useDayNotes, useDayNotesStore } from "./dayNotes";
 import { closestGoal, goalMilestone, measure, type Goal } from "../core/goals";
 import { useGoalLabels, useGoals } from "./goals";
+import { useCurrentPlan } from "./planner";
 import { useOutsideLogs } from "./outside";
 import { useRopedLogs } from "./roped";
 import { useTraining } from "./training";
@@ -70,20 +72,22 @@ export function useTodayInfo(): TodayInfo {
   const snoozes = useDayNotesStore((s) => s.snoozes);
   const goals = useGoals();
   const labels = useGoalLabels();
+  const plan = useCurrentPlan();
   const overview = useOverview(8);
   const boulderWorking = overview.working;
   return useMemo(() => {
     const days = climbingDays(activities);
     const streak = streakInfo(days, today);
     const working = { boulder: boulderWorking, roped: ropedWorking(roped, new Date()) };
-    const nudge = restNudge({ activities, notes, today, level, working, streakAlive: streak.current > 0, snoozedThrough: snoozes[NUDGE_KEY] ?? null });
+    const nudge0 = restNudge({ activities, notes, today, level, working, streakAlive: streak.current > 0, snoozedThrough: snoozes[NUDGE_KEY] ?? null });
     const hidden = (snoozes[MOTIVATION_KEY] ?? "") >= today;
+    const nudge = withPlan(nudge0, !!(plan && plan.status === "active" && todaysSession(plan, today)?.light));
     const goalCtx = { activities, today, labels };
     // A goal that is close takes the place of the usual line.
     const close = closestGoal(goals, goalCtx);
     const motivation = motivationOn && !hidden ? (close ? goalMilestone(close.goal, close.progress) : motivationLine({ activities, today, streak })) : null;
     return { today, streak, dots: weekDots(days, today), climbingDays: days, motivation, ring: ringFor(goals, goalCtx), nudge, notes };
-  }, [activities, notes, roped, today, motivationOn, level, snoozes, boulderWorking, goals, labels]);
+  }, [activities, notes, roped, today, motivationOn, level, snoozes, boulderWorking, goals, labels, plan]);
 }
 
 /** The ring for the first active volume goal that runs over a week or a month. */

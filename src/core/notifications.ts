@@ -13,11 +13,12 @@ import type { DayNote } from "./body";
 import { addDays, dayOf, dayStart, weekdayOf, weekStartDay, type Day } from "./days";
 import { isHardDay, typicalDayEntries, type WorkingGrades } from "./load";
 import type { Milestone } from "./milestones";
+import type { Plan } from "./planner";
 import { reviewNotificationText, weeklyReview, type ReviewLabels } from "./review";
 import type { NotificationPrefs } from "./settings";
 import { STREAK_MAX_GAP, type StreakInfo } from "./streak";
 
-export type NotificationKind = "review" | "streak" | "rest" | "milestone";
+export type NotificationKind = "plan" | "review" | "streak" | "rest" | "milestone";
 
 export interface PlannedNotification {
   /** `kind:day`, so the same notification always has the same id. */
@@ -43,7 +44,7 @@ export const MIN_STREAK_FOR_REMINDER = 3;
 export const MILESTONE_WEEKDAY = 2;
 
 /** When two would fall on one day, the first in this list is kept: the streak reminder cannot wait, the milestone can. */
-const PRIORITY: NotificationKind[] = ["streak", "rest", "review", "milestone"];
+const PRIORITY: NotificationKind[] = ["streak", "plan", "rest", "review", "milestone"];
 
 export const OUR_PREFIXES = PRIORITY.map((k) => `${k}:`);
 export const isOurs = (id: string): boolean => OUR_PREFIXES.some((p) => id.startsWith(p));
@@ -84,6 +85,8 @@ export interface PlanInput {
   working: WorkingGrades;
   /** The one milestone (or close goal) worth saying, or null. */
   milestone: Milestone | null;
+  /** The plan being followed, or null. A paused plan sends nothing. */
+  plan?: Plan | null;
 }
 
 /** What should be scheduled, soonest first. Only times still ahead of `now`, one per day. */
@@ -105,6 +108,17 @@ export function plan(input: PlanInput): PlannedNotification[] {
     const fireAt = atTime(deadline, STREAK_TIME);
     if (deadline >= today && nothingYet && !quiet(fireAt)) {
       add({ kind: "streak", fireAt, title: "Keep your streak going", body: `Today keeps your ${input.streak.current}-day streak going.`, route: "/stats" }, deadline);
+    }
+  }
+
+  // Plan: on days with a session still to do, at the time the user picked. Logged, skipped and moved-away sessions send nothing.
+  if (prefs.plan && input.plan && input.plan.status === "active") {
+    const byDay = new Map<Day, string[]>();
+    for (const s of input.plan.sessions) if (s.status === "planned" && s.day >= today && s.day <= horizonEnd) (byDay.get(s.day) ?? byDay.set(s.day, []).get(s.day)!).push(s.title);
+    for (const [day, titles] of byDay) {
+      const fireAt = atTime(day, prefs.planTime);
+      if (quiet(fireAt)) continue;
+      add({ kind: "plan", fireAt, title: "Today's plan", body: `Today: ${titles.join(" and ")}.`, route: "/train" }, day);
     }
   }
 
@@ -185,7 +199,7 @@ export function restEndAlert(now: Date, remainingMs: number, next: string): { fi
 }
 
 /** Routes a tap may open. Anything else is ignored, so a notification can only ever lead somewhere the app chose. */
-export const SAFE_ROUTE = /^\/(review(\?day=\d{4}-\d{2}-\d{2})?|stats|year-review)?$/;
+export const SAFE_ROUTE = /^\/(review(\?day=\d{4}-\d{2}-\d{2})?|stats|year-review|train)?$/;
 
 /** The route in a notification's data, when it is one the app made. */
 export function routeOf(data: unknown): string | null {

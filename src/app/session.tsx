@@ -17,6 +17,7 @@ import { cancelRestEnd, scheduleRestEnd } from "../state/notifications";
 import { useStore } from "../state/store";
 import { useToday } from "../state/today";
 import { useTraining, useTrainingStore } from "../state/training";
+import { planActions, useAdapted, usePlanner } from "../state/planner";
 import { ExerciseList } from "../ui/ExerciseList";
 import { haptic } from "../ui/haptics";
 import { Icon } from "../ui/Icon";
@@ -273,7 +274,7 @@ function Runner({ items, startedAt, idFor, onFinished }: { items: RunnerItem[]; 
 }
 
 /** What was done, an optional effort rating, and save or discard. The sets are already saved; this only adds the rating. */
-function Summary({ state, startedAt, idFor }: { state: RunnerState; startedAt: string; idFor: (i: number) => string }) {
+function Summary({ state, startedAt, idFor, planSessionId }: { state: RunnerState; startedAt: string; idFor: (i: number) => string; planSessionId: string | null }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const units = useStore((s) => s.settings.units);
@@ -281,7 +282,8 @@ function Summary({ state, startedAt, idFor }: { state: RunnerState; startedAt: s
   const [busy, setBusy] = useState(false);
   const entries = useMemo(() => toEntries(state, startedAt, effort, idFor), [state, startedAt, effort, idFor]);
   const leave = () => router.navigate("/train");
-  const save = async () => { setBusy(true); await useTrainingStore.getState().saveAll(entries); leave(); };
+  // A planned session is done once its training is saved.
+  const save = async () => { setBusy(true); await useTrainingStore.getState().saveAll(entries); if (planSessionId && entries.length) await planActions().complete(planSessionId); leave(); };
   const discard = async () => { setBusy(true); for (const e of entries) await useTrainingStore.getState().remove(e.id); leave(); };
   if (entries.length === 0) {
     return (
@@ -320,22 +322,29 @@ function Summary({ state, startedAt, idFor }: { state: RunnerState; startedAt: s
 
 /** A training session, started from the Train tab or an exercise: pick what to do, run it set by set, then log it. */
 export default function Session() {
-  const { ids } = useLocalSearchParams<{ ids?: string }>();
+  const { ids, plan: planParam } = useLocalSearchParams<{ ids?: string; plan?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const entries = useTraining();
   const loaded = useTrainingStore((s) => s.loaded);
   const [picked, setPicked] = useState<string[]>(() => (ids ? ids.split(",").filter((id) => exerciseById(id)) : []));
-  const [stage, setStage] = useState<"pick" | "run" | "summary">(picked.length ? "run" : "pick");
+  const planner = usePlanner();
+  const plannedBase = useMemo(() => (planParam ? planner.plans.flatMap((p) => p.sessions).find((s) => s.id === planParam) ?? null : null), [planParam, planner.plans]);
+  const planBlock = useMemo(() => planner.plans.find((p) => p.sessions.some((s) => s.id === planParam))?.block.kind, [planParam, planner.plans]);
+  const planned = useAdapted(plannedBase, planBlock)?.session ?? null;
+  const [stage, setStage] = useState<"pick" | "run" | "summary">(picked.length || planParam ? "run" : "pick");
   const [final, setFinal] = useState<RunnerState | null>(null);
   const startedAt = useRef(localStamp(new Date())).current;
   const sessionIds = useRef<string[]>([]);
   const idFor = useRef((i: number) => (sessionIds.current[i] ??= randomHex(16))).current;
 
   // The session starts from last time's values, so it waits for the saved training to be read.
+  // A planned session that is not there (it was deleted, or the plan was rebuilt) falls back to choosing exercises.
+  useEffect(() => { if (planParam && planner.loaded && !planned && stage === "run") setStage("pick"); }, [planParam, planner.loaded, planned, stage]);
+
   const items = useMemo<RunnerItem[]>(
-    () => (loaded ? picked.map((id) => ({ exerciseId: id, sets: targetsFor(exerciseById(id)!, lastTime(entries, id)) })) : []),
-    [loaded, stage === "run"], // eslint-disable-line react-hooks/exhaustive-deps
+    () => (planned ? planned.items.map((i) => ({ exerciseId: i.exerciseId, sets: i.sets.map((t) => ({ ...t })) })) : loaded ? picked.map((id) => ({ exerciseId: id, sets: targetsFor(exerciseById(id)!, lastTime(entries, id)) })) : []),
+    [loaded, stage === "run", planned?.id], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (
@@ -346,9 +355,9 @@ export default function Session() {
       </View>
       {stage === "pick" ? <Picker picked={picked} setPicked={setPicked} onStart={() => setStage("run")} /> : null}
       {stage === "run" ? (
-        loaded ? <Runner items={items} startedAt={startedAt} idFor={idFor} onFinished={(s) => { setFinal(s); setStage("summary"); }} /> : <View style={{ padding: 40 }}><Spinner size="large" /></View>
+        loaded && (!planParam || planner.loaded) && items.length > 0 ? <Runner items={items} startedAt={startedAt} idFor={idFor} onFinished={(s) => { setFinal(s); setStage("summary"); }} /> : <View style={{ padding: 40 }}><Spinner size="large" /></View>
       ) : null}
-      {stage === "summary" && final ? <Summary state={final} startedAt={startedAt} idFor={idFor} /> : null}
+      {stage === "summary" && final ? <Summary state={final} startedAt={startedAt} idFor={idFor} planSessionId={planned?.id ?? null} /> : null}
     </View>
   );
 }

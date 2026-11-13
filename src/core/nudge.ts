@@ -45,6 +45,15 @@ function runEndingAt(days: Set<Day>, end: Day): Day[] {
  * The nudge to show now, or null. In order: the fingers (from today's check-in), three days in a row, two in a row when they were hard
  * (or always, on Keen; never on Relaxed), and a big week. At most one is returned.
  */
+/**
+ * On a day the plan deliberately made light, the rest line says so instead of warning: the user is already doing what it would suggest.
+ * Any other day, or no nudge, is unchanged.
+ */
+export function withPlan(nudge: Nudge | null, plannedLightToday: boolean): Nudge | null {
+  if (!nudge || !plannedLightToday) return nudge;
+  return { id: nudge.id, text: "Your plan has a light day today, which fits.", why: ["You have been going hard, and today's planned session is a light one on purpose.", ...nudge.why] };
+}
+
 export function restNudge(input: NudgeInput): Nudge | null {
   const { activities, notes, today, level, working, streakAlive, snoozedThrough } = input;
   if (level === "off") return null;

@@ -3,11 +3,12 @@ import type { Activity, ActivityKind } from "./activity";
 import { climbingDays } from "./activity";
 import { blankNote } from "./body";
 import { dayOf } from "./days";
-import { afterQuiet, atTime, diff, HORIZON_DAYS, isOurs, isQuiet, plan, restEndAlert, routeOf, type PlanInput, type PlannedNotification, type ScheduledNotification } from "./notifications";
+import { afterQuiet, atTime, diff, plan as planFn, HORIZON_DAYS, isOurs, isQuiet, plan, restEndAlert, routeOf, type PlanInput, type PlannedNotification, type ScheduledNotification } from "./notifications";
 import type { Milestone } from "./milestones";
 import type { ReviewLabels } from "./review";
 import { DEFAULT_NOTIFICATIONS, type NotificationPrefs } from "./settings";
 import { streakInfo } from "./streak";
+import type { Plan, PlanSession } from "./planner";
 
 const labels: ReviewLabels = { boulder: (v) => `V${v}`, roped: (n) => `R${n}` };
 let n = 0;
@@ -20,7 +21,7 @@ const NOW = new Date(2026, 10, 12, 12, 0, 0); // Thursday 12 Nov 2026, noon
 const ON: NotificationPrefs = { ...DEFAULT_NOTIFICATIONS, review: true, streak: true, rest: true, milestone: true };
 const MILESTONE: Milestone = { id: "m", kind: "sendCount", text: "3 more V4s until you have 10.", current: 7, target: 10, progress: 0.7, why: "" };
 
-const only = (kind: "review" | "streak" | "rest" | "milestone"): NotificationPrefs => ({ ...DEFAULT_NOTIFICATIONS, [kind]: true });
+const only = (kind: "plan" | "review" | "streak" | "rest" | "milestone"): NotificationPrefs => ({ ...DEFAULT_NOTIFICATIONS, [kind]: true });
 
 const input = (over: Partial<PlanInput> & { acts?: Activity[] } = {}): PlanInput => {
   const activities = over.acts ?? over.activities ?? [];
@@ -172,8 +173,8 @@ describe("reconciling with what the phone has", () => {
   });
 
   it("knows which identifiers are ours", () => {
-    expect(["review:2026-11-16", "streak:2026-11-13", "rest:2026-11-12", "milestone:2026-11-16"].every(isOurs)).toBe(true);
-    expect(["session-rest", "other", "plan:2026-11-12"].some(isOurs)).toBe(false);
+    expect(["review:2026-11-16", "streak:2026-11-13", "rest:2026-11-12", "milestone:2026-11-16", "plan:2026-11-12"].every(isOurs)).toBe(true);
+    expect(["session-rest", "other", "planner:x"].some(isOurs)).toBe(false);
   });
 });
 
@@ -211,7 +212,7 @@ describe("the alert for the end of a rest", () => {
 
 describe("which routes a tapped notification may open", () => {
   it("opens the screens the app chose and nothing else", () => {
-    for (const r of ["/", "/review", "/review?day=2026-11-09", "/stats", "/year-review"]) expect(routeOf({ route: r }), r).toBe(r);
+    for (const r of ["/", "/review", "/review?day=2026-11-09", "/stats", "/year-review", "/train"]) expect(routeOf({ route: r }), r).toBe(r);
     for (const r of ["/settings", "/session", "https://example.com", "//evil", "/review?day=x", "/review?day=2026-11-09&x=1", "", 5, null]) expect(routeOf({ route: r }), String(r)).toBeNull();
     expect(routeOf(null)).toBeNull();
     expect(routeOf(undefined)).toBeNull();
@@ -222,5 +223,40 @@ describe("which routes a tapped notification may open", () => {
     const list = plan(input({ acts, milestone: MILESTONE }));
     expect(list.length).toBeGreaterThan(0);
     for (const p of list) expect(routeOf({ route: p.route }), p.route).toBe(p.route);
+  });
+});
+
+describe("the plan reminder", () => {
+  const session = (day: string, title: string, over: Partial<PlanSession> = {}): PlanSession => ({ id: day + title, day, week: 1, slot: "finger", title, items: [], status: "planned", movedFrom: null, light: false, minutes: 45, why: [], ...over });
+  const mk = (sessions: PlanSession[], status: Plan["status"] = "active"): Plan => ({ id: "p", startDay: "2026-11-09", block: {} as Plan["block"], status, createdAt: "2026-11-09 08:00:00", sessions });
+  const on = { ...only("plan"), planTime: "17:30" };
+
+  it("fires at the chosen time on days with a session still to do, naming it", () => {
+    const list = mk([session("2026-11-12", "Finger strength"), session("2026-11-14", "Pull and core")]);
+    const out = plan_(list);
+    expect(out.map((x) => [x.id, x.body])).toEqual([["plan:2026-11-12", "Today: Finger strength."], ["plan:2026-11-14", "Today: Pull and core."]]);
+    expect(out[0].fireAt).toEqual(new Date(2026, 10, 12, 17, 30));
+    expect(out[0]).toMatchObject({ kind: "plan", title: "Today's plan", route: "/train" });
+  });
+
+  const plan_ = (p: Plan) => planFn(input({ prefs: on, plan: p }));
+  const plan_fn = planFn;
+
+  it("sends nothing for a logged or skipped session, a paused plan, or a time already past", () => {
+    expect(plan_(mk([session("2026-11-12", "A", { status: "done" }), session("2026-11-14", "B", { status: "skipped" })]))).toEqual([]);
+    expect(plan_(mk([session("2026-11-14", "B")], "paused"))).toEqual([]);
+    expect(plan_fn(input({ prefs: on, now: new Date(2026, 10, 12, 18, 0), plan: mk([session("2026-11-12", "A")]) }))).toEqual([]);
+  });
+
+  it("is off by default, and not planned inside quiet hours", () => {
+    expect(plan_fn(input({ prefs: DEFAULT_NOTIFICATIONS, plan: mk([session("2026-11-14", "B")]) }))).toEqual([]);
+    expect(plan_fn(input({ prefs: { ...on, quietStart: "17:00", quietEnd: "18:00" }, plan: mk([session("2026-11-14", "B")]) }))).toEqual([]);
+  });
+
+  it("names two sessions on one day together, and wins over a rest reminder that day", () => {
+    const p = mk([session("2026-11-12", "Finger strength"), session("2026-11-12", "Pull and core", { slot: "pullcore" })]);
+    const out = plan_fn(input({ prefs: { ...DEFAULT_NOTIFICATIONS, plan: true, rest: true }, plan: p, acts: [act("training", "2026-11-12", { fingerIntense: true })] }));
+    expect(out.filter((x) => x.day === "2026-11-12").map((x) => x.kind)).toEqual(["plan"]);
+    expect(out[0].body).toBe("Today: Finger strength and Pull and core.");
   });
 });

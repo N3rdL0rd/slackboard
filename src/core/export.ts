@@ -9,6 +9,7 @@ import { isSend, ropedTitle, type RopedLog } from "./roped";
 import type { DayNote } from "./body";
 import { ropedLabel } from "../data/ropedGrades";
 import type { Goal } from "./goals";
+import type { Plan, Profile, TestResult } from "./planner";
 import { doneSets, entryName, entryText, type TrainingEntry } from "./training";
 import type { LogEntry } from "./types";
 
@@ -100,6 +101,10 @@ export interface ExportBundle {
   training: TrainingEntry[];
   /** Goals and their status. */
   goals: Goal[];
+  /** The training profile, test results and plans. */
+  profile: Profile | null;
+  tests: TestResult[];
+  plans: Plan[];
   /** Daily body check-ins, which exist only on the phone. */
   dayNotes: DayNote[];
   /** Climbs lit up on a board, newest first. */
@@ -115,7 +120,7 @@ export interface ExportBundle {
 
 export function exportJson(input: {
   now: Date; user: { id: number | null; username: string }; range: ExportRange; logbook: LogEntry[]; circuits: LogicalCircuit[];
-  offBoard: OutsideLog[]; roped: RopedLog[]; training: TrainingEntry[]; goals: Goal[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
+  offBoard: OutsideLog[]; roped: RopedLog[]; training: TrainingEntry[]; goals: Goal[]; profile: Profile | null; tests: TestResult[]; plans: Plan[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
   gradeOf: (e: LogEntry) => GradeText;
 }): string {
   const bundle: ExportBundle = {
@@ -129,6 +134,9 @@ export function exportJson(input: {
     roped: input.roped,
     training: input.training,
     goals: input.goals,
+    profile: input.profile,
+    tests: input.tests,
+    plans: input.plans,
     dayNotes: input.dayNotes,
     litHistory: input.litHistory,
     moon: input.moon,

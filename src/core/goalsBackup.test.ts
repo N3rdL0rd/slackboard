@@ -18,7 +18,7 @@ const done = (id: string): Goal => goal({ id, status: "achieved", achievedAt: "2
 
 const file = (goals: unknown[]) => {
   const bundle = JSON.parse(exportJson({
-    now: new Date("2026-11-12T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: [], circuits: [], offBoard: [], roped: [], training: [], goals: [], dayNotes: [], litHistory: [],
+    now: new Date("2026-11-12T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: [], circuits: [], offBoard: [], roped: [], training: [], goals: [], profile: null, tests: [], plans: [], dayNotes: [], litHistory: [],
     moon: EMPTY_MOON, spaces: EMPTY_SPACES, preferences: EMPTY_PREFS, liked: [], blocked: [], boards: [], gradeOf: () => ({ v: "", font: "" }),
   }));
   return JSON.stringify({ ...bundle, goals });
@@ -81,6 +81,6 @@ describe("goals in a backup", () => {
 
   it("says what a backup holds and what was restored", () => {
     expect(describeBackup(parse([goal(), done("g2")]))).toContain("2 goals");
-    expect(describeRestored({ offBoard: 0, roped: 0, training: 0, goals: 1, dayNotes: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 goal.");
+    expect(describeRestored({ offBoard: 0, roped: 0, training: 0, goals: 1, plans: 0, tests: 0, profile: false, dayNotes: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 goal.");
   });
 });

@@ -10,7 +10,7 @@
  * `tick` takes the real time that passed, so a phone that slept for a minute catches up through every phase it missed.
  */
 import { exerciseById } from "../data/exercises";
-import type { SetTarget, TrainingEntry, TrainingSet } from "./training";
+import type { Feel, SetTarget, TrainingEntry, TrainingSet } from "./training";
 
 export interface RunnerItem {
   exerciseId: string;
@@ -45,6 +45,7 @@ export type RunnerEvent =
   | { type: "addRest"; ms: number }
   | { type: "pause" }
   | { type: "resume" }
+  | { type: "feel"; feel: Feel | null }
   | { type: "edit"; patch: Partial<SetTarget> }
   | { type: "addSet" }
   | { type: "skipExercise" }
@@ -112,7 +113,7 @@ function record(s: RunnerState, set: DoneSet): void {
 /** Finishes the current set with the reps and time it actually got, or drops it when nothing was done. */
 function finishSet(s: RunnerState): void {
   const t = s.items[s.item].sets[s.set];
-  const base = { loadKg: t.loadKg, edgeMm: t.edgeMm, grip: t.grip, restS: t.restS, done: true };
+  const base = { loadKg: t.loadKg, edgeMm: t.edgeMm, grip: t.grip, restS: t.restS, done: true, feel: null };
   if (s.phase === "work") {
     record(s, { ...base, reps: t.reps, timeS: null });
   } else if (t.onS !== null) {
@@ -149,7 +150,7 @@ function tick(s: RunnerState, ms: number): void {
       if ((t.offS ?? 0) > 0) { s.phase = "off"; s.remainingMs = (t.offS ?? 0) * 1000; } else enterWork(s, s.rep + 1);
     } else {
       // The last rep ran out: the set was done in full.
-      const full: DoneSet = { loadKg: t.loadKg, edgeMm: t.edgeMm, grip: t.grip, restS: t.restS, done: true, reps: t.reps, timeS: t.onS };
+      const full: DoneSet = { loadKg: t.loadKg, edgeMm: t.edgeMm, grip: t.grip, restS: t.restS, done: true, feel: null, reps: t.reps, timeS: t.onS };
       record(s, full);
       afterSet(s);
     }
@@ -181,6 +182,12 @@ export function step(state: RunnerState, e: RunnerEvent): RunnerState {
     case "resume":
       s.paused = false;
       break;
+    case "feel": {
+      // How the set just done felt. It belongs to the last set recorded, while resting or about to start the next.
+      const last = s.done.length - 1;
+      if (last >= 0 && (s.phase === "rest" || s.phase === "ready")) s.done[last] = { item: s.done[last].item, set: { ...s.done[last].set, feel: e.feel } };
+      break;
+    }
     case "edit":
       // A change applies to this set and every set after it in the exercise, so a raised weight carries on.
       if (s.phase === "ready" || s.phase === "rest") {

@@ -6,6 +6,7 @@ import { plan } from "../core/notifications";
 import { streakInfo } from "../core/streak";
 import { useDayNotes } from "./dayNotes";
 import { useGoalLabels, useLogsReady } from "./goals";
+import { useCurrentPlan } from "./planner";
 import { reconcile } from "./notifications";
 import { useStore } from "./store";
 import { useActivities, useClosestMilestone, useToday, useWorkingGrades } from "./today";
@@ -26,6 +27,7 @@ export function useNotificationSync(): void {
   const working = useWorkingGrades();
   const milestone = useClosestMilestone();
   const today = useToday();
+  const currentPlan = useCurrentPlan();
   const ready = useLogsReady();
   const [wake, setWake] = useState(0);
 
@@ -39,8 +41,8 @@ export function useNotificationSync(): void {
     const timer = setTimeout(() => {
       const now = new Date();
       const streak = streakInfo(climbingDays(activities), dayOf(now));
-      void reconcile(plan({ now, prefs, activities, notes, streak, labels, working, milestone }));
+      void reconcile(plan({ now, prefs, activities, notes, streak, labels, working, milestone, plan: currentPlan }));
     }, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [ready, prefs, activities, notes, labels, working, milestone, today, wake]);
+  }, [ready, prefs, activities, notes, labels, working, milestone, today, wake, currentPlan]);
 }

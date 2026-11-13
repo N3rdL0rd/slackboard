@@ -9,7 +9,7 @@ import type { Db } from "./db";
  * The key of the full backup file that carries a table's records, or `"none"` for a table that is not backed up (with the reason in a
  * comment next to it). A test checks every table names a section the backup really has, so a new table cannot be forgotten.
  */
-export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "goals" | "dayNotes" | "litHistory" | "spaces" | "none";
+export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "goals" | "plans" | "dayNotes" | "litHistory" | "spaces" | "none";
 
 /** A table in the local database. `clearable` tables are emptied when the user removes their data (signs out everywhere). */
 export interface LocalTable {
@@ -58,6 +58,19 @@ CREATE TABLE IF NOT EXISTS l_training_sets (entry_id TEXT NOT NULL, position INT
 
 const V5 = `
 CREATE TABLE IF NOT EXISTS l_goals (id TEXT PRIMARY KEY, type TEXT NOT NULL, scope_json TEXT NOT NULL, window_json TEXT NOT NULL, target_json TEXT NOT NULL, status TEXT NOT NULL, title TEXT NOT NULL, created_at TEXT NOT NULL, achieved_at TEXT);
+`;
+
+const V6 = `
+CREATE TABLE IF NOT EXISTS l_profile (id INTEGER PRIMARY KEY, profile_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS l_tests (id TEXT PRIMARY KEY, test TEXT NOT NULL, value REAL NOT NULL, taken_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS l_plans (id TEXT PRIMARY KEY, start_day TEXT NOT NULL, block_json TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS l_plan_sessions (id TEXT PRIMARY KEY, plan_id TEXT NOT NULL, day TEXT NOT NULL, week INTEGER NOT NULL, slot TEXT NOT NULL, title TEXT NOT NULL, items_json TEXT NOT NULL, status TEXT NOT NULL, moved_from TEXT, light INTEGER NOT NULL, minutes INTEGER NOT NULL, why_json TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS l_plan_sessions_plan ON l_plan_sessions (plan_id, day);
+`;
+
+// A set can say how it felt. Adding a column leaves every existing row as it was, with no answer.
+const V7 = `
+ALTER TABLE l_training_sets ADD COLUMN feel TEXT;
 `;
 
 export const LOCAL_MIGRATIONS: LocalMigration[] = [
@@ -113,6 +126,18 @@ export const LOCAL_MIGRATIONS: LocalMigration[] = [
     ],
     up: (db) => db.exec(V5),
   },
+  {
+    version: 6,
+    tables: [
+      // The planner's data is the user's own: kept when signing out, and carried in the backup.
+      { name: "l_profile", clearable: false, backup: "plans" },
+      { name: "l_tests", clearable: false, backup: "plans" },
+      { name: "l_plans", clearable: false, backup: "plans" },
+      { name: "l_plan_sessions", clearable: false, backup: "plans" },
+    ],
+    up: (db) => db.exec(V6),
+  },
+  { version: 7, tables: [], up: (db) => db.exec(V7) },
 ];
 
 export const LOCAL_SCHEMA_VERSION = LOCAL_MIGRATIONS[LOCAL_MIGRATIONS.length - 1].version;

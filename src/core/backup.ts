@@ -23,13 +23,16 @@ import { parseTrainingEntry, type TrainingEntry } from "./training";
 import { saveTraining } from "./trainingLocal";
 import { parseGoal, type Goal } from "./goals";
 import { saveGoal } from "./goalsLocal";
+import { parsePlan, parseProfile, parseTestResult } from "./planData";
+import { savePlan, saveProfile, saveTest } from "./planLocal";
+import type { Plan, Profile, TestResult } from "./planner";
 import { ropedValue, type RopedSystem } from "../data/ropedGrades";
 import { parseDayNote, type DayNote } from "./body";
 import { saveDayNote } from "./dayNotesLocal";
 import type { LogEntry } from "./types";
 
 /** The newest file format this version of the app writes and reads. */
-export const BACKUP_VERSION = 6;
+export const BACKUP_VERSION = 7;
 
 export interface ParsedBackup {
   exportedAt: string;
@@ -40,6 +43,10 @@ export interface ParsedBackup {
   training: TrainingEntry[];
   /** Goals, with their status. An achieved goal stays achieved. */
   goals: Goal[];
+  /** The training profile (null when none was saved), test results, and plans with their sessions. */
+  profile: Profile | null;
+  tests: TestResult[];
+  plans: Plan[];
   /** Daily body check-ins. */
   dayNotes: DayNote[];
   /** Sends and attempts on boards that have no service. */
@@ -63,6 +70,9 @@ export interface RestoreSummary {
   roped: number;
   training: number;
   goals: number;
+  plans: number;
+  tests: number;
+  profile: boolean;
   dayNotes: number;
   localLogs: number;
   circuits: number;
@@ -186,6 +196,11 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
   const roped = each(raw.roped, ropedOf);
   const training = each(raw.training, parseTrainingEntry);
   const goals = each(raw.goals, parseGoal);
+  const tests = each(raw.tests, parseTestResult);
+  const plans = each(raw.plans, parsePlan);
+  // A profile that does not read counts as one skipped record, like any other damaged one.
+  const profile = raw.profile === null || raw.profile === undefined ? null : parseProfile(raw.profile);
+  if (raw.profile !== null && raw.profile !== undefined && !profile) skipped++;
   const dayNotes = each(raw.dayNotes, parseDayNote);
   const allLogs = each(raw.logbook, logOf);
   // Entries on services come back by syncing, so they are neither restored nor counted as damaged.
@@ -195,7 +210,7 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
   const moon = parseMoon(raw.moon, () => { skipped++; });
   const spaces = parseSpaces(raw.spaces, () => { skipped++; });
   const preferences = parsePreferences(raw.preferences);
-  return { ok: true, backup: { exportedAt, offBoard, roped, training, goals, dayNotes, localLogs, circuits, litHistory, moon, spaces, preferences, skipped } };
+  return { ok: true, backup: { exportedAt, offBoard, roped, training, goals, profile, tests, plans, dayNotes, localLogs, circuits, litHistory, moon, spaces, preferences, skipped } };
 }
 
 /**
@@ -213,6 +228,9 @@ export async function restoreBackup(t: RestoreTargets, b: ParsedBackup): Promise
   for (const l of b.roped) await saveRoped(t.local, l);
   for (const e of b.training) await saveTraining(t.local, e);
   for (const g of b.goals) await saveGoal(t.local, g);
+  if (b.profile) await saveProfile(t.local, b.profile);
+  for (const r of b.tests) await saveTest(t.local, r);
+  for (const p of b.plans) await savePlan(t.local, p);
   for (const n of b.dayNotes) await saveDayNote(t.local, n);
   for (const e of b.litHistory) await saveLit(t.local, e);
   // Boards first, so the problems, logs and tags that belong to them have somewhere to go.
@@ -227,6 +245,9 @@ export async function restoreBackup(t: RestoreTargets, b: ParsedBackup): Promise
     roped: b.roped.length,
     training: b.training.length,
     goals: b.goals.length,
+    plans: b.plans.length,
+    tests: b.tests.length,
+    profile: b.profile !== null,
     dayNotes: b.dayNotes.length,
     offBoard: b.offBoard.length, localLogs: b.localLogs.length, circuits: added.length, litHistory: b.litHistory.length, moonBoards: b.moon.boards.length,
     moonProblems: b.moon.problems.length, moonTags: b.moon.tags.length, places: b.spaces.places.length, preferences: hasPreferences(b.preferences), skipped: b.skipped,
@@ -242,6 +263,9 @@ export function describeBackup(b: ParsedBackup): string {
     b.roped.length ? plural(b.roped.length, "roped climb", "roped climbs") : "",
     b.training.length ? plural(b.training.length, "training entry", "training entries") : "",
     b.goals.length ? plural(b.goals.length, "goal", "goals") : "",
+    b.plans.length ? plural(b.plans.length, "training plan", "training plans") : "",
+    b.tests.length ? plural(b.tests.length, "test result", "test results") : "",
+    b.profile ? "your training profile" : "",
     b.dayNotes.length ? plural(b.dayNotes.length, "body check-in", "body check-ins") : "",
     b.localLogs.length ? plural(b.localLogs.length, "MoonBoard log entry", "MoonBoard log entries") : "",
     b.moon.boards.length ? plural(b.moon.boards.length, "MoonBoard", "MoonBoards") : "",
@@ -262,6 +286,9 @@ export function describeRestored(s: RestoreSummary): string {
     s.roped ? plural(s.roped, "roped climb", "roped climbs") : "",
     s.training ? plural(s.training, "training entry", "training entries") : "",
     s.goals ? plural(s.goals, "goal", "goals") : "",
+    s.plans ? plural(s.plans, "training plan", "training plans") : "",
+    s.tests ? plural(s.tests, "test result", "test results") : "",
+    s.profile ? "your training profile" : "",
     s.dayNotes ? plural(s.dayNotes, "body check-in", "body check-ins") : "",
     s.localLogs ? plural(s.localLogs, "MoonBoard log entry", "MoonBoard log entries") : "",
     s.moonBoards ? plural(s.moonBoards, "MoonBoard", "MoonBoards") : "",

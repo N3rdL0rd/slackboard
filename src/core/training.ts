@@ -15,6 +15,10 @@ export const MAX_EDGE_MM = 60;
 export const MAX_NOTE = 500;
 
 /** One set as it was done. `timeS` is the work time of one rep; `reps` is how many reps (null for a single hold or an uncounted set). */
+/** How a set felt, when the user said: easy (well inside what they could do), right, or hard (close to or at failure). */
+export type Feel = "easy" | "right" | "hard";
+export const FEELS: Feel[] = ["easy", "right", "hard"];
+
 export interface TrainingSet {
   position: number;
   reps: number | null;
@@ -24,6 +28,8 @@ export interface TrainingSet {
   grip: Grip | null;
   restS: number | null;
   done: boolean;
+  /** How it felt. Optional: the planner uses it to set the next session, and nothing breaks without it. */
+  feel: Feel | null;
 }
 
 export interface TrainingEntry {
@@ -67,8 +73,9 @@ function parseSet(v: unknown, position: number): TrainingSet | null {
   const restS = num(v.restS, 0, MAX_TIME_S);
   if ([reps, loadKg, timeS, edgeMm, restS].includes(undefined)) return null;
   const grip = v.grip === null || v.grip === undefined ? null : GRIPS.includes(v.grip as Grip) ? (v.grip as Grip) : undefined;
-  if (grip === undefined || typeof v.done !== "boolean") return null;
-  return { position, reps: reps ?? null, loadKg: loadKg ?? null, timeS: timeS ?? null, edgeMm: edgeMm ?? null, grip, restS: restS ?? null, done: v.done };
+  const feel = v.feel === null || v.feel === undefined ? null : FEELS.includes(v.feel as Feel) ? (v.feel as Feel) : undefined;
+  if (grip === undefined || feel === undefined || typeof v.done !== "boolean") return null;
+  return { position, reps: reps ?? null, loadKg: loadKg ?? null, timeS: timeS ?? null, edgeMm: edgeMm ?? null, grip, restS: restS ?? null, done: v.done, feel };
 }
 
 /** Reads one entry from untrusted input. Null for anything damaged or naming an exercise this version doesn't know. */
