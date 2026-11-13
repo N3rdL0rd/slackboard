@@ -94,7 +94,7 @@ export function BluetoothTray() {
           {climb && !justLit ? <Button label={`Show ${climb.name}`} onPress={() => void lightBoard(holes, board, climb.uuid).then((ok) => { if (ok) { setJustLit(climb.name); setTimeout(() => useBluetoothTray.getState().hide(), CLOSE_AFTER_LIT_MS); } })} /> : null}
           <Button variant="secondary" label="Turn the board off" onPress={() => { void clearBoard(board); setJustLit(null); }} />
           <Button variant="secondary" label="Disconnect" onPress={() => void ble.disconnect()} />
-          <Text v="caption">The board follows the climb you look at. {settings.autoDisconnectSec ? `It disconnects after ${settings.autoDisconnectSec >= 60 ? `${settings.autoDisconnectSec / 60} min` : `${settings.autoDisconnectSec} s`} of nothing.` : ""}</Text>
+          <Text v="caption">The board follows the climb you look at. It stays connected until you disconnect, or after 20 minutes of nothing.</Text>
         </View>
       ) : ble.phase === "connected" ? (
         <View style={{ gap: 12 }}>

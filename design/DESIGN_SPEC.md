@@ -158,7 +158,7 @@ Avatar, username, name, verified badge, follower and following **counts** (the o
 ### 6.10 Settings (`Settings.dc.html`)
 - Grades: display V and Font, V only, or Font only (new; the app has no such setting). Legend of grade-band colors.
 - Reading the board: live preview of the four role markers. Switches: "Shapes as well as colors"; "High contrast" (forces shapes on and draws holds chalk white); "Auto connect".
-- Auto disconnect: Off / 30 sec / 1 min / 5 min (the official app has 17 steps; fewer shown here, extend if needed).
+- Auto disconnect: not a setting. The board stays connected until the user disconnects, and is let go after 20 minutes with nothing written to it.
 - Account: signed-in username, Sign out, Delete account (bottom sheet: password, "I understand" switch, destructive button enabled only when both are set; this is a stricter flow than the official one).
 - About: mark, wordmark, disclaimer, Source code, Licenses.
 Settings are stored per user on the device.

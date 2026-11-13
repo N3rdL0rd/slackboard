@@ -175,6 +175,15 @@ export class LedLink {
 }
 
 /** Fires `onIdle` when `touch()` has not been called for `seconds`. Zero seconds means never. */
+/**
+ * A connection to the board is kept until the user disconnects, except that after this long with nothing written to it the app lets
+ * go, so a phone left in a bag doesn't hold the controller. It is not a setting: there is no shorter timer.
+ */
+export const IDLE_DISCONNECT_SEC = 20 * 60;
+
+/** After the link drops without the user asking, the app tries to get it back: how long it waits before each attempt. */
+export const RECONNECT_DELAYS_MS = [1000, 4000, 12000, 30000];
+
 export class IdleTimer {
   private handle: ReturnType<typeof setTimeout> | null = null;
   constructor(private seconds: number, private readonly onIdle: () => void, private readonly timers: { set: typeof setTimeout; clear: typeof clearTimeout } = { set: setTimeout, clear: clearTimeout }) {}

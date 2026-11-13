@@ -36,7 +36,6 @@ export interface Settings {
   shapes: boolean;
   highContrast: boolean;
   autoConnect: boolean;
-  autoDisconnectSec: number;
   /** Tell the server which climbs are lit on the board, for its Recently lit history. The official app always does. */
   logLit: boolean;
   /** Haptic feedback for swiping, the angle dial, sends, attempts and the timer. */
@@ -61,7 +60,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
 };
 
 export const DEFAULT_SETTINGS: Settings = {
-  gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, autoDisconnectSec: 60, logLit: true, haptics: true,
+  gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, logLit: true, haptics: true,
   ropedWorking: false, ropedEquivalence: DEFAULT_EQUIVALENCE, trainTab: true, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS,
 };
 
@@ -86,7 +85,6 @@ export function parseSettings(raw: unknown): Partial<Settings> {
   const display = DISPLAYS.find((d) => d === raw.gradeDisplay);
   if (display) out.gradeDisplay = display;
   for (const k of BOOLS) if (typeof raw[k] === "boolean") out[k] = raw[k] as boolean;
-  if (typeof raw.autoDisconnectSec === "number" && Number.isFinite(raw.autoDisconnectSec) && raw.autoDisconnectSec >= 0 && raw.autoDisconnectSec <= 3600) out.autoDisconnectSec = raw.autoDisconnectSec;
   const equivalence = parseEquivalence(raw.ropedEquivalence);
   if (equivalence) out.ropedEquivalence = equivalence;
   const nudges = NUDGES.find((n) => n === raw.nudges);

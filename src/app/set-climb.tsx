@@ -1,3 +1,4 @@
+import { useKeepAwake } from "expo-keep-awake";
 import { useLocalSearchParams, usePreventRemove, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, TextInput, View, useWindowDimensions } from "react-native";
@@ -32,6 +33,8 @@ const ROLE_BUTTONS: { name: RoleName; label: string }[] = [
 
 /** Set a boulder or route: pick a role, tap holes on each frame, then save a draft or publish. */
 export default function SetClimb() {
+  // Setting a climb lights the board as you go, and a phone that sleeps mid-edit drops the link.
+  useKeepAwake("set-climb");
   const { uuid, type, from } = useLocalSearchParams<{ uuid?: string; type?: ClimbKind; from?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();

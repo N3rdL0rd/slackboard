@@ -11,6 +11,7 @@ import { syncBackgroundTaskRegistration } from "../state/backgroundSync";
 import { BluetoothTray } from "../ui/BluetoothTray";
 import { GoalCelebration } from "../ui/GoalCelebration";
 import { useGoalSync } from "../state/goals";
+import { useBoardKeepAwake } from "../state/keepAwake";
 import { useData } from "../state/data";
 import { getProvider } from "../providers";
 import { resolveBoardId } from "../core/boards";
@@ -28,6 +29,7 @@ export default function Root() {
   });
   const hydrated = useHydrated();
   useGoalSync();
+  useBoardKeepAwake();
   const booted = useBoot();
   const accounts = useStore((s) => s.accounts);
   const signedIn = Object.keys(accounts).length > 0;

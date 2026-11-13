@@ -77,10 +77,6 @@ export default function Settings() {
         <Segmented<NudgeLevel> options={[{ value: "off", label: "Off" }, { value: "relaxed", label: "Relaxed" }, { value: "standard", label: "Standard" }, { value: "keen", label: "Keen" }]} value={s.nudges} onChange={(nudges) => patch({ nudges })} />
         <Text v="caption" style={{ marginTop: 6 }}>Relaxed speaks up after 3 days in a row. Standard also after 2 hard days in a row. Keen after any 2 in a row. It is advice, never a rule.</Text>
 
-        <SectionLabel>Auto disconnect</SectionLabel>
-        <Segmented<string> options={[{ value: "0", label: "Off" }, { value: "30", label: "30 sec" }, { value: "60", label: "1 min" }, { value: "300", label: "5 min" }]}
-          value={String(s.autoDisconnectSec)} onChange={(v) => patch({ autoDisconnectSec: Number(v) })} />
-
         <SectionLabel>Privacy</SectionLabel>
         <SwitchRow label="Log climbs I light up" help={`Each board brand keeps a Recently lit history for each controller. Turn this off and Slackboard won't add the climbs you light up to it.`} value={s.logLit} onChange={(logLit) => patch({ logLit })} />
 

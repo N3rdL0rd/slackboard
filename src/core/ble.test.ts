@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { mergeSeen, shortUuid, bleReducer, boardLabel, foundEvent, IdleTimer, INITIAL_BLE, isBoardName, LedLink, pickAutoConnect, type BleEvent, type BleState } from "./ble";
+import { mergeSeen, shortUuid, bleReducer, boardLabel, foundEvent, IdleTimer, IDLE_DISCONNECT_SEC, INITIAL_BLE, RECONNECT_DELAYS_MS, isBoardName, LedLink, pickAutoConnect, type BleEvent, type BleState } from "./ble";
 import { tension } from "../providers/tension";
 
 const ble = tension.ble!;
@@ -166,5 +166,28 @@ describe("nearby devices", () => {
 
   it("shortens a service uuid", () => {
     expect(shortUuid("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")).toBe("6e400001");
+  });
+});
+
+describe("keeping the connection", () => {
+  it("lets go after 20 minutes idle and tries a few times to get a dropped link back, with growing gaps", () => {
+    expect(IDLE_DISCONNECT_SEC).toBe(1200);
+    expect(RECONNECT_DELAYS_MS.length).toBeGreaterThanOrEqual(3);
+    expect(RECONNECT_DELAYS_MS.every((d, i) => i === 0 || d > RECONNECT_DELAYS_MS[i - 1])).toBe(true);
+  });
+
+  it("the idle timer fires once after the idle time and not before, and a write pushes it back", () => {
+    const fake = (() => { let t = 0; const jobs: { at: number; fn: () => void }[] = []; return {
+      set: ((fn: () => void, ms: number) => { jobs.push({ at: t + ms, fn }); return jobs.length; }) as never,
+      clear: ((h: number) => { jobs[h - 1] = { at: Infinity, fn: () => {} }; }) as never,
+      advance: (ms: number) => { t += ms; for (const j of jobs) if (j.at <= t) { j.at = Infinity; j.fn(); } },
+    }; })();
+    let idle = 0;
+    const timer = new IdleTimer(IDLE_DISCONNECT_SEC, () => idle++, fake);
+    timer.touch();
+    fake.advance(1199_000); expect(idle).toBe(0);
+    timer.touch();
+    fake.advance(1199_000); expect(idle).toBe(0);
+    fake.advance(1_000); expect(idle).toBe(1);
   });
 });

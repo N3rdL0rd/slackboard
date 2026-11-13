@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_NOTIFICATIONS, DEFAULT_SETTINGS, defaultUnits, parseSettings, withDefaults } from "./settings";
 
 /** The settings an older build stored, before the Train tab, units, motivation, nudges and notifications existed. */
-const OLD = { gradeDisplay: "v", shapes: true, highContrast: false, autoConnect: false, autoDisconnectSec: 30, logLit: false, haptics: true };
+const OLD = { gradeDisplay: "v", shapes: true, highContrast: false, autoConnect: false, logLit: false, haptics: true };
 
 describe("settings from an older build", () => {
   it("keeps what the user chose and fills in everything new with defaults", () => {
     const s = withDefaults(OLD);
-    expect(s).toMatchObject({ gradeDisplay: "v", shapes: true, autoConnect: false, autoDisconnectSec: 30, logLit: false });
+    expect(s).toMatchObject({ gradeDisplay: "v", shapes: true, autoConnect: false, logLit: false });
     expect(s).toMatchObject({ trainTab: true, motivation: true, nudges: "standard", units: { weight: "kg", length: "m" } });
     expect(s.notifications).toEqual(DEFAULT_NOTIFICATIONS);
   });
@@ -34,7 +34,7 @@ describe("settings from an older build", () => {
 describe("reading settings safely", () => {
   it("drops values of the wrong type or outside their range, field by field", () => {
     const s = parseSettings({
-      gradeDisplay: "roman", shapes: "yes", haptics: false, autoDisconnectSec: 99999, trainTab: false, nudges: "keen", motivation: 1,
+      gradeDisplay: "roman", shapes: "yes", haptics: false, trainTab: false, nudges: "keen", motivation: 1,
       units: { weight: "stone", length: "m" }, notifications: { plan: true, review: "on", planTime: "25:00", reviewTime: "08:05", quietStart: "9pm" }, extra: 1,
     });
     expect(s).toEqual({ haptics: false, trainTab: false, nudges: "keen", notifications: { plan: true, reviewTime: "08:05" } });

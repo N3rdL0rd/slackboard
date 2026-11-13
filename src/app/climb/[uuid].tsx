@@ -1,3 +1,4 @@
+import { useKeepAwake } from "expo-keep-awake";
 import { useCanSet, useUsername } from "../../state/useActive";
 import { DEFAULT_PROVIDER, getProvider } from "../../providers";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -485,6 +486,8 @@ function TimerSheet({ visible, onClose, running, onStart, onStop }: { visible: b
 
 /** A thin countdown under the top bar. */
 function TimerBar({ end, length, onExpire }: { end: number; length: number; onExpire: () => void }) {
+  // The bar is only mounted while the rest timer runs, so the screen stays on for exactly that long.
+  useKeepAwake("rest-timer");
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 250); return () => clearInterval(t); }, []);
   useEffect(() => { if (now >= end) onExpire(); }, [now >= end]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -1,8 +1,8 @@
-import { PermissionsAndroid, Platform } from "react-native";
+import { AppState, PermissionsAndroid, Platform } from "react-native";
 import type { BleManager, Device, Subscription } from "react-native-ble-plx";
 import { create } from "zustand";
 import { toBase64 } from "../core/base64";
-import { bleReducer, CONNECT_TIMEOUT_MS, foundEvent, IdleTimer, INITIAL_BLE, LedLink, mergeSeen, pickAutoConnect, shortUuid, type SeenDevice, SCAN_MAX_MS, type BleEvent, type BleState, type Kit } from "../core/ble";
+import { bleReducer, CONNECT_TIMEOUT_MS, IDLE_DISCONNECT_SEC, RECONNECT_DELAYS_MS, foundEvent, IdleTimer, INITIAL_BLE, LedLink, mergeSeen, pickAutoConnect, shortUuid, type SeenDevice, SCAN_MAX_MS, type BleEvent, type BleState, type Kit } from "../core/ble";
 import type { LitHold } from "../core/led";
 import type { ProviderBle } from "../core/provider";
 import * as repo from "../core/repo";
@@ -35,7 +35,8 @@ interface BleStore extends BleState {
   sends: SendStats;
   startScan: (board: Board | null, everything?: boolean) => Promise<void>;
   stopScan: () => void;
-  connect: (id: string, board: Board | null) => Promise<void>;
+  /** `auto` is for the app's own reconnect after a dropped link; a user action leaves it out and so cancels any reconnect in progress. */
+  connect: (id: string, board: Board | null, auto?: boolean) => Promise<void>;
   disconnect: () => Promise<void>;
 }
 
@@ -48,8 +49,12 @@ let lastBoard: Board | null = null;
 /** The controller family of the board the link was opened for. */
 let bleSpec: ProviderBle | null = null;
 const bleOf = (board: Board | null): ProviderBle | null => (board ? getProvider(board.spec.provider).ble : null);
-const idle = new IdleTimer(useStore.getState().settings.autoDisconnectSec, () => void useBle.getState().disconnect());
-useStore.subscribe((s, prev) => { if (s.settings.autoDisconnectSec !== prev.settings.autoDisconnectSec) idle.setSeconds(s.settings.autoDisconnectSec); });
+// Letting go after a long idle is the only automatic disconnect; everything else is the user asking.
+const idle = new IdleTimer(IDLE_DISCONNECT_SEC, () => void useBle.getState().disconnect());
+
+/** The board the link was lost to without the user asking, while the app is still trying to get it back. */
+let lastDrop: { id: string; board: Board | null } | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getManager(): BleManager | null {
   if (manager) return manager;
@@ -88,6 +93,29 @@ export const useBle = create<BleStore>((set, get) => {
     dispatch({ type: "scan-stop" });
   };
 
+  const cancelReconnect = () => {
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+    lastDrop = null;
+  };
+
+  /** Tries to get a dropped link back, a few times with growing gaps. Anything the user does in the meantime stops it. */
+  const tryReconnect = (attempt: number) => {
+    if (!lastDrop || attempt >= RECONNECT_DELAYS_MS.length) { reconnectTimer = null; return; }
+    reconnectTimer = setTimeout(async () => {
+      reconnectTimer = null;
+      const drop = lastDrop;
+      const phase = get().phase;
+      if (!drop || (phase !== "idle" && phase !== "failed")) return;
+      await get().connect(drop.id, drop.board, true);
+      if (get().phase === "connected") lastDrop = null; else tryReconnect(attempt + 1);
+    }, RECONNECT_DELAYS_MS[attempt]);
+  };
+  // When the phone wakes, a link that was lost while it slept is tried again at once.
+  AppState.addEventListener("change", (s) => {
+    if (s === "active" && lastDrop && !reconnectTimer && (get().phase === "idle" || get().phase === "failed")) tryReconnect(0);
+  });
+
   const cleanUp = () => {
     idle.cancel();
     dropSub?.remove(); dropSub = null;
@@ -106,6 +134,7 @@ export const useBle = create<BleStore>((set, get) => {
     sends: NO_SENDS,
 
     async startScan(board, everything = false) {
+      cancelReconnect();
       lastBoard = board;
       bleSpec = bleOf(board);
       const m = getManager();
@@ -141,7 +170,8 @@ export const useBle = create<BleStore>((set, get) => {
 
     stopScan,
 
-    async connect(id, board) {
+    async connect(id, board, auto = false) {
+      if (!auto) cancelReconnect();
       const m = getManager();
       if (!m) return;
       lastBoard = board;
@@ -172,7 +202,8 @@ export const useBle = create<BleStore>((set, get) => {
           async (c) => { await d.writeCharacteristicWithResponseForService(spec.uartService, spec.uartRx, toBase64(c)); },
           () => idle.touch(),
         );
-        dropSub = m.onDeviceDisconnected(id, () => { cleanUp(); dispatch({ type: "disconnected" }); });
+        // Reaching here means the link was lost (our own disconnect removes this listener first), so get it back.
+        dropSub = m.onDeviceDisconnected(id, () => { cleanUp(); dispatch({ type: "disconnected" }); lastDrop = { id, board: lastBoard }; tryReconnect(0); });
         set({ match: board ? { provider: board.spec.provider, layoutId: board.spec.layoutId, productSizeId: board.spec.productSizeId } : null });
         dispatch({ type: "connected" });
         idle.touch();
@@ -184,6 +215,7 @@ export const useBle = create<BleStore>((set, get) => {
     },
 
     async disconnect() {
+      cancelReconnect();
       const d = device;
       cleanUp();
       dispatch({ type: "disconnected" });
