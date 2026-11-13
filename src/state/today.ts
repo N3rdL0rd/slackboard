@@ -19,6 +19,11 @@ import { useRopedLogs } from "./roped";
 import { useTraining } from "./training";
 import { gradeOfEntry, useOverview } from "./stats";
 import { useStore } from "./store";
+import { memoLast } from "./sharedMemo";
+import type { LogEntry } from "../core/types";
+import type { OutsideLog } from "../core/outside";
+import type { RopedLog } from "../core/roped";
+import type { TrainingEntry } from "../core/training";
 
 /** Snooze keys for the two lines that can be hidden for the day. */
 export const NUDGE_KEY = "nudge";
@@ -36,14 +41,17 @@ export function useToday(): Day {
   return today;
 }
 
-/** Every kind of entry as one list, newest first, with each day's effort rating on its entries. */
+const buildActivities = memoLast((logbook: LogEntry[], offBoard: OutsideLog[], roped: RopedLog[], training: TrainingEntry[], notes: DayNote[]): Activity[] =>
+  withDayEfforts(activitiesOf({ board: logbook, offBoard, roped, training, gradeOf: gradeOfEntry }), notes));
+
+/** Every kind of entry as one list, newest first, with each day's effort rating on its entries. Built once per change to the logs, however many components ask. */
 export function useActivities(): Activity[] {
   const logbook = useData((d) => d.logbook);
   const offBoard = useOutsideLogs();
   const roped = useRopedLogs();
   const training = useTraining();
   const notes = useDayNotes();
-  return useMemo(() => withDayEfforts(activitiesOf({ board: logbook, offBoard, roped, training, gradeOf: gradeOfEntry }), notes), [logbook, offBoard, roped, training, notes]);
+  return buildActivities(logbook, offBoard, roped, training, notes);
 }
 
 export interface TodayInfo {

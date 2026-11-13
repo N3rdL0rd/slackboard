@@ -45,9 +45,11 @@ export const WEEKS_SHOWN = 26;
  * but cannot place on the grade charts.
  */
 export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) => number, weeksShown = WEEKS_SHOWN): Overview {
+  const stamps = entries.map((e) => parseStamp(e.climbedAt));
   const sends = entries.filter((e) => e.isSend);
-  // Each graded send with its grade on the shared scale.
-  const graded = sends.filter((e) => e.difficulty > 0).map((e) => ({ e, g: gradeOf(e) }));
+  // Each graded send with its grade on the shared scale and its time.
+  const graded: { e: LogEntry; g: number; t: number }[] = [];
+  entries.forEach((e, i) => { if (e.isSend && e.difficulty > 0) graded.push({ e, g: gradeOf(e), t: stamps[i].getTime() }); });
   const attempts = entries.reduce((n, e) => n + Math.max(0, e.bidCount), 0);
   const uniqueClimbs = new Set(sends.map((e) => e.climbUuid)).size;
   const days = new Set(entries.map((e) => dayOf(e.climbedAt)));
@@ -56,7 +58,7 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
   for (const { e, g } of graded) if (!hardest || g > hardest.grade) hardest = { name: e.climbName, grade: g, provider: e.provider, climbedAt: e.climbedAt, angle: e.angle };
 
   const since = now.getTime() - 30 * DAY;
-  const recent = entries.filter((e) => parseStamp(e.climbedAt).getTime() >= since);
+  const recent = entries.filter((_, i) => stamps[i].getTime() >= since);
 
   const byV = new Map<number, number>();
   for (const { g } of graded) { const v = Math.floor(g); byV.set(v, (byV.get(v) ?? 0) + 1); }
@@ -64,10 +66,10 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
   // Weekly buckets from the first logged week to this one, so gaps show as empty weeks.
   const thisWeek = weekStart(now).getTime();
   const weekMs = new Map<number, LogEntry[]>();
-  for (const e of entries) {
-    const k = weekStart(parseStamp(e.climbedAt)).getTime();
+  entries.forEach((e, i) => {
+    const k = weekStart(stamps[i]).getTime();
     (weekMs.get(k) ?? weekMs.set(k, []).get(k)!).push(e);
-  }
+  });
   const first = entries.length ? Math.min(...weekMs.keys()) : thisWeek;
   const weeks: WeekPoint[] = [];
   for (let t = first; t <= thisWeek; ) {
@@ -80,13 +82,14 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
   }
   // Working grade: mean of the three hardest graded sends in the trailing window.
   const windowStart = (w: WeekPoint) => { const d = new Date(w.start); d.setDate(d.getDate() - 7 * (WORKING_WINDOW - 1)); return d.getTime(); };
-  for (const w of weeks) {
+  // Only the weeks that are returned need a working grade.
+  const trailing = weeks.slice(-weeksShown);
+  for (const w of trailing) {
     const lo = windowStart(w);
     const hi = w.start.getTime() + 7 * DAY;
-    const top = graded.filter(({ e }) => { const t = parseStamp(e.climbedAt).getTime(); return t >= lo && t < hi; }).map(({ g }) => g).sort((a, b) => b - a).slice(0, 3);
+    const top = graded.filter(({ t }) => t >= lo && t < hi).map(({ g }) => g).sort((a, b) => b - a).slice(0, 3);
     w.working = top.length ? top.reduce((a, b) => a + b, 0) / top.length : null;
   }
-  const trailing = weeks.slice(-weeksShown);
   const last = trailing[trailing.length - 1]?.working ?? null;
   const prior = trailing.length > WORKING_WINDOW ? trailing[trailing.length - 1 - WORKING_WINDOW]?.working ?? null : null;
 
