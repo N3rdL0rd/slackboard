@@ -34,15 +34,21 @@ describe("roped grades", () => {
     expect(otherSystem("yds")).toBe("french");
   });
 
-  it("draws the grades below the boards' range in their own colour, and from 5.9 in the boards' bands", () => {
-    expect(ropedBand(5).name).toBe("yellow");
+  it("draws the grades below the boards' range in their own bands, and from 5.9 in the boards' bands", () => {
+    expect(ropedBand(5).name).toBe("cyan");
+    expect(ropedBand(7).name).toBe("cyan");
+    expect(ropedBand(8).name).toBe("yellow");
     expect(ropedBand(9).name).toBe("yellow");
     expect(ropedBand(10).name).toBe("pink");
     expect(ropedBand(12).name).toBe("pink");
     expect(ropedBand(13).name).toBe("blue");
     expect(ropedBand(34).name).toBe(ropedBand(33).name);
-    // Every roped grade has a band, and the easy one differs from the one above it.
+    // Every roped grade has a band, and each easy band differs from the one above it.
     for (const g of ROPED_GRADES) expect(ropedBand(g.value).fill).toMatch(/^#[0-9A-F]{6}$/);
+    expect(ropedBand(7).fill).not.toBe(ropedBand(8).fill);
     expect(ropedBand(9).fill).not.toBe(ropedBand(10).fill);
+    // The easiest band is a ring on a dark chip, like the hardest ones, so it is told apart by form too.
+    expect(ropedBand(7).borderWidth).toBeGreaterThan(0);
+    expect(ropedBand(8).borderWidth).toBe(0);
   });
 });

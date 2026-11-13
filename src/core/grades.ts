@@ -32,11 +32,17 @@ const BANDS: Record<string, GradeBand> = {
 };
 
 /**
- * The band below pink, for roped grades easier than the boards' range (YDS 5.8 and below). Boulder grades start at V0 and never use it.
- * Yellow because it is the colour furthest from every other band: in the CIE Lab measure it is 59 from the nearest band normally, 29
- * or more under red-green colour blindness and 24 under blue-yellow, where the closest existing pair (pink and white) is 20 apart.
+ * The bands below pink, for roped grades easier than the boards' range. Boulder grades start at V0 and never use them.
+ *
+ * Yellow is for YDS 5.7 and 5.8: in the CIE Lab measure it is 59 from the nearest band normally, 29 or more under red-green colour
+ * blindness and 24 under blue-yellow, where the closest existing pair (pink and white) is 20 apart.
+ *
+ * For 5.6 and below no further fill colour holds up (the best candidate fell to 9 under blue-yellow colour blindness), so this end of the
+ * scale does what the top end does: a dark chip with a coloured ring and number, cyan here. It differs from every other band by form
+ * as well as hue.
  */
 export const EASY_BAND: GradeBand = { name: "yellow", fill: "#F2D45C", text: "#101416", border: "#F2D45C", borderWidth: 0, bar: "#F2D45C" };
+export const EASIEST_BAND: GradeBand = { name: "cyan", fill: "#050607", text: "#46D6E8", border: "#46D6E8", borderWidth: 1.5, bar: "#46D6E8" };
 
 /** V number -> band: two grades per band, black for V9-V10, then violet, amber and lime. */
 export function bandForV(v: number): GradeBand {
