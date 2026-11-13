@@ -30,6 +30,8 @@ Nothing else leaves your phone, and nothing is shared between brands: the combin
 - **Location**: only when you open Find my gym and allow it, to centre the map and sort gyms. It stays on the phone, which also remembers
   where you added a board so boards in the same place can group together. Older Android versions require this permission for
   Bluetooth scanning, but the app does not read your location for that.
+- **Notifications**: only if you turn a reminder on in Settings. They are scheduled on your phone, with no server and no push service, and
+  the app asks for the permission at that point, not before.
 - **Photos and camera**: to pick or take a profile picture, and to save the images you make of climbs. The app does not read your photo
   library otherwise.
 

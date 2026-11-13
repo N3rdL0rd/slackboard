@@ -57,3 +57,16 @@ describe("default units", () => {
     expect(defaultUnits(undefined)).toEqual({ weight: "kg", length: "m" });
   });
 });
+
+describe("notification settings", () => {
+  it("starts with every type off, including the rest alert, and the permission not refused", () => {
+    expect(DEFAULT_SETTINGS.notifications).toMatchObject({ review: false, streak: false, rest: false, milestone: false, sessionRest: false });
+    expect(DEFAULT_SETTINGS.notificationsDeclined).toBe(false);
+  });
+
+  it("keeps a stored refusal across launches, and fills in the rest alert for an older copy", () => {
+    const s = withDefaults({ notificationsDeclined: true, notifications: { review: true } });
+    expect(s.notificationsDeclined).toBe(true);
+    expect(s.notifications).toMatchObject({ review: true, sessionRest: false, reviewTime: "08:00" });
+  });
+});

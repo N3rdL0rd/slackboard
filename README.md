@@ -38,6 +38,12 @@ combining happens on your phone.
   tap each. Roped grades have their own scale and stats and are never mixed into your boulder grades.
 - Working grade: in Settings you can let roped sends count toward your boulder working grade and stats. You say which roped grade you
   count as equal to which boulder grade (it starts at 5.11c = V4), and every step on the roped list is worth half a V. Off by default.
+- Reviews: a weekly review (You > Weekly review) with your numbers, a highlight, how the week compares with your recent average, training,
+  goals and body notes, and a year in review with totals, grade pyramids, a heatmap of climbing days, your best week and landmarks. They
+  are computed from your log when you open them, so they always match the Stats screen.
+- Notifications (Settings), all off until you turn them on and all scheduled on your phone with no server: a Monday review, a streak
+  reminder on the last day that keeps a streak alive, a rest reminder after a hard day, a weekly milestone, and an alert when a rest in a
+  training session ends while the app is in the background. At most one a day, with quiet hours, and never for a missed day.
 - Goals (You > Goals): send a grade, climb a number of days or sends in a week or month, hold a streak, train fingers a number of days,
   or your own words with a tick box. Goals count what you log from the day you set them, show a progress ring and one plain sentence, and
   when one is reached you get confetti and one suggested next goal to accept or leave. A goal that is close takes the place of the usual

@@ -2,9 +2,9 @@ import { Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold } from "@expo-g
 import { BarlowCondensed_600SemiBold, BarlowCondensed_700Bold } from "@expo-google-fonts/barlow-condensed";
 import { CaveatBrush_400Regular } from "@expo-google-fonts/caveat-brush";
 import { useFonts } from "expo-font";
-import { Redirect, Stack, usePathname } from "expo-router";
+import { Redirect, Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppState, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { syncBackgroundTaskRegistration } from "../state/backgroundSync";
@@ -12,6 +12,8 @@ import { BluetoothTray } from "../ui/BluetoothTray";
 import { GoalCelebration } from "../ui/GoalCelebration";
 import { useGoalSync } from "../state/goals";
 import { useBoardKeepAwake } from "../state/keepAwake";
+import { useNotificationSync } from "../state/notificationSync";
+import { installNotificationHandler, onNotificationTap } from "../state/notifications";
 import { useData } from "../state/data";
 import { getProvider } from "../providers";
 import { resolveBoardId } from "../core/boards";
@@ -30,6 +32,15 @@ export default function Root() {
   const hydrated = useHydrated();
   useGoalSync();
   useBoardKeepAwake();
+  useNotificationSync();
+  const nav = useRouter();
+  const router = useRef(nav);
+  router.current = nav;
+  useEffect(() => {
+    installNotificationHandler();
+    // A tapped reminder opens the screen it was about.
+    return onNotificationTap((route) => router.current.push(route as never));
+  }, []);
   const booted = useBoot();
   const accounts = useStore((s) => s.accounts);
   const signedIn = Object.keys(accounts).length > 0;

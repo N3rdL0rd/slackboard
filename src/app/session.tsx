@@ -1,7 +1,7 @@
 import { useKeepAwake } from "expo-keep-awake";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { AppState, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { randomHex } from "../core/api";
 import { AREAS, AREA_LABEL, fingerHoldOff, noteFor, reportPain, type Area, type PainKind } from "../core/body";
@@ -11,7 +11,9 @@ import { entryName, entryText, lastTime, MAX_EDGE_MM, MAX_LOAD_KG, MAX_REPS, MAX
 import { formatWeight, roundTo, weightIn, weightStep, weightToKg } from "../core/units";
 import type { Units } from "../core/settings";
 import { exerciseById, GRIP_LABEL, type Exercise, type Grip } from "../data/exercises";
+import { restEndAlert } from "../core/notifications";
 import { useDayNotes, useDayNotesStore } from "../state/dayNotes";
+import { cancelRestEnd, scheduleRestEnd } from "../state/notifications";
 import { useStore } from "../state/store";
 import { useToday } from "../state/today";
 import { useTraining, useTrainingStore } from "../state/training";
@@ -142,6 +144,22 @@ function Runner({ items, startedAt, idFor, onFinished }: { items: RunnerItem[]; 
   const today = useToday();
   const [state, dispatch] = useReducer(step, items, startRunner);
   const [hurt, setHurt] = useState(false);
+
+  // If the phone is put away mid-rest, one alert says when it ends (when the user turned that on). It is cancelled on return.
+  const restAlert = useStore((s) => s.settings.notifications.sessionRest);
+  const latest = useRef(state);
+  latest.current = state;
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (a) => {
+      if (a === "active") { void cancelRestEnd(); return; }
+      const st = latest.current;
+      if (!restAlert || st.phase !== "rest" || st.paused) return;
+      const name = exerciseById(st.items[st.item].exerciseId)?.name ?? "Next set";
+      const alert = restEndAlert(new Date(), st.remainingMs, `${name}, set ${st.set + 1} of ${st.items[st.item].sets.length}`);
+      if (alert) void scheduleRestEnd(alert.fireAt, alert.title, alert.body);
+    });
+    return () => { sub.remove(); void cancelRestEnd(); };
+  }, [restAlert]);
 
   // Real time passed, not the number of ticks, so a phone that stalls for a moment catches up.
   useEffect(() => {

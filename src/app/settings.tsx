@@ -10,6 +10,7 @@ import type { NudgeLevel } from "../core/settings";
 import { deleteUserReq, submit } from "../core/api";
 import { sessionFor } from "../state/session";
 import { Button, IconButton, Segmented, SectionLabel, Sheet, SwitchRow } from "../ui/parts";
+import { NotificationSettings } from "../ui/NotificationSettings";
 import { Stepper } from "../ui/Stepper";
 import { ROPED_GRADES, ropedLabel } from "../data/ropedGrades";
 import { MAX_V } from "../core/ropedEquivalence";
@@ -80,6 +81,8 @@ export default function Settings() {
             <Text v="caption" style={{ marginTop: 6 }}>Relaxed speaks up after 3 days in a row. Standard also after 2 hard days in a row. Keen after any 2 in a row.</Text>
           </>
         ) : null}
+
+        <NotificationSettings />
 
         <SectionLabel>Privacy</SectionLabel>
         <SwitchRow label="Log climbs I light up" help={`Each board brand keeps a Recently lit history for each controller. Turn this off and Slackboard won't add the climbs you light up to it.`} value={s.logLit} onChange={(logLit) => patch({ logLit })} />

@@ -40,7 +40,7 @@
           ]
         }
       ],
-      "versionCode": 2,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon-foreground.png",
         "monochromeImage": "./assets/adaptive-icon-monochrome.png",
@@ -110,7 +110,14 @@
         }
       ],
       "./plugins/withReleaseSigning",
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "expo-notifications",
+        {
+          "color": "#121618",
+          "defaultChannel": "plans-reviews"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false

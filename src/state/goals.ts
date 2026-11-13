@@ -70,6 +70,15 @@ export function useGoalLabels(): GoalLabels {
   return useMemo(() => ({ boulder: (v) => commonLabel(v, display), roped: (n) => ropedLabel(n, system) ?? `${n}` }), [display, system]);
 }
 
+/** True once every source of entries (board logbooks, off-board, roped, training) has been read, so nothing is judged against half a log. */
+export function useLogsReady(): boolean {
+  const boards = useData((d) => d.boardsLoaded);
+  const roped = useRoped((s) => s.loaded);
+  const outside = useOutside((s) => s.loaded);
+  const training = useTrainingStore((s) => s.loaded);
+  return boards && roped && outside && training;
+}
+
 /**
  * Keeps goal statuses true: whenever the entries or the goals change, reached goals become achieved and goals whose window passed
  * become ended. It waits until every source of entries has been read, because a goal must never be judged against a log that is
@@ -81,11 +90,8 @@ export function useGoalSync(): void {
   const today = useToday();
   const goals = useGoals();
   const goalsLoaded = useGoalsStore((s) => s.loaded);
-  const boards = useData((d) => d.boardsLoaded);
-  const roped = useRoped((s) => s.loaded);
-  const outside = useOutside((s) => s.loaded);
-  const training = useTrainingStore((s) => s.loaded);
-  const ready = goalsLoaded && boards && roped && outside && training;
+  const logsReady = useLogsReady();
+  const ready = goalsLoaded && logsReady;
   useEffect(() => {
     if (!ready) return;
     const r = resolveGoals(goals, { activities, today, labels }, new Date());

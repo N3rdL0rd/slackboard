@@ -15,7 +15,9 @@ export const hasPreferences = (p: Preferences): boolean => Object.keys(p.setting
 
 /** The preferences in the app's stored state. */
 export function preferencesOf(s: { settings: Partial<Settings>; angles: Record<string, number>; timer: TimerConfig; restSec: number }): Preferences {
-  return { settings: { ...s.settings }, angles: { ...s.angles }, timer: s.timer, restSec: s.restSec };
+  // Whether this phone refused the notification permission is about this phone, not a preference to carry to another.
+  const { notificationsDeclined: _declined, ...settings } = s.settings;
+  return { settings, angles: { ...s.angles }, timer: s.timer, restSec: s.restSec };
 }
 
 type Obj = Record<string, unknown>;
@@ -25,7 +27,7 @@ const TIMER_KEYS: (keyof TimerConfig)[] = ["prepSec", "workSec", "restSec", "rep
 
 export function parsePreferences(raw: unknown): Preferences {
   if (!isObj(raw)) return EMPTY_PREFS;
-  const settings = parseSettings(raw.settings);
+  const { notificationsDeclined: _declined, ...settings } = parseSettings(raw.settings);
   const angles: Record<string, number> = {};
   if (isObj(raw.angles)) {
     let n = 0;

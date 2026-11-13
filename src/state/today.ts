@@ -6,6 +6,7 @@ import { dayOf, type Day } from "../core/days";
 import { milestoneCandidates, motivationLine, toastMilestone, type Milestone } from "../core/milestones";
 import { restNudge, type Nudge } from "../core/nudge";
 import { ropedWorking } from "../core/roped";
+import type { WorkingGrades } from "../core/load";
 import { streakInfo, weekDots, type StreakInfo, type WeekDot } from "../core/streak";
 import { useData } from "./data";
 import { useDayNotes, useDayNotesStore } from "./dayNotes";
@@ -91,6 +92,26 @@ function ringFor(goals: Goal[], ctx: Parameters<typeof measure>[1]): TodayInfo["
   if (!g) return null;
   const p = measure(g, ctx);
   return { progress: p.progress, label: String(p.current), text: `${g.title}. ${p.summary}` };
+}
+
+/** The grades a rest nudge and the notifications judge a hard day against: the boulder working grade and the roped one. */
+export function useWorkingGrades(): WorkingGrades {
+  const roped = useRopedLogs();
+  const overview = useOverview(8);
+  const boulder = overview.working;
+  return useMemo(() => ({ boulder, roped: ropedWorking(roped, new Date()) }), [boulder, roped]);
+}
+
+/** The one thing worth saying about progress right now: a close goal, else the closest milestone. Null when there is nothing close and true. */
+export function useClosestMilestone(): Milestone | null {
+  const activities = useActivities();
+  const today = useToday();
+  const goals = useGoals();
+  const labels = useGoalLabels();
+  return useMemo(() => {
+    const close = closestGoal(goals, { activities, today, labels });
+    return close ? goalMilestone(close.goal, close.progress) : motivationLine({ activities, today, streak: streakInfo(climbingDays(activities), today) });
+  }, [activities, today, goals, labels]);
 }
 
 /** All the milestones that can be said, for the sheet that shows how the line was chosen. */

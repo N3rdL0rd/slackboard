@@ -41,6 +41,8 @@ export default function You() {
   const caps = getProvider(current?.spec.provider).capabilities;
   const shortcuts: { label: string; value?: string; to: () => void }[] = [
     { label: "Stats", to: () => router.push("/stats") },
+    { label: "Weekly review", to: () => router.push("/review") },
+    { label: "Year in review", to: () => router.push("/year-review") },
     { label: "Goals", value: String(goals.filter((g) => g.status === "active").length), to: () => router.push("/goals") },
     { label: "Log", value: String(logbook.length), to: () => router.navigate("/log") },
     { label: "Off-board climbs", value: String(outside.length), to: () => router.push("/off-board") },

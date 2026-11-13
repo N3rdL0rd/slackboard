@@ -27,6 +27,8 @@ export interface NotificationPrefs {
   rest: boolean;
   /** The single closest milestone, at most weekly. */
   milestone: boolean;
+  /** One alert when a rest in a training session ends while the app is in the background. */
+  sessionRest: boolean;
   quietStart: string;
   quietEnd: string;
 }
@@ -53,15 +55,17 @@ export interface Settings {
   motivation: boolean;
   nudges: NudgeLevel;
   notifications: NotificationPrefs;
+  /** The user said no to the system permission request. Kept on this phone only (it is not in a backup), so the app never asks twice. */
+  notificationsDeclined: boolean;
 }
 
 export const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
-  plan: false, planTime: "17:30", review: false, reviewTime: "08:00", streak: false, rest: false, milestone: false, quietStart: "21:00", quietEnd: "08:00",
+  plan: false, planTime: "17:30", review: false, reviewTime: "08:00", streak: false, rest: false, milestone: false, sessionRest: false, quietStart: "21:00", quietEnd: "08:00",
 };
 
 export const DEFAULT_SETTINGS: Settings = {
   gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, logLit: true, haptics: true,
-  ropedWorking: false, ropedEquivalence: DEFAULT_EQUIVALENCE, trainTab: true, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS,
+  ropedWorking: false, ropedEquivalence: DEFAULT_EQUIVALENCE, trainTab: true, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS, notificationsDeclined: false,
 };
 
 /** Pounds and feet where people use them. `region` is the two-letter country of the phone's locale ("US"). */
@@ -70,9 +74,9 @@ export const defaultUnits = (region: string | undefined): Units =>
 
 const DISPLAYS: GradeDisplay[] = ["both", "v", "font"];
 const NUDGES: NudgeLevel[] = ["off", "relaxed", "standard", "keen"];
-const NOTIFICATION_SWITCHES = ["plan", "review", "streak", "rest", "milestone"] as const;
+const NOTIFICATION_SWITCHES = ["plan", "review", "streak", "rest", "milestone", "sessionRest"] as const;
 const NOTIFICATION_TIMES = ["planTime", "reviewTime", "quietStart", "quietEnd"] as const;
-const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "ropedWorking", "trainTab", "motivation"] as const;
+const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "ropedWorking", "trainTab", "motivation", "notificationsDeclined"] as const;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 type Obj = Record<string, unknown>;

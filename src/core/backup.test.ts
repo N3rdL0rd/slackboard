@@ -8,6 +8,7 @@ import { EMPTY_MOON, exportMoon, parseMoon } from "./moonBackup";
 import { climbCount, createBoard, LOCAL_USER_ID, saveLog, saveOwnClimb, setTag } from "./moonLocal";
 import { layoutIdOf, setupByKey } from "./moonboard";
 import { DEFAULT_NOTIFICATIONS } from "./settings";
+import { DEFAULT_CONFIG } from "./timer";
 import { EMPTY_PREFS, parsePreferences, preferencesOf } from "./prefsBackup";
 import { loadLogbook, loadStatsAt } from "./repo";
 import { localTables } from "./localMigrations";
@@ -329,5 +330,13 @@ describe("every local table is backed up or says why not", () => {
   it("names a section the backup file really has", () => {
     const sections = Object.keys(JSON.parse(file({})));
     for (const t of localTables()) if (t.backup !== "none") expect(sections, t.name).toContain(t.backup);
+  });
+});
+
+describe("a refused notification permission stays on its phone", () => {
+  it("is left out of what is exported and ignored in what is read", () => {
+    const out = preferencesOf({ settings: { gradeDisplay: "v", notificationsDeclined: true }, angles: {}, timer: DEFAULT_CONFIG, restSec: 60 });
+    expect(out.settings).toEqual({ gradeDisplay: "v" });
+    expect(parsePreferences({ settings: { gradeDisplay: "v", notificationsDeclined: true } }).settings).toEqual({ gradeDisplay: "v" });
   });
 });
