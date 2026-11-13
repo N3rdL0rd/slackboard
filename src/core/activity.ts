@@ -58,11 +58,19 @@ export const ACTIVITY_KINDS: Record<ActivityKind, ActivityKindInfo> = {
   training: { label: "Training", discipline: "training", countsTowardStreak: true },
 };
 
-/** A board send or attempts record. */
-export function boardActivity(e: LogEntry): Activity<LogEntry> {
+/**
+ * The record behind an activity, by kind. The adapters below set `ref` to the record they read, so the kind says which type it is;
+ * these three are the only places that trust that.
+ */
+export const boardEntryOf = (a: Activity): LogEntry | null => (a.kind === "board" ? (a.ref as LogEntry) : null);
+export const offBoardLogOf = (a: Activity): OutsideLog | null => (a.kind === "offBoard" ? (a.ref as OutsideLog) : null);
+export const ropedLogOf = (a: Activity): RopedLog | null => (a.kind === "roped" ? (a.ref as RopedLog) : null);
+
+/** A board send or attempts record. `gradeOf` puts the send's grade on the shared V scale. */
+export function boardActivity(e: LogEntry, gradeOf: (e: LogEntry) => number): Activity<LogEntry> {
   return {
     id: `board:${e.id}`, kind: "board", at: e.climbedAt, day: dayOf(e.climbedAt), title: e.climbName, ref: e,
-    facts: { discipline: "boulder", send: e.isSend, tries: Math.max(1, e.bidCount), grade: e.isSend && e.difficulty > 0 ? e.difficulty : null, effort: null, fingerIntense: false },
+    facts: { discipline: "boulder", send: e.isSend, tries: Math.max(1, e.bidCount), grade: e.isSend && e.difficulty > 0 ? gradeOf(e) : null, effort: null, fingerIntense: false },
   };
 }
 
@@ -84,9 +92,13 @@ export function ropedActivity(l: RopedLog): Activity<RopedLog> {
   };
 }
 
-/** Every kind of entry as one list, newest first. */
-export function activitiesOf(input: { board?: LogEntry[]; offBoard?: OutsideLog[]; roped?: RopedLog[]; extra?: Activity[] }): Activity[] {
-  return [...(input.board ?? []).map(boardActivity), ...(input.offBoard ?? []).map(offBoardActivity), ...(input.roped ?? []).map(ropedActivity), ...(input.extra ?? [])].sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
+/**
+ * Every kind of entry as one list, newest first. `gradeOf` gives a board entry's grade on the shared V scale (a board's own difficulty
+ * numbers differ between brands), so it is required: without it a board send would carry a number the other kinds can't be compared to.
+ */
+export function activitiesOf(input: { board?: LogEntry[]; offBoard?: OutsideLog[]; roped?: RopedLog[]; extra?: Activity[]; gradeOf: (e: LogEntry) => number }): Activity[] {
+  const board = (input.board ?? []).map((e) => boardActivity(e, input.gradeOf));
+  return [...board, ...(input.offBoard ?? []).map(offBoardActivity), ...(input.roped ?? []).map(ropedActivity), ...(input.extra ?? [])].sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
 }
 
 /** Entries grouped by local day. */

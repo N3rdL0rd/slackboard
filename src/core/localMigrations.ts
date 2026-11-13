@@ -9,7 +9,7 @@ import type { Db } from "./db";
  * The key of the full backup file that carries a table's records, or `"none"` for a table that is not backed up (with the reason in a
  * comment next to it). A test checks every table names a section the backup really has, so a new table cannot be forgotten.
  */
-export type BackupSection = "circuits" | "offBoard" | "roped" | "litHistory" | "spaces" | "none";
+export type BackupSection = "circuits" | "offBoard" | "roped" | "dayNotes" | "litHistory" | "spaces" | "none";
 
 /** A table in the local database. `clearable` tables are emptied when the user removes their data (signs out everywhere). */
 export interface LocalTable {
@@ -45,6 +45,11 @@ CREATE TABLE IF NOT EXISTS l_roped_logs (id TEXT PRIMARY KEY, style TEXT NOT NUL
 CREATE INDEX IF NOT EXISTS l_roped_logs_at ON l_roped_logs (climbed_at);
 `;
 
+const V3 = `
+CREATE TABLE IF NOT EXISTS l_day_notes (day TEXT PRIMARY KEY, effort INTEGER, energy INTEGER, fingers TEXT NOT NULL, elbows TEXT NOT NULL, shoulders TEXT NOT NULL, other TEXT NOT NULL, note TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS l_nudge_state (key TEXT PRIMARY KEY, shown_at TEXT, snoozed_until TEXT, dismissed INTEGER NOT NULL DEFAULT 0);
+`;
+
 export const LOCAL_MIGRATIONS: LocalMigration[] = [
   {
     version: 1,
@@ -70,6 +75,16 @@ export const LOCAL_MIGRATIONS: LocalMigration[] = [
       { name: "l_roped_logs", clearable: false, backup: "roped" },
     ],
     up: (db) => db.exec(V2),
+  },
+  {
+    version: 3,
+    tables: [
+      // A day's body check-in is the user's own record, like the logs: kept when signing out and carried in the backup.
+      { name: "l_day_notes", clearable: false, backup: "dayNotes" },
+      // Which line was snoozed or hidden today. It only means something for a day or two, so it is not worth carrying in a backup.
+      { name: "l_nudge_state", clearable: true, backup: "none" },
+    ],
+    up: (db) => db.exec(V3),
   },
 ];
 

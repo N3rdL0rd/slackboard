@@ -16,8 +16,8 @@ The license text is at <https://openfontlicense.org/>. The fonts reach the app t
 
 ## Icons
 
-The Train tab's `muscle` icon is Lucide's `biceps-flexed`: ISC License, Copyright (c) 2026 Lucide Icons and Contributors, taken from
-`lucide-static` 1.72.0. The license text is at <https://github.com/lucide-icons/lucide/blob/main/LICENSE>.
+The `muscle`, `board`, `rock` and `rope` icons are Lucide's `biceps-flexed`, `grid-3x3`, `mountain` and `route`: ISC License, Copyright (c)
+2026 Lucide Icons and Contributors, taken from `lucide-static` 1.72.0. The license text is at <https://github.com/lucide-icons/lucide/blob/main/LICENSE>.
 
 ## Grade scales
 

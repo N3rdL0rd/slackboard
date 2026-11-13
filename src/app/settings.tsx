@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { GradeDisplay } from "../core/grades";
 import { signOutAll } from "../state/auth";
 import { useStore } from "../state/store";
+import type { NudgeLevel } from "../core/settings";
 import { deleteUserReq, submit } from "../core/api";
 import { sessionFor } from "../state/session";
 import { Button, IconButton, Segmented, SectionLabel, Sheet, SwitchRow } from "../ui/parts";
@@ -49,6 +50,12 @@ export default function Settings() {
         <SwitchRow label="Haptics" help="Taps you can feel when swiping, turning the angle dial, logging and during the timer" value={s.haptics !== false} onChange={(haptics) => patch({ haptics })} />
         <SwitchRow label="Auto connect" value={s.autoConnect} onChange={(autoConnect) => patch({ autoConnect })} />
         <SwitchRow label="Train tab" help="A tab for training. Hide it if you only climb; the interval timer stays under You." value={s.trainTab} onChange={(trainTab) => patch({ trainTab })} />
+
+        <SectionLabel>Motivation and rest</SectionLabel>
+        <SwitchRow label="Motivation lines" help="A line on the Climb tab when a milestone is close, such as '3 more V4s until you have 10'. Worked out from your own log only." value={s.motivation} onChange={(motivation) => patch({ motivation })} />
+        <Text v="bodyStrong" style={{ marginTop: 14, marginBottom: 8 }}>Rest advice</Text>
+        <Segmented<NudgeLevel> options={[{ value: "off", label: "Off" }, { value: "relaxed", label: "Relaxed" }, { value: "standard", label: "Standard" }, { value: "keen", label: "Keen" }]} value={s.nudges} onChange={(nudges) => patch({ nudges })} />
+        <Text v="caption" style={{ marginTop: 6 }}>Relaxed speaks up after 3 days in a row. Standard also after 2 hard days in a row. Keen after any 2 in a row. It is advice, never a rule.</Text>
 
         <SectionLabel>Auto disconnect</SectionLabel>
         <Segmented<string> options={[{ value: "0", label: "Off" }, { value: "30", label: "30 sec" }, { value: "60", label: "1 min" }, { value: "300", label: "5 min" }]}

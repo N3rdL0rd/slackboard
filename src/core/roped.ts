@@ -243,3 +243,18 @@ export function ropedStats(logs: RopedLog[], now: Date, weeksShown = ROPED_WEEKS
   out.weeks = starts.map((s) => { const w = weeks.get(s)!; return { ...w, metres: Math.round(w.metres) }; });
   return out;
 }
+
+/** How far back the roped working grade looks, in days, and how many sends it needs. */
+export const ROPED_WORKING_DAYS = 90;
+export const ROPED_WORKING_SENDS = 3;
+
+/**
+ * The user's roped working grade (IRCRA): the average of their three hardest sends in the last `ROPED_WORKING_DAYS` days, or null with
+ * fewer than three. It is on the roped scale and is only compared with other roped grades, such as when the load model decides
+ * whether a day was hard.
+ */
+export function ropedWorking(logs: RopedLog[], now: Date): number | null {
+  const from = addDays(dayOf(now), -ROPED_WORKING_DAYS);
+  const top = logs.filter((l) => isSend(l.result) && dayOf(l.climbedAt) >= from).map((l) => l.grade).sort((a, b) => b - a).slice(0, ROPED_WORKING_SENDS);
+  return top.length < ROPED_WORKING_SENDS ? null : top.reduce((a, b) => a + b, 0) / top.length;
+}

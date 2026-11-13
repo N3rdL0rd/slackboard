@@ -29,6 +29,9 @@ import { deleteClimb, reportClimb } from "../../state/climbActions";
 import { showBluetooth } from "../../state/bluetoothTray";
 import { logSend, setTag, undoLog, type Logged } from "../../state/serverSends";
 import { useStore, useBoard } from "../../state/store";
+import { vOf } from "../../core/milestones";
+import { gradeOfEntry } from "../../state/stats";
+import { useToastMilestone } from "../../state/today";
 import { useClimbList } from "../../state/useClimbList";
 import { BoardView, boardHeight } from "../../ui/BoardView";
 import { ZoomView } from "../../ui/ZoomView";
@@ -159,7 +162,7 @@ export default function ClimbView() {
   const [timerLen, setTimerLen] = useState(60);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
-  const [toast, setToast] = useState<{ text: string; entry: Logged; share?: { send: SendFacts; difficulty: number }; celebrate?: Celebration } | null>(null);
+  const [toast, setToast] = useState<{ text: string; entry: Logged; share?: { send: SendFacts; difficulty: number }; celebrate?: Celebration; loggedV?: number } | null>(null);
   const [confetti, setConfetti] = useState(0);
   const [share, setShare] = useState<ShareFacts | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -274,6 +277,8 @@ export default function ClimbView() {
       text: entry.serverId ? text : "Saved on this phone. It uploads when you're online.", entry,
       celebrate: celebrate ?? undefined,
       share: sent ? { send: { attempts: input.bidCount, stars: input.quality ?? 0, comment: input.comment, climbedAt: localStamp(input.climbedAt) }, difficulty: input.difficulty! } : undefined,
+      // The board grade just sent, so the toast can say how close the next milestone at that grade is.
+      loggedV: sent && board ? vOf(gradeOfEntry({ provider: board.spec.provider, difficulty: input.difficulty! })) : undefined,
     });
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), sent ? 9000 : 6000);
@@ -385,6 +390,7 @@ export default function ClimbView() {
           <View style={{ flex: 1, paddingVertical: 8 }}>
             {toast.celebrate ? <Text style={{ fontFamily: font.display, fontSize: 26, lineHeight: 30, color: c.starOn }}>Congrats!</Text> : null}
             <Text v="bodyStrong">{toast.celebrate ? toast.celebrate.text : toast.text}</Text>
+            {toast.loggedV !== undefined && !toast.celebrate ? <ToastMilestone v={toast.loggedV} /> : null}
           </View>
           {toast.share ? (
             <Tap accessibilityRole="button" accessibilityLabel="Share your send" onPress={() => { const t = toast.share!; setToast(null); openShare("send", t.send, t.difficulty); }} style={{ minHeight: 48, justifyContent: "center", paddingHorizontal: 12 }}>
@@ -580,4 +586,10 @@ function Item({ label, onPress, danger }: { label: string; onPress: () => void; 
       <Text v="bodyStrong" style={{ color: danger ? c.danger : c.text }}>{label}</Text>
     </Tap>
   );
+}
+
+/** The milestone about the grade just sent, when it has come close: "3 more V4s until you have 10". */
+function ToastMilestone({ v }: { v: number }) {
+  const m = useToastMilestone(v);
+  return m ? <Text v="caption">{m.text}</Text> : null;
 }

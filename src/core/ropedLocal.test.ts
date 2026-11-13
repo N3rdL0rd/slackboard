@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clearLocalData, ensureLocalSchema } from "./logicalCircuits";
-import { LOCAL_MIGRATIONS, localTables, migrateLocal, storedLocalVersion } from "./localMigrations";
+import { LOCAL_MIGRATIONS, LOCAL_SCHEMA_VERSION, localTables, migrateLocal, storedLocalVersion } from "./localMigrations";
 import { openNodeDb } from "./nodeDb";
 import type { RopedLog } from "./roped";
 import { deleteRoped, loadRoped, saveRoped } from "./ropedLocal";
@@ -32,7 +32,7 @@ describe("roped storage", () => {
     await db.run("INSERT INTO l_lit_history (id, provider, climb_id, climb_name, board_id, board_name, angle, lit_at) VALUES ('t1', 'tension', 'C', 'Pizza', 'b', 'Home', 40, '2026-11-01 10:00:00')");
     expect(await storedLocalVersion(db)).toBe(1);
     await ensureLocalSchema(db);
-    expect(await storedLocalVersion(db)).toBe(2);
+    expect(await storedLocalVersion(db)).toBe(LOCAL_SCHEMA_VERSION);
     await saveRoped(db, log("a"));
     expect(await loadRoped(db)).toHaveLength(1);
     expect((await db.all("SELECT * FROM l_lit_history")).length).toBe(1);

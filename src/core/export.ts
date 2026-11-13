@@ -6,6 +6,7 @@ import type { SpacesBackup } from "./spacesBackup";
 import type { LogicalCircuit } from "./logicalCircuits";
 import { RESULT_LABEL, wallStyle, type OutsideLog } from "./outside";
 import { isSend, ropedTitle, type RopedLog } from "./roped";
+import type { DayNote } from "./body";
 import { ropedLabel } from "../data/ropedGrades";
 import type { LogEntry } from "./types";
 
@@ -85,6 +86,8 @@ export interface ExportBundle {
   offBoard: OutsideLog[];
   /** Roped climbs, which exist only on the phone. */
   roped: RopedLog[];
+  /** Daily body check-ins, which exist only on the phone. */
+  dayNotes: DayNote[];
   /** Climbs lit up on a board, newest first. */
   litHistory: LitEntry[];
   /** MoonBoard boards, the problems the user set, and their likes and blocks. */
@@ -98,7 +101,7 @@ export interface ExportBundle {
 
 export function exportJson(input: {
   now: Date; user: { id: number | null; username: string }; range: ExportRange; logbook: LogEntry[]; circuits: LogicalCircuit[];
-  offBoard: OutsideLog[]; roped: RopedLog[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
+  offBoard: OutsideLog[]; roped: RopedLog[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
   gradeOf: (e: LogEntry) => GradeText;
 }): string {
   const bundle: ExportBundle = {
@@ -110,6 +113,7 @@ export function exportJson(input: {
     circuits: input.circuits.map((c) => ({ uuid: c.uuid, name: c.name, description: c.description, color: c.color, userId: c.userId, createdAt: c.createdAt, updatedAt: c.updatedAt, isPublic: c.isPublic, climbs: c.climbs, items: c.items, publishedOn: c.projections.map((p) => ({ provider: p.provider, uuid: p.remoteUuid, isPublic: p.isPublic })) })),
     offBoard: input.offBoard,
     roped: input.roped,
+    dayNotes: input.dayNotes,
     litHistory: input.litHistory,
     moon: input.moon,
     spaces: input.spaces,

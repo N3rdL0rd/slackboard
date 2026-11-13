@@ -18,6 +18,7 @@ import { ClimbSummary } from "../../ui/ClimbSummary";
 import { SpeedDial } from "../../ui/SpeedDial";
 import { ClimbWorkoutSheet } from "../../ui/ClimbWorkoutSheet";
 import { Button, Chip, IconButton, Spinner, Tap } from "../../ui/parts";
+import { TodayRow } from "../../ui/TodayRow";
 import { AngleSheet, BoardSheet, FilterSheet } from "../../ui/climbSheets";
 import { ArrivalChip } from "../../ui/SpaceBar";
 import { Text } from "../../ui/Text";
@@ -158,6 +159,7 @@ export default function ClimbTab() {
       </View>
 
       <ClimbSummary total={list.length} loading={loading} pending={pending} filterCount={filterCount} onFilters={() => setSheet("filter")} onReset={() => setFilter(DEFAULT_FILTER)} />
+      <TodayRow />
 
           </View>
         }

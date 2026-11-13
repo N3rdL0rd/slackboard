@@ -36,6 +36,11 @@ const PATHS = {
   edit: "M4 20l1-4L16 5l3 3L8 19l-4 1Z",
   // Lucide "biceps-flexed" (ISC licence, lucide-static 1.72.0). See THIRD_PARTY_NOTICES.md.
   muscle: "M12.409 13.017A5 5 0 0 1 22 15c0 3.866-4 7-9 7-4.077 0-8.153-.82-10.371-2.462-.426-.316-.631-.832-.62-1.362C2.118 12.723 2.627 2 10 2a3 3 0 0 1 3 3 2 2 0 0 1-2 2c-1.105 0-1.64-.444-2-1M15 14a5 5 0 0 0-7.584 2M9.964 6.825C8.019 7.977 9.5 13 8 15",
+  // Lucide "grid-3x3", "mountain" and "route" (ISC licence, lucide-static 1.72.0), with the rect and circles written as paths. They tell the
+  // kinds of log entry apart by shape: a board, a boulder off the boards, and a roped route.
+  board: "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM3 9h18M3 15h18M9 3v18M15 3v18",
+  rock: "m8 3 4 8 5-5 5 15H2L8 3z",
+  rope: "M9 5h8.5a1 1 0 0 1 0 7h-11a1 1 0 0 0 0 7H15M21 19a3 3 0 1 0-6 0 3 3 0 0 0 6 0ZM9 5a3 3 0 1 0-6 0 3 3 0 0 0 6 0Z",
 } as const;
 export type IconName = keyof typeof PATHS;
 

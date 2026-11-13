@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ropedActivity } from "./activity";
 import {
-  afterSave, describeRoped, draftOf, draftProblem, fromMetres, gradeText, makeRopedLog, newDraft, normaliseTries, parseLength, recentCombos, repeatDraft, ropedStats, ropedTitle, toMetres,
+  afterSave, describeRoped, draftOf, draftProblem, fromMetres, gradeText, makeRopedLog, newDraft, normaliseTries, parseLength, recentCombos, repeatDraft, ropedStats, ropedTitle, ropedWorking, toMetres,
   type RopedLog,
 } from "./roped";
 
@@ -178,5 +178,21 @@ describe("as an activity", () => {
     expect(a).toMatchObject({ id: "roped:r1", kind: "roped", day: "2026-11-04", title: "5.10c autobelay" });
     expect(a.facts).toMatchObject({ discipline: "roped", send: true, tries: 6, grade: 13, fingerIntense: false });
     expect(ropedActivity(log({ result: "fell" })).facts).toMatchObject({ send: false, grade: null });
+  });
+});
+
+describe("roped working grade", () => {
+  const now = new Date(2026, 10, 12, 12, 0, 0);
+  const sent = (grade: number, climbedAt: string, over: Partial<RopedLog> = {}) => log({ id: `w${grade}${climbedAt}`, grade, climbedAt, ...over });
+
+  it("averages the three hardest sends in the last 90 days", () => {
+    const logs = [sent(12, "2026-11-01 10:00:00"), sent(14, "2026-10-20 10:00:00"), sent(13, "2026-09-20 10:00:00"), sent(11, "2026-11-02 10:00:00"), sent(20, "2026-06-01 10:00:00")];
+    expect(ropedWorking(logs, now)).toBeCloseTo((14 + 13 + 12) / 3);
+  });
+
+  it("is null with fewer than three sends, ignoring falls and anything older", () => {
+    expect(ropedWorking([], now)).toBeNull();
+    expect(ropedWorking([sent(12, "2026-11-01 10:00:00"), sent(13, "2026-11-02 10:00:00"), sent(14, "2026-11-03 10:00:00", { result: "fell" })], now)).toBeNull();
+    expect(ropedWorking([sent(12, "2026-11-01 10:00:00"), sent(13, "2026-11-02 10:00:00"), sent(14, "2026-06-03 10:00:00")], now)).toBeNull();
   });
 });
