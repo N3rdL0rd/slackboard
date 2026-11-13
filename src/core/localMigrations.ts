@@ -9,7 +9,7 @@ import type { Db } from "./db";
  * The key of the full backup file that carries a table's records, or `"none"` for a table that is not backed up (with the reason in a
  * comment next to it). A test checks every table names a section the backup really has, so a new table cannot be forgotten.
  */
-export type BackupSection = "circuits" | "offBoard" | "roped" | "dayNotes" | "litHistory" | "spaces" | "none";
+export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "dayNotes" | "litHistory" | "spaces" | "none";
 
 /** A table in the local database. `clearable` tables are emptied when the user removes their data (signs out everywhere). */
 export interface LocalTable {
@@ -50,6 +50,12 @@ CREATE TABLE IF NOT EXISTS l_day_notes (day TEXT PRIMARY KEY, effort INTEGER, en
 CREATE TABLE IF NOT EXISTS l_nudge_state (key TEXT PRIMARY KEY, shown_at TEXT, snoozed_until TEXT, dismissed INTEGER NOT NULL DEFAULT 0);
 `;
 
+const V4 = `
+CREATE TABLE IF NOT EXISTS l_training_entries (id TEXT PRIMARY KEY, exercise_id TEXT NOT NULL, performed_at TEXT NOT NULL, effort INTEGER, note TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS l_training_entries_at ON l_training_entries (performed_at);
+CREATE TABLE IF NOT EXISTS l_training_sets (entry_id TEXT NOT NULL, position INTEGER NOT NULL, reps INTEGER, load_kg REAL, time_s REAL, edge_mm REAL, grip TEXT, rest_s INTEGER, done INTEGER NOT NULL, PRIMARY KEY (entry_id, position));
+`;
+
 export const LOCAL_MIGRATIONS: LocalMigration[] = [
   {
     version: 1,
@@ -85,6 +91,15 @@ export const LOCAL_MIGRATIONS: LocalMigration[] = [
       { name: "l_nudge_state", clearable: true, backup: "none" },
     ],
     up: (db) => db.exec(V3),
+  },
+  {
+    version: 4,
+    tables: [
+      // Training is the user's own record, kept like climbs: signing out keeps it, and the backup carries it.
+      { name: "l_training_entries", clearable: false, backup: "training" },
+      { name: "l_training_sets", clearable: false, backup: "training" },
+    ],
+    up: (db) => db.exec(V4),
   },
 ];
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Activity } from "./activity";
-import { blankNote, fingerHoldOff, isBlankNote, nextState, noteFor, noteSummary, painNote, parseDayNote, repeatedPain, withDayEfforts, type DayNote } from "./body";
+import { blankNote, fingerHoldOff, isBlankNote, nextState, noteFor, noteSummary, painNote, parseDayNote, repeatedPain, withDayEfforts, reportPain, type DayNote } from "./body";
 
 const day = (n: number) => `2026-11-${String(n).padStart(2, "0")}`;
 const note = (n: number, over: Partial<DayNote> = {}): DayNote => ({ ...blankNote(day(n)), ...over });
@@ -109,5 +109,19 @@ describe("a check-in in one line", () => {
     expect(noteSummary(note(3, { effort: 4 }))).toBe("effort 4 of 10");
     expect(noteSummary(note(3, { note: "only a note" }))).toBe("");
     expect(noteSummary(blankNote(day(3)))).toBe("");
+  });
+});
+
+describe("reporting pain during a session", () => {
+  const day = "2026-11-12";
+  it("marks an ache as sore and a sharp pain as hurts, starting a note when there is none", () => {
+    expect(reportPain(undefined, day, "fingers", "achy")).toMatchObject({ day, fingers: "sore", elbows: "fine" });
+    expect(reportPain(undefined, day, "elbows", "sharp")).toMatchObject({ elbows: "hurts", fingers: "fine" });
+  });
+
+  it("never softens a worse state, and keeps the rest of the note", () => {
+    const note = { ...blankNote(day), fingers: "hurts" as const, energy: 3, note: "tweaky" };
+    expect(reportPain(note, day, "fingers", "achy")).toEqual(note);
+    expect(reportPain({ ...note, fingers: "sore" }, day, "fingers", "sharp")).toMatchObject({ fingers: "hurts", energy: 3, note: "tweaky" });
   });
 });

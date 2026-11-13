@@ -8,6 +8,7 @@ import { RESULT_LABEL, wallStyle, type OutsideLog } from "./outside";
 import { isSend, ropedTitle, type RopedLog } from "./roped";
 import type { DayNote } from "./body";
 import { ropedLabel } from "../data/ropedGrades";
+import { doneSets, entryName, entryText, type TrainingEntry } from "./training";
 import type { LogEntry } from "./types";
 
 export type ExportFormat = "csv" | "json";
@@ -40,7 +41,7 @@ export interface GradeText {
 
 export const CSV_HEADER = [
   "date", "provider", "climb", "climb_uuid", "type", "angle", "mirrored", "attempts", "grade_v", "grade_font", "quality", "comment", "setting", "venue", "wall", "tags", "link",
-  "kind", "style", "result", "grade_yds", "grade_french", "length_m", "pitches",
+  "kind", "style", "result", "grade_yds", "grade_french", "length_m", "pitches", "detail",
 ];
 
 /**
@@ -49,11 +50,11 @@ export const CSV_HEADER = [
  * their own columns (style, result, YDS and French grade, length and pitches), because roped grades are not V grades.
  */
 export function logbookCsv(
-  entries: LogEntry[], gradeOf: (e: LogEntry) => GradeText, offBoard: OutsideLog[] = [], offGradeOf: (l: OutsideLog) => GradeText = () => ({ v: "", font: "" }), roped: RopedLog[] = [],
+  entries: LogEntry[], gradeOf: (e: LogEntry) => GradeText, offBoard: OutsideLog[] = [], offGradeOf: (l: OutsideLog) => GradeText = () => ({ v: "", font: "" }), roped: RopedLog[] = [], training: TrainingEntry[] = [],
 ): string {
   type Field = string | number | boolean | null;
   const rows: { at: string; fields: Field[] }[] = [];
-  const none: Field[] = ["", "", "", "", "", ""];
+  const none: Field[] = ["", "", "", "", "", "", ""];
   for (const e of entries) {
     const g = e.difficulty > 0 ? gradeOf(e) : { v: "", font: "" };
     rows.push({ at: e.climbedAt, fields: [e.climbedAt, e.provider, e.climbName, e.climbUuid, e.isSend ? "send" : "attempts", e.angle, e.isMirror, e.bidCount, g.v, g.font, e.isSend ? e.quality : "", e.comment, "", "", "", "", "", "board", ...none] });
@@ -66,7 +67,15 @@ export function logbookCsv(
   for (const l of roped) {
     rows.push({ at: l.climbedAt, fields: [
       l.climbedAt, "", ropedTitle(l), l.id, isSend(l.result) ? "send" : "attempts", "", "", l.attempts, "", "", "", l.note, l.setting, l.venue, "", "", l.link,
-      "roped", l.style, l.result, ropedLabel(l.grade, "yds") ?? "", ropedLabel(l.grade, "french") ?? "", l.lengthM ?? "", l.pitches,
+      "roped", l.style, l.result, ropedLabel(l.grade, "yds") ?? "", ropedLabel(l.grade, "french") ?? "", l.lengthM ?? "", l.pitches, "",
+    ] });
+  }
+  // Training: `attempts` is the sets done, and `detail` the last set in kilograms (the CSV does not follow the unit setting).
+  for (const t of training) {
+    if (doneSets(t).length === 0) continue;
+    rows.push({ at: t.performedAt, fields: [
+      t.performedAt, "", entryName(t), t.id, "training", "", "", doneSets(t).length, "", "", "", t.note, "", "", "", "", "",
+      "training", "", "", "", "", "", "", entryText(t, { weight: "kg", length: "m" }),
     ] });
   }
   rows.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
@@ -86,6 +95,8 @@ export interface ExportBundle {
   offBoard: OutsideLog[];
   /** Roped climbs, which exist only on the phone. */
   roped: RopedLog[];
+  /** Training entries and their sets, which exist only on the phone. */
+  training: TrainingEntry[];
   /** Daily body check-ins, which exist only on the phone. */
   dayNotes: DayNote[];
   /** Climbs lit up on a board, newest first. */
@@ -101,7 +112,7 @@ export interface ExportBundle {
 
 export function exportJson(input: {
   now: Date; user: { id: number | null; username: string }; range: ExportRange; logbook: LogEntry[]; circuits: LogicalCircuit[];
-  offBoard: OutsideLog[]; roped: RopedLog[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
+  offBoard: OutsideLog[]; roped: RopedLog[]; training: TrainingEntry[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
   gradeOf: (e: LogEntry) => GradeText;
 }): string {
   const bundle: ExportBundle = {
@@ -113,6 +124,7 @@ export function exportJson(input: {
     circuits: input.circuits.map((c) => ({ uuid: c.uuid, name: c.name, description: c.description, color: c.color, userId: c.userId, createdAt: c.createdAt, updatedAt: c.updatedAt, isPublic: c.isPublic, climbs: c.climbs, items: c.items, publishedOn: c.projections.map((p) => ({ provider: p.provider, uuid: p.remoteUuid, isPublic: p.isPublic })) })),
     offBoard: input.offBoard,
     roped: input.roped,
+    training: input.training,
     dayNotes: input.dayNotes,
     litHistory: input.litHistory,
     moon: input.moon,

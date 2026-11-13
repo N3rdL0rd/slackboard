@@ -8,6 +8,8 @@
 import { dayOf, type Day } from "./days";
 import { adjustedGrade, SETTING_LABEL, wallStyle, type OutsideLog } from "./outside";
 import { isSend, ropedTitle, type RopedLog } from "./roped";
+import { doneSets, entryName, type TrainingEntry } from "./training";
+import { exerciseById } from "../data/exercises";
 import type { LogEntry } from "./types";
 
 export type ActivityKind = "board" | "offBoard" | "roped" | "training";
@@ -60,10 +62,11 @@ export const ACTIVITY_KINDS: Record<ActivityKind, ActivityKindInfo> = {
 
 /**
  * The record behind an activity, by kind. The adapters below set `ref` to the record they read, so the kind says which type it is;
- * these three are the only places that trust that.
+ * these four are the only places that trust that.
  */
 export const boardEntryOf = (a: Activity): LogEntry | null => (a.kind === "board" ? (a.ref as LogEntry) : null);
 export const offBoardLogOf = (a: Activity): OutsideLog | null => (a.kind === "offBoard" ? (a.ref as OutsideLog) : null);
+export const trainingEntryOf = (a: Activity): TrainingEntry | null => (a.kind === "training" ? (a.ref as TrainingEntry) : null);
 export const ropedLogOf = (a: Activity): RopedLog | null => (a.kind === "roped" ? (a.ref as RopedLog) : null);
 
 /** A board send or attempts record. `gradeOf` puts the send's grade on the shared V scale. */
@@ -92,13 +95,23 @@ export function ropedActivity(l: RopedLog): Activity<RopedLog> {
   };
 }
 
+/** One exercise on one day. Tries are the sets done; finger-intense work counts toward the rest nudge. Never a send, never graded. */
+export function trainingActivity(e: TrainingEntry): Activity<TrainingEntry> {
+  return {
+    id: `training:${e.id}`, kind: "training", at: e.performedAt, day: dayOf(e.performedAt), title: entryName(e), ref: e,
+    facts: { discipline: "training", send: false, tries: Math.max(1, doneSets(e).length), grade: null, effort: e.effort, fingerIntense: exerciseById(e.exerciseId)?.fingerIntense ?? false },
+  };
+}
+
 /**
  * Every kind of entry as one list, newest first. `gradeOf` gives a board entry's grade on the shared V scale (a board's own difficulty
  * numbers differ between brands), so it is required: without it a board send would carry a number the other kinds can't be compared to.
  */
-export function activitiesOf(input: { board?: LogEntry[]; offBoard?: OutsideLog[]; roped?: RopedLog[]; extra?: Activity[]; gradeOf: (e: LogEntry) => number }): Activity[] {
+export function activitiesOf(input: { board?: LogEntry[]; offBoard?: OutsideLog[]; roped?: RopedLog[]; training?: TrainingEntry[]; extra?: Activity[]; gradeOf: (e: LogEntry) => number }): Activity[] {
   const board = (input.board ?? []).map((e) => boardActivity(e, input.gradeOf));
-  return [...board, ...(input.offBoard ?? []).map(offBoardActivity), ...(input.roped ?? []).map(ropedActivity), ...(input.extra ?? [])].sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
+  return [...board, ...(input.offBoard ?? []).map(offBoardActivity), ...(input.roped ?? []).map(ropedActivity),
+    // An entry with no done set is not a day of training.
+    ...(input.training ?? []).filter((e) => doneSets(e).length > 0).map(trainingActivity), ...(input.extra ?? [])].sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
 }
 
 /** Entries grouped by local day. */

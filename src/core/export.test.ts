@@ -31,8 +31,8 @@ describe("logbookCsv", () => {
     const out = logbookCsv([e(), e({ isSend: false, difficulty: 0, climbName: 'Oh, "no"' })], g);
     const lines = out.split("\r\n");
     expect(lines[0]).toBe(CSV_HEADER.join(","));
-    expect(lines[1]).toBe("2026-10-28 18:00:00,tension,Masquerade,U1,send,40,false,2,V3,6a,3,,,,,,,board,,,,,,");
-    expect(lines[2]).toBe('2026-10-28 18:00:00,tension,"Oh, ""no""",U1,attempts,40,false,2,,,,,,,,,,board,,,,,,');
+    expect(lines[1]).toBe("2026-10-28 18:00:00,tension,Masquerade,U1,send,40,false,2,V3,6a,3,,,,,,,board,,,,,,,");
+    expect(lines[2]).toBe('2026-10-28 18:00:00,tension,"Oh, ""no""",U1,attempts,40,false,2,,,,,,,,,,board,,,,,,,');
     expect(out.endsWith("\r\n")).toBe(true);
   });
   it("is just the header for an empty logbook", () => expect(logbookCsv([], g)).toBe(CSV_HEADER.join(",") + "\r\n"));
@@ -46,15 +46,15 @@ describe("logbookCsv", () => {
     const lines = logbookCsv([e()], g, [], undefined, roped).split("\r\n");
     expect(lines).toHaveLength(6);
     // Newest first, with the board entry among them; the kind column says which is which.
-    expect(lines[1]).toBe("2026-10-29 09:00:00,,\"Slab, Happy\",r1,send,,,3,,,,'=hard,outdoor,Index,,,https://thecrag.com/r,roped,sport,redpoint,5.10c,6a+,24.5,2");
-    expect(lines[2]).toMatch(/,U1,send,40,.*,board,,,,,,$/);
-    expect(lines[3]).toBe("2026-10-27 09:00:00,,6a autobelay,r2,send,,,6,,,,,indoor,,,,,roped,autobelay,redpoint,5.10b,6a,,1");
-    expect(lines[4]).toBe("2026-10-26 09:00:00,,5.11a trad,r3,attempts,,,1,,,,,outdoor,,,,,roped,trad,fell,5.11a,6b+,,1");
+    expect(lines[1]).toBe("2026-10-29 09:00:00,,\"Slab, Happy\",r1,send,,,3,,,,'=hard,outdoor,Index,,,https://thecrag.com/r,roped,sport,redpoint,5.10c,6a+,24.5,2,");
+    expect(lines[2]).toMatch(/,U1,send,40,.*,board,,,,,,,$/);
+    expect(lines[3]).toBe("2026-10-27 09:00:00,,6a autobelay,r2,send,,,6,,,,,indoor,,,,,roped,autobelay,redpoint,5.10b,6a,,1,");
+    expect(lines[4]).toBe("2026-10-26 09:00:00,,5.11a trad,r3,attempts,,,1,,,,,outdoor,,,,,roped,trad,fell,5.11a,6b+,,1,");
   });
 });
 
 describe("exportJson", () => {
-  const base = { now: new Date("2026-10-31T12:00:00Z"), user: { id: 7, username: "n" }, range: "all" as const, circuits: [], offBoard: [], roped: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON, spaces: EMPTY_SPACES, preferences: EMPTY_PREFS, liked: ["b", "a"], blocked: [], boards: [], gradeOf: g };
+  const base = { now: new Date("2026-10-31T12:00:00Z"), user: { id: 7, username: "n" }, range: "all" as const, circuits: [], offBoard: [], roped: [], training: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON, spaces: EMPTY_SPACES, preferences: EMPTY_PREFS, liked: ["b", "a"], blocked: [], boards: [], gradeOf: g };
   it("round-trips the logbook with grades, drops the pending flag, and sorts tag lists", () => {
     const parsed = JSON.parse(exportJson({ ...base, logbook: [{ ...e(), pending: true }] }));
     expect(parsed.logbook[0]).toMatchObject({ climbName: "Masquerade", grade_v: "V3" });

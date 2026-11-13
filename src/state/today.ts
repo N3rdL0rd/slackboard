@@ -11,6 +11,7 @@ import { useData } from "./data";
 import { useDayNotes, useDayNotesStore } from "./dayNotes";
 import { useOutsideLogs } from "./outside";
 import { useRopedLogs } from "./roped";
+import { useTraining } from "./training";
 import { gradeOfEntry, useOverview } from "./stats";
 import { useStore } from "./store";
 
@@ -35,8 +36,9 @@ export function useActivities(): Activity[] {
   const logbook = useData((d) => d.logbook);
   const offBoard = useOutsideLogs();
   const roped = useRopedLogs();
+  const training = useTraining();
   const notes = useDayNotes();
-  return useMemo(() => withDayEfforts(activitiesOf({ board: logbook, offBoard, roped, gradeOf: gradeOfEntry }), notes), [logbook, offBoard, roped, notes]);
+  return useMemo(() => withDayEfforts(activitiesOf({ board: logbook, offBoard, roped, training, gradeOf: gradeOfEntry }), notes), [logbook, offBoard, roped, training, notes]);
 }
 
 export interface TodayInfo {

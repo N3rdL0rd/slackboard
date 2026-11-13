@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { JumpList } from "../../ui/JumpToTop";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { boardEntryOf, offBoardLogOf, ropedLogOf, type Activity, type ActivityKind } from "../../core/activity";
+import { boardEntryOf, offBoardLogOf, ropedLogOf, trainingEntryOf, type Activity, type ActivityKind } from "../../core/activity";
 import { noteFor, noteSummary, type DayNote } from "../../core/body";
 import { parseStamp } from "../../core/days";
 import { dayCards, dayTitle, filterByKind, KIND_FILTERS, timelineTotals, type CardLabels, type DayCard, type KindFilter } from "../../core/logTimeline";
@@ -18,6 +18,8 @@ import { useData } from "../../state/data";
 import { useDayNotes } from "../../state/dayNotes";
 import { useOutbox } from "../../state/outbox";
 import { useRopedLogs } from "../../state/roped";
+import { entryText } from "../../core/training";
+import type { Units } from "../../core/settings";
 import { activePin, pinProvider } from "../../state/active";
 import { setSequence } from "../../state/sequence";
 import { deleteLogEntry, editLogEntry, logSend } from "../../state/serverSends";
@@ -39,9 +41,6 @@ const RANGES: { value: Range; label: string }[] = [
 ];
 const DAYS: Record<Range, number> = { day: 1, week: 7, month: 31, year: 366, all: Infinity };
 
-/** Training joins this list when it can be logged. Until then its chip would lead to an empty screen, so it is not offered. */
-const FILTERS = KIND_FILTERS.filter((f) => f.value !== "training");
-
 /** The icon that tells the kinds of entry apart by shape. */
 const KIND_ICON: Record<ActivityKind, IconName> = { board: "board", offBoard: "rock", roped: "rope", training: "muscle" };
 
@@ -61,6 +60,7 @@ export default function LogTab() {
   const spaces = useSpaces((s) => s.spaces);
   const logSpaces = useSpaces((s) => s.logSpaces);
   const ropedSystem = useRopedLogs()[0]?.gradeSystem ?? "yds";
+  const units = useStore((s) => s.settings.units);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [range, setRange] = useState<Range>("month");
   const [kind, setKind] = useState<KindFilter>("all");
@@ -114,7 +114,9 @@ export default function LogTab() {
     const off = offBoardLogOf(a);
     if (off) { router.push({ pathname: "/outside", params: { id: off.id } }); return; }
     const rope = ropedLogOf(a);
-    if (rope) router.push({ pathname: "/roped", params: { id: rope.id } });
+    if (rope) { router.push({ pathname: "/roped", params: { id: rope.id } }); return; }
+    const t = trainingEntryOf(a);
+    if (t) router.push({ pathname: "/training/[id]", params: { id: t.id } });
   };
 
   return (
@@ -127,7 +129,7 @@ export default function LogTab() {
         <Segmented options={RANGES} value={range} onChange={setRange} />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 8 }}>
-        {FILTERS.map((f) => <Chip key={f.value} label={f.label} selected={kind === f.value} onPress={() => setKind(f.value)} />)}
+        {KIND_FILTERS.map((f) => <Chip key={f.value} label={f.label} selected={kind === f.value} onPress={() => setKind(f.value)} />)}
       </ScrollView>
       {(pending > 0 || rejected.length > 0) && (
         <View style={{ marginHorizontal: 16, marginBottom: 8, padding: 12, borderRadius: r.input, backgroundColor: c.raised, borderWidth: 1, borderColor: rejected.length ? c.danger : c.lineStrong, gap: 4 }}>
@@ -174,7 +176,7 @@ export default function LogTab() {
           </View>
         }
         renderItem={({ item: g }) => (
-          <DayCardView card={g} today={today} open={expanded === g.day} labels={labels} display={display} ropedSystem={ropedSystem}
+          <DayCardView card={g} today={today} open={expanded === g.day} labels={labels} display={display} ropedSystem={ropedSystem} units={units}
             note={noteFor(notes, g.day)} onToggle={() => setExpanded(expanded === g.day ? null : g.day)} onEntry={openEntry} onBody={() => setBodyDay(g.day)} />
         )}
       />
@@ -214,8 +216,8 @@ export default function LogTab() {
 }
 
 /** One day: the title, where, and a one-line summary; open it for the entries, each with the icon of its kind, and the day's check-in. */
-function DayCardView({ card, today, open, labels, display, ropedSystem, note, onToggle, onEntry, onBody }: {
-  card: DayCard; today: string; open: boolean; labels: CardLabels; display: GradeDisplay; ropedSystem: RopedSystem;
+function DayCardView({ card, today, open, labels, display, ropedSystem, units, note, onToggle, onEntry, onBody }: {
+  card: DayCard; today: string; open: boolean; labels: CardLabels; display: GradeDisplay; ropedSystem: RopedSystem; units: Units;
   note: DayNote | undefined; onToggle: () => void; onEntry: (a: Activity) => void; onBody: () => void;
 }) {
   const title = dayTitle(card.day, today);
@@ -237,7 +239,7 @@ function DayCardView({ card, today, open, labels, display, ropedSystem, note, on
         </View>
         <Icon name={open ? "chevD" : "chevR"} size={20} color={c.muted} />
       </Tap>
-      {open && card.entries.map((a) => <EntryRow key={a.id} a={a} display={display} ropedSystem={ropedSystem} onPress={() => onEntry(a)} />)}
+      {open && card.entries.map((a) => <EntryRow key={a.id} a={a} display={display} ropedSystem={ropedSystem} units={units} onPress={() => onEntry(a)} />)}
       {open && (
         <Tap accessibilityRole="button" accessibilityLabel={note ? "Edit how you felt this day" : "Add how you felt this day"} onPress={onBody}
           style={{ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, borderTopWidth: 1, borderTopColor: c.divider }}>
@@ -253,10 +255,11 @@ function DayCardView({ card, today, open, labels, display, ropedSystem, note, on
 const resultLine = (l: OutsideLog) => (l.result === "attempt" ? `${l.attempts} ${l.attempts === 1 ? "attempt" : "attempts"}` : l.result === "flash" ? RESULT_LABEL.flash : `Sent in ${l.attempts}`);
 
 /** One entry in an open day: its kind's icon, what it was, and its grade. */
-function EntryRow({ a, display, ropedSystem, onPress }: { a: Activity; display: GradeDisplay; ropedSystem: RopedSystem; onPress: () => void }) {
+function EntryRow({ a, display, ropedSystem, units, onPress }: { a: Activity; display: GradeDisplay; ropedSystem: RopedSystem; units: Units; onPress: () => void }) {
   const entry = boardEntryOf(a);
   const off = offBoardLogOf(a);
   const rope = ropedLogOf(a);
+  const training = trainingEntryOf(a);
   let name = a.title;
   let sub = clock(a.at);
   let chip: { band: GradeBand; label: string } | null = null;
@@ -278,6 +281,9 @@ function EntryRow({ a, display, ropedSystem, onPress }: { a: Activity; display: 
     sub = `${clock(rope.climbedAt)} \u00B7 ${describeRoped(rope)}${rope.venue ? ` \u00B7 ${rope.venue}` : ""}`;
     chip = { band: ropedBand(rope.grade), label: ropedLabel(rope.grade, ropedSystem) ?? rope.gradeLabel };
     comment = rope.note;
+  } else if (training) {
+    sub = `${clock(training.performedAt)} \u00B7 ${entryText(training, units)}`;
+    comment = training.note;
   }
   return (
     <Tap accessibilityRole="button" accessibilityLabel={`${name}. ${entry ? "Options" : "Edit"}`} onPress={onPress}

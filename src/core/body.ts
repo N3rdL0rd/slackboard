@@ -112,3 +112,16 @@ export function noteSummary(n: DayNote): string {
   if (n.effort !== null) parts.push(`effort ${n.effort} of 10`);
   return parts.join(" \u00B7 ");
 }
+
+export type PainKind = "achy" | "sharp";
+
+/**
+ * The day's note after the user says something hurts during a session: an ache marks the area sore, a sharp pain marks it hurts. A worse
+ * state already on the note stays (a sharp pain is never softened to an ache), and nothing else on the note changes.
+ */
+export function reportPain(existing: DayNote | undefined, day: Day, area: Area, kind: PainKind): DayNote {
+  const note = existing ?? blankNote(day);
+  const next: AreaState = kind === "sharp" ? "hurts" : "sore";
+  const worse = AREA_STATES.indexOf(next) > AREA_STATES.indexOf(note[area]) ? next : note[area];
+  return { ...note, [area]: worse };
+}

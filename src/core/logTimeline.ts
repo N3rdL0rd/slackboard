@@ -65,7 +65,7 @@ function summaryOf(entries: Activity[], labels: CardLabels, hardestRoped: number
     parts.push(sends > 0 ? count(sends, `${word} send`) : count(list.length, `${word} attempt`));
   }
   const training = of("training");
-  if (training.length) parts.push(count(training.length, "training entry", "training entries"));
+  if (training.length) parts.push(count(training.length, "exercise"));
   return parts.join(" \u00B7 ");
 }
 
