@@ -4,6 +4,7 @@
  * notification scheduler all share.
  */
 import type { GradeDisplay } from "./grades";
+import { DEFAULT_EQUIVALENCE, parseEquivalence, type RopedEquivalence } from "./ropedEquivalence";
 
 export type WeightUnit = "kg" | "lb";
 export type LengthUnit = "m" | "ft";
@@ -42,6 +43,10 @@ export interface Settings {
   haptics: boolean;
   /** Count gym and outdoor climbs in the stats (default on). */
   statsOffBoard?: boolean;
+  /** Let roped sends count toward the boulder working grade and stats, through `ropedEquivalence`. Off until the user turns it on. */
+  ropedWorking: boolean;
+  /** The pair the user counts as equal: a roped grade and a boulder grade. */
+  ropedEquivalence: RopedEquivalence;
   /** Show the Train tab. */
   trainTab: boolean;
   units: Units;
@@ -57,7 +62,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
 
 export const DEFAULT_SETTINGS: Settings = {
   gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, autoDisconnectSec: 60, logLit: true, haptics: true,
-  trainTab: true, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS,
+  ropedWorking: false, ropedEquivalence: DEFAULT_EQUIVALENCE, trainTab: true, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS,
 };
 
 /** Pounds and feet where people use them. `region` is the two-letter country of the phone's locale ("US"). */
@@ -68,7 +73,7 @@ const DISPLAYS: GradeDisplay[] = ["both", "v", "font"];
 const NUDGES: NudgeLevel[] = ["off", "relaxed", "standard", "keen"];
 const NOTIFICATION_SWITCHES = ["plan", "review", "streak", "rest", "milestone"] as const;
 const NOTIFICATION_TIMES = ["planTime", "reviewTime", "quietStart", "quietEnd"] as const;
-const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "trainTab", "motivation"] as const;
+const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "ropedWorking", "trainTab", "motivation"] as const;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 type Obj = Record<string, unknown>;
@@ -82,6 +87,8 @@ export function parseSettings(raw: unknown): Partial<Settings> {
   if (display) out.gradeDisplay = display;
   for (const k of BOOLS) if (typeof raw[k] === "boolean") out[k] = raw[k] as boolean;
   if (typeof raw.autoDisconnectSec === "number" && Number.isFinite(raw.autoDisconnectSec) && raw.autoDisconnectSec >= 0 && raw.autoDisconnectSec <= 3600) out.autoDisconnectSec = raw.autoDisconnectSec;
+  const equivalence = parseEquivalence(raw.ropedEquivalence);
+  if (equivalence) out.ropedEquivalence = equivalence;
   const nudges = NUDGES.find((n) => n === raw.nudges);
   if (nudges) out.nudges = nudges;
   if (isObj(raw.units)) {

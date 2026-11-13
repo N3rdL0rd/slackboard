@@ -9,7 +9,7 @@ import { angleAdvice, angleForStyle, angleSamples, gymTarget, gymTargetText, out
 import { useData } from "../state/data";
 import { useOutsideLogs } from "../state/outside";
 import { setSequence } from "../state/sequence";
-import { gradeOfEntry } from "../state/stats";
+import { gradeOfEntry, useRopedForWorking } from "../state/stats";
 import { useBoard, useStore } from "../state/store";
 import { useSpaceFor } from "../state/spaces";
 import { useBoardCandidates } from "../state/useBoardCandidates";
@@ -53,6 +53,7 @@ export default function Suggestions() {
   const logbook = useData((d) => d.logbook);
   const done = useData((d) => d.done);
   const outside = useOutsideLogs();
+  const roped = useRopedForWorking();
   const allBoards = useData((d) => d.boards);
   // Where your sends, on the boards and off them, say you have the most to gain; adjustable boards are then shown at that angle.
   const samples = useMemo(() => angleSamples(logbook, outside, gradeOfEntry), [logbook, outside]);
@@ -61,7 +62,7 @@ export default function Suggestions() {
   const profile = useMemo(() => styleProfile(samples, new Date()), [samples]);
   // What to try on the gym wall today: a style, tag, angle and grade you have done little of at your level. "Another" asks again.
   const [rerolls, setRerolls] = useState(0);
-  const working = useMemo(() => workingGrade(logbook, new Date(), gradeOfEntry, outsideEvidence(outside)), [logbook, outside]);
+  const working = useMemo(() => workingGrade(logbook, new Date(), gradeOfEntry, [...outsideEvidence(outside), ...roped.evidence]), [logbook, outside, roped]);
   const target = useMemo(() => {
     const now = new Date();
     const favoured: WallStyleId[] = [...(advice?.worthTraining ? [advice.weak.style] : []), ...(profile ? [profile.anti] : [])];
@@ -116,10 +117,10 @@ export default function Suggestions() {
       return { label: wallStyle(style).label.toLowerCase(), boards: set.candidates.filter((b) => plan.allowed.has(b.key) && inScope.has(b.key)), aim };
     };
     return suggest({
-      boards: scoped, logbook, logGrade: gradeOfEntry, now: new Date(), extraGrades: outsideEvidence(outside),
+      boards: scoped, logbook, logGrade: gradeOfEntry, now: new Date(), extraGrades: [...outsideEvidence(outside), ...roped.evidence],
       forYou: styleSet(forYouSet, forYouPlan, profile?.main), anti: styleSet(antiSet, antiPlan, profile?.anti),
     });
-  }, [ready, scoped, logbook, outside, profile, forYouSet, antiSet, forYouPlan, antiPlan]);
+  }, [ready, scoped, logbook, outside, roped, profile, forYouSet, antiSet, forYouPlan, antiPlan]);
   const sets = { base: base, foryou: forYouSet, anti: antiSet };
   const flat = useMemo(() => groups.flatMap((g) => g.items.map((i) => makeRef(i.provider, i.climb.uuid))), [groups]);
 

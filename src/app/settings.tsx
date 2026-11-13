@@ -10,6 +10,11 @@ import type { NudgeLevel } from "../core/settings";
 import { deleteUserReq, submit } from "../core/api";
 import { sessionFor } from "../state/session";
 import { Button, IconButton, Segmented, SectionLabel, Sheet, SwitchRow } from "../ui/parts";
+import { Stepper } from "../ui/Stepper";
+import { ROPED_GRADES, ropedLabel } from "../data/ropedGrades";
+import { MAX_V } from "../core/ropedEquivalence";
+import { useRopedLogs } from "../state/roped";
+import { commonLabel } from "../state/stats";
 import { Text } from "../ui/Text";
 import { c, r, role as roleTokens, type RoleName } from "../theme";
 
@@ -18,6 +23,7 @@ export default function Settings() {
   const insets = useSafeAreaInsets();
   const s = useStore((x) => x.settings);
   const patch = useStore((x) => x.patchSettings);
+  const ropedSystem = useRopedLogs()[0]?.gradeSystem ?? "yds";
   const accounts = useStore((x) => x.accounts);
   const roles: { n: RoleName; l: string }[] = [{ n: "start", l: "Start" }, { n: "middle", l: "Middle" }, { n: "finish", l: "Finish" }, { n: "foot", l: "Foot only" }];
   return (
@@ -29,6 +35,20 @@ export default function Settings() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 + insets.bottom }}>
         <SectionLabel>Grades</SectionLabel>
         <Segmented<GradeDisplay> options={[{ value: "both", label: "V and Font" }, { value: "v", label: "V only" }, { value: "font", label: "Font only" }]} value={s.gradeDisplay} onChange={(gradeDisplay) => patch({ gradeDisplay })} />
+
+        <SectionLabel>Working grade</SectionLabel>
+        <SwitchRow label="Count roped climbs" help="Roped sends count toward your boulder working grade and stats, using the pair you set below. Grades don't convert reliably, so this is a rough guide, and it is off until you turn it on." value={s.ropedWorking} onChange={(ropedWorking) => patch({ ropedWorking })} />
+        {s.ropedWorking ? (
+          <View style={{ gap: 4, marginTop: 8 }}>
+            <Text v="secondary">I count these as about equal:</Text>
+            <Stepper label="Roped" value={ropedLabel(s.ropedEquivalence.ircra, ropedSystem) ?? String(s.ropedEquivalence.ircra)}
+              min={s.ropedEquivalence.ircra <= ROPED_GRADES[0].value} max={s.ropedEquivalence.ircra >= ROPED_GRADES[ROPED_GRADES.length - 1].value}
+              onChange={(d) => patch({ ropedEquivalence: { ...s.ropedEquivalence, ircra: s.ropedEquivalence.ircra + d } })} />
+            <Stepper label="Boulder" value={commonLabel(s.ropedEquivalence.v, s.gradeDisplay)} min={s.ropedEquivalence.v <= 0} max={s.ropedEquivalence.v >= MAX_V}
+              onChange={(d) => patch({ ropedEquivalence: { ...s.ropedEquivalence, v: s.ropedEquivalence.v + d } })} />
+            <Text v="caption">Every step up or down the roped list moves the boulder equivalent by half a V grade.</Text>
+          </View>
+        ) : null}
 
         <SectionLabel>Reading the board</SectionLabel>
         <View style={{ flexDirection: "row", justifyContent: "space-between", padding: 14, borderRadius: r.card, backgroundColor: c.board, borderWidth: 1, borderColor: c.line }}>
