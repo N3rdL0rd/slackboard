@@ -36,6 +36,12 @@ combining happens on your phone.
 - Log roped climbs (sport, trad, top rope, autobelay) in a gym or outdoors, graded in YDS or French, with the result (onsight, flash,
   redpoint, fell, hung, project), tries, length and pitches. Repeating a route is two taps, and a session of autobelay laps is one
   tap each. Roped grades have their own scale and stats and are never mixed into your boulder grades.
+- Working grade: in Settings you can let roped sends count toward your boulder working grade and stats. You say which roped grade you
+  count as equal to which boulder grade (it starts at 5.11c = V4), and every step on the roped list is worth half a V. Off by default.
+- Goals (You > Goals): send a grade, climb a number of days or sends in a week or month, hold a streak, train fingers a number of days,
+  or your own words with a tick box. Goals count what you log from the day you set them, show a progress ring and one plain sentence, and
+  when one is reached you get confetti and one suggested next goal to accept or leave. A goal that is close takes the place of the usual
+  motivation line on the Climb tab. A goal that is not reached in time just ends, quietly, and can be tried again.
 - Train: a library of about twenty exercises (hangboard, pulling, core, mobility), a session runner that counts hangs and repeaters
   down for you with haptic cues, steppers for load, time and edge between sets, and a "Something hurts" button that goes on the day's
   body note. Training is saved as it goes, shows in the Log, and counts as a climbing day for your streak.

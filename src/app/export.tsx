@@ -22,6 +22,7 @@ import { refreshSpaces } from "../state/spaces";
 import { useOutside, useOutsideLogs } from "../state/outside";
 import { useRoped, useRopedLogs } from "../state/roped";
 import { useTraining, useTrainingStore } from "../state/training";
+import { useGoals, useGoalsStore } from "../state/goals";
 import { useDayNotes, useDayNotesStore } from "../state/dayNotes";
 import { useStore } from "../state/store";
 import { Button, IconButton, Segmented, SectionLabel } from "../ui/parts";
@@ -49,6 +50,7 @@ export default function Export() {
   const offBoard = useOutsideLogs();
   const roped = useRopedLogs();
   const training = useTraining();
+  const goals = useGoals();
   const dayNotes = useDayNotes();
   const litHistory = useLitHistory();
   const username = useUsername();
@@ -78,7 +80,7 @@ export default function Export() {
         const moon = state.accounts[MOON] ? await exportMoon(await getDb(MOON)) : EMPTY_MOON;
         const spaces = await exportSpaces(await getLocalDb());
         body = exportJson({
-          now, user: { id: userId, username }, range: "all", logbook, circuits, offBoard, roped, training, dayNotes, litHistory, moon, spaces, preferences: preferencesOf(state), liked, blocked, boards, gradeOf,
+          now, user: { id: userId, username }, range: "all", logbook, circuits, offBoard, roped, training, goals, dayNotes, litHistory, moon, spaces, preferences: preferencesOf(state), liked, blocked, boards, gradeOf,
         });
       }
       const file = new File(Paths.cache, exportFileName(format, now, username));
@@ -122,6 +124,7 @@ export default function Export() {
       await useOutside.getState().load();
       await useRoped.getState().load();
       await useTrainingStore.getState().load();
+      await useGoalsStore.getState().load();
       await useDayNotesStore.getState().load();
       await useLit.getState().load();
       await useData.getState().loadAll(useStore.getState().accounts);

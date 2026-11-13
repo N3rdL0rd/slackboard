@@ -9,7 +9,7 @@ import type { Db } from "./db";
  * The key of the full backup file that carries a table's records, or `"none"` for a table that is not backed up (with the reason in a
  * comment next to it). A test checks every table names a section the backup really has, so a new table cannot be forgotten.
  */
-export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "dayNotes" | "litHistory" | "spaces" | "none";
+export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "goals" | "dayNotes" | "litHistory" | "spaces" | "none";
 
 /** A table in the local database. `clearable` tables are emptied when the user removes their data (signs out everywhere). */
 export interface LocalTable {
@@ -56,6 +56,10 @@ CREATE INDEX IF NOT EXISTS l_training_entries_at ON l_training_entries (performe
 CREATE TABLE IF NOT EXISTS l_training_sets (entry_id TEXT NOT NULL, position INTEGER NOT NULL, reps INTEGER, load_kg REAL, time_s REAL, edge_mm REAL, grip TEXT, rest_s INTEGER, done INTEGER NOT NULL, PRIMARY KEY (entry_id, position));
 `;
 
+const V5 = `
+CREATE TABLE IF NOT EXISTS l_goals (id TEXT PRIMARY KEY, type TEXT NOT NULL, scope_json TEXT NOT NULL, window_json TEXT NOT NULL, target_json TEXT NOT NULL, status TEXT NOT NULL, title TEXT NOT NULL, created_at TEXT NOT NULL, achieved_at TEXT);
+`;
+
 export const LOCAL_MIGRATIONS: LocalMigration[] = [
   {
     version: 1,
@@ -100,6 +104,14 @@ export const LOCAL_MIGRATIONS: LocalMigration[] = [
       { name: "l_training_sets", clearable: false, backup: "training" },
     ],
     up: (db) => db.exec(V4),
+  },
+  {
+    version: 5,
+    tables: [
+      // Goals are the user's own, kept when signing out and carried in the backup. An achieved goal stays achieved.
+      { name: "l_goals", clearable: false, backup: "goals" },
+    ],
+    up: (db) => db.exec(V5),
   },
 ];
 

@@ -8,6 +8,7 @@ import { RESULT_LABEL, wallStyle, type OutsideLog } from "./outside";
 import { isSend, ropedTitle, type RopedLog } from "./roped";
 import type { DayNote } from "./body";
 import { ropedLabel } from "../data/ropedGrades";
+import type { Goal } from "./goals";
 import { doneSets, entryName, entryText, type TrainingEntry } from "./training";
 import type { LogEntry } from "./types";
 
@@ -97,6 +98,8 @@ export interface ExportBundle {
   roped: RopedLog[];
   /** Training entries and their sets, which exist only on the phone. */
   training: TrainingEntry[];
+  /** Goals and their status. */
+  goals: Goal[];
   /** Daily body check-ins, which exist only on the phone. */
   dayNotes: DayNote[];
   /** Climbs lit up on a board, newest first. */
@@ -112,7 +115,7 @@ export interface ExportBundle {
 
 export function exportJson(input: {
   now: Date; user: { id: number | null; username: string }; range: ExportRange; logbook: LogEntry[]; circuits: LogicalCircuit[];
-  offBoard: OutsideLog[]; roped: RopedLog[]; training: TrainingEntry[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
+  offBoard: OutsideLog[]; roped: RopedLog[]; training: TrainingEntry[]; goals: Goal[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
   gradeOf: (e: LogEntry) => GradeText;
 }): string {
   const bundle: ExportBundle = {
@@ -125,6 +128,7 @@ export function exportJson(input: {
     offBoard: input.offBoard,
     roped: input.roped,
     training: input.training,
+    goals: input.goals,
     dayNotes: input.dayNotes,
     litHistory: input.litHistory,
     moon: input.moon,

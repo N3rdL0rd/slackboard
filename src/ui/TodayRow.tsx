@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 import { streakLabel } from "../core/streak";
@@ -8,6 +9,7 @@ import { c, r } from "../theme";
 import { BodySheet } from "./BodySheet";
 import { Icon } from "./Icon";
 import { Button, LinkButton, Sheet, Tap } from "./parts";
+import { ProgressRing } from "./ProgressRing";
 import { Dot, StreakSheet } from "./StreakSheet";
 import { Text } from "./Text";
 
@@ -18,17 +20,23 @@ import { Text } from "./Text";
  */
 export function TodayRow() {
   const info = useTodayInfo();
+  const router = useRouter();
   const [sheet, setSheet] = useState<null | "streak" | "why" | "body">(null);
   const patchSettings = useStore((s) => s.patchSettings);
   const line = info.nudge ?? info.motivation;
   const showStreak = info.streak.current > 0;
-  if (!showStreak && !line) return null;
+  if (!showStreak && !line && !info.ring) return null;
 
   const hide = () => { void useDayNotesStore.getState().snooze(info.nudge ? NUDGE_KEY : MOTIVATION_KEY, info.today); };
 
   return (
     <>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 16, marginTop: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.line, minHeight: 56 }}>
+        {info.ring ? (
+          <Tap accessibilityRole="button" accessibilityLabel={`${info.ring.text}. Open goals`} onPress={() => router.push("/goals")} style={{ minHeight: 44, justifyContent: "center" }}>
+            <ProgressRing progress={info.ring.progress} size={40} stroke={5} label={info.ring.label} />
+          </Tap>
+        ) : null}
         {showStreak ? (
           <Tap accessibilityRole="button" accessibilityLabel={`Streak, ${streakLabel(info.streak)}. Open the calendar`} onPress={() => setSheet("streak")} style={{ gap: 5, minHeight: 44, justifyContent: "center" }}>
             <Text v="numeral" style={{ fontSize: 18 }}>{info.streak.current} {info.streak.current === 1 ? "day" : "days"}</Text>

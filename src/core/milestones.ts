@@ -10,7 +10,7 @@ import { hashSeed } from "./filters";
 import type { RopedLog } from "./roped";
 import type { StreakInfo } from "./streak";
 
-export type MilestoneKind = "countAtGrade" | "newGrade" | "sendCount" | "streak" | "week" | "month" | "ropedFirst";
+export type MilestoneKind = "goal" | "countAtGrade" | "newGrade" | "sendCount" | "streak" | "week" | "month" | "ropedFirst";
 
 export interface Milestone {
   /** Stable for the same milestone, so a hidden one stays hidden and a repeat can be told apart. */

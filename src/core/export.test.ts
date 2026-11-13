@@ -54,7 +54,7 @@ describe("logbookCsv", () => {
 });
 
 describe("exportJson", () => {
-  const base = { now: new Date("2026-10-31T12:00:00Z"), user: { id: 7, username: "n" }, range: "all" as const, circuits: [], offBoard: [], roped: [], training: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON, spaces: EMPTY_SPACES, preferences: EMPTY_PREFS, liked: ["b", "a"], blocked: [], boards: [], gradeOf: g };
+  const base = { now: new Date("2026-10-31T12:00:00Z"), user: { id: 7, username: "n" }, range: "all" as const, circuits: [], offBoard: [], roped: [], training: [], goals: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON, spaces: EMPTY_SPACES, preferences: EMPTY_PREFS, liked: ["b", "a"], blocked: [], boards: [], gradeOf: g };
   it("round-trips the logbook with grades, drops the pending flag, and sorts tag lists", () => {
     const parsed = JSON.parse(exportJson({ ...base, logbook: [{ ...e(), pending: true }] }));
     expect(parsed.logbook[0]).toMatchObject({ climbName: "Masquerade", grade_v: "V3" });

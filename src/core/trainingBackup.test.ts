@@ -19,7 +19,7 @@ const entry = (over: Partial<TrainingEntry> = {}): TrainingEntry => ({
 });
 const file = (training: unknown[]) => {
   const bundle = JSON.parse(exportJson({
-    now: new Date("2026-11-05T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: [], circuits: [], offBoard: [], roped: [], training: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON,
+    now: new Date("2026-11-05T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: [], circuits: [], offBoard: [], roped: [], training: [], goals: [], dayNotes: [], litHistory: [], moon: EMPTY_MOON,
     spaces: EMPTY_SPACES, preferences: EMPTY_PREFS, liked: [], blocked: [], boards: [], gradeOf: () => ({ v: "", font: "" }),
   }));
   return JSON.stringify({ ...bundle, training });
@@ -84,7 +84,7 @@ describe("training in a backup", () => {
   it("says what a backup holds and what was restored", () => {
     const b = parse([entry(), entry({ id: "t2" })]);
     expect(describeBackup(b)).toContain("2 training entries");
-    expect(describeRestored({ offBoard: 0, roped: 0, training: 1, dayNotes: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 training entry.");
+    expect(describeRestored({ offBoard: 0, roped: 0, training: 1, goals: 0, dayNotes: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 training entry.");
   });
 });
 

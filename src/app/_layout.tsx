@@ -9,6 +9,8 @@ import { AppState, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { syncBackgroundTaskRegistration } from "../state/backgroundSync";
 import { BluetoothTray } from "../ui/BluetoothTray";
+import { GoalCelebration } from "../ui/GoalCelebration";
+import { useGoalSync } from "../state/goals";
 import { useData } from "../state/data";
 import { getProvider } from "../providers";
 import { resolveBoardId } from "../core/boards";
@@ -25,6 +27,7 @@ export default function Root() {
     Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold, BarlowCondensed_600SemiBold, BarlowCondensed_700Bold, CaveatBrush_400Regular,
   });
   const hydrated = useHydrated();
+  useGoalSync();
   const booted = useBoot();
   const accounts = useStore((s) => s.accounts);
   const signedIn = Object.keys(accounts).length > 0;
@@ -55,6 +58,7 @@ export default function Root() {
       {signedIn && checked ? <DataLoader /> : null}
       {redirect ? <Redirect href={redirect as "/"} /> : null}
       <BluetoothTray />
+      <GoalCelebration />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.ground }, animation: "slide_from_right" }} />
     </SafeAreaProvider>
   );

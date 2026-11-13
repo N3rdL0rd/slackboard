@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { boardColor } from "../../core/boards";
 import { circuitDisplayColor } from "../../core/circuits";
 import { useData } from "../../state/data";
+import { useGoals } from "../../state/goals";
 import { useLitHistory } from "../../state/litHistory";
 import { useOutsideLogs } from "../../state/outside";
 import { useRopedLogs } from "../../state/roped";
@@ -35,10 +36,12 @@ export default function You() {
   const current = useBoard();
   const { profile } = useProfile(me);
 
+  const goals = useGoals();
   const canSet = permissions.has("set_boulder") || permissions.has("set_route");
   const caps = getProvider(current?.spec.provider).capabilities;
   const shortcuts: { label: string; value?: string; to: () => void }[] = [
     { label: "Stats", to: () => router.push("/stats") },
+    { label: "Goals", value: String(goals.filter((g) => g.status === "active").length), to: () => router.push("/goals") },
     { label: "Log", value: String(logbook.length), to: () => router.navigate("/log") },
     { label: "Off-board climbs", value: String(outside.length), to: () => router.push("/off-board") },
     { label: "Roped climbs", value: String(roped.length), to: () => router.push("/roped-climbs") },

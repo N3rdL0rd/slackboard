@@ -32,13 +32,14 @@ Everything on the phone, in one file, which **Restore** can read back.
 ```jsonc
 {
   "app": "slackboard",
-  "version": 5,
+  "version": 6,
   "exportedAt": "2026-11-02T12:00:00.000Z",
   "user": { "id": 7, "username": "..." },
   "logbook": [ /* every board entry, with grade_v and grade_font added */ ],
   "circuits": [ /* name, colour, items, timestamps, and where it is published */ ],
   "offBoard": [ /* gym and outdoor climbs */ ],
   "roped": [ /* roped climbs: style, setting, grade label and system, result, tries, length, pitches */ ],
+  "goals": [ /* goals: kind, target, window and status; a goal that was reached stays reached */ ],
   "training": [ /* one exercise on one day, with its sets: reps, time, load, edge, grip, rest */ ],
   "litHistory": [ /* climbs lit on boards */ ],
   "moon": { "boards": [], "problems": [], "tags": [] },
@@ -55,6 +56,7 @@ and Grasshopper. A restore brings back only what exists on the phone alone:
 
 - off-board climbs
 - roped climbs
+- goals, with their status (a goal you reached stays reached, even if you later edit the climb that completed it)
 - training entries: each exercise with its sets (a set that is not done is not saved)
 - **MoonBoard**: the boards (with their old ids), the problems you set, your logs (back in the MoonBoard database, so ticks and send
   counts return), and your likes and blocks. The downloaded problem lists are not in the file; they download again when a board is

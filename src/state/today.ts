@@ -9,6 +9,8 @@ import { ropedWorking } from "../core/roped";
 import { streakInfo, weekDots, type StreakInfo, type WeekDot } from "../core/streak";
 import { useData } from "./data";
 import { useDayNotes, useDayNotesStore } from "./dayNotes";
+import { closestGoal, goalMilestone, measure, type Goal } from "../core/goals";
+import { useGoalLabels, useGoals } from "./goals";
 import { useOutsideLogs } from "./outside";
 import { useRopedLogs } from "./roped";
 import { useTraining } from "./training";
@@ -48,6 +50,8 @@ export interface TodayInfo {
   climbingDays: Day[];
   /** The motivation line, or null when it is off, hidden for today, or there is nothing close and true to say. */
   motivation: Milestone | null;
+  /** A ring for an active weekly or monthly volume goal, or null. Shown whatever the motivation setting says: it is the user's own goal. */
+  ring: { progress: number; label: string; text: string } | null;
   /** The rest nudge, or null when it is off, snoozed, or the log doesn't call for it. */
   nudge: Nudge | null;
   /** Every milestone, close or not, for the sheet that explains the line. */
@@ -63,6 +67,8 @@ export function useTodayInfo(): TodayInfo {
   const motivationOn = useStore((s) => s.settings.motivation);
   const level = useStore((s) => s.settings.nudges);
   const snoozes = useDayNotesStore((s) => s.snoozes);
+  const goals = useGoals();
+  const labels = useGoalLabels();
   const overview = useOverview(8);
   const boulderWorking = overview.working;
   return useMemo(() => {
@@ -71,9 +77,20 @@ export function useTodayInfo(): TodayInfo {
     const working = { boulder: boulderWorking, roped: ropedWorking(roped, new Date()) };
     const nudge = restNudge({ activities, notes, today, level, working, streakAlive: streak.current > 0, snoozedThrough: snoozes[NUDGE_KEY] ?? null });
     const hidden = (snoozes[MOTIVATION_KEY] ?? "") >= today;
-    const motivation = motivationOn && !hidden ? motivationLine({ activities, today, streak }) : null;
-    return { today, streak, dots: weekDots(days, today), climbingDays: days, motivation, nudge, notes };
-  }, [activities, notes, roped, today, motivationOn, level, snoozes, boulderWorking]);
+    const goalCtx = { activities, today, labels };
+    // A goal that is close takes the place of the usual line.
+    const close = closestGoal(goals, goalCtx);
+    const motivation = motivationOn && !hidden ? (close ? goalMilestone(close.goal, close.progress) : motivationLine({ activities, today, streak })) : null;
+    return { today, streak, dots: weekDots(days, today), climbingDays: days, motivation, ring: ringFor(goals, goalCtx), nudge, notes };
+  }, [activities, notes, roped, today, motivationOn, level, snoozes, boulderWorking, goals, labels]);
+}
+
+/** The ring for the first active volume goal that runs over a week or a month. */
+function ringFor(goals: Goal[], ctx: Parameters<typeof measure>[1]): TodayInfo["ring"] {
+  const g = goals.find((x) => x.status === "active" && x.spec.type === "volume" && (x.window.kind === "week" || x.window.kind === "month"));
+  if (!g) return null;
+  const p = measure(g, ctx);
+  return { progress: p.progress, label: String(p.current), text: `${g.title}. ${p.summary}` };
 }
 
 /** All the milestones that can be said, for the sheet that shows how the line was chosen. */
@@ -88,8 +105,14 @@ export function useToastMilestone(v: number | undefined): Milestone | null {
   const activities = useActivities();
   const today = useToday();
   const on = useStore((s) => s.settings.motivation);
+  const goals = useGoals();
+  const labels = useGoalLabels();
   return useMemo(() => {
     if (v === undefined || !on) return null;
-    return toastMilestone({ activities, today, streak: streakInfo(climbingDays(activities), today) }, v);
-  }, [activities, today, on, v]);
+    const m = toastMilestone({ activities, today, streak: streakInfo(climbingDays(activities), today) }, v);
+    if (m) return m;
+    // No milestone about this grade: a goal that is close can be said instead.
+    const close = closestGoal(goals, { activities, today, labels });
+    return close ? goalMilestone(close.goal, close.progress) : null;
+  }, [activities, today, on, v, goals, labels]);
 }
