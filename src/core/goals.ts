@@ -206,6 +206,20 @@ export function goalMilestone(goal: Goal, p: GoalProgress): Milestone {
 }
 
 /** The closest goal worth saying today (the furthest along), or null. */
+/**
+ * The goal to keep in view: the active goal furthest along, whatever its type, and whether or not it is close. Ties go to the lower id,
+ * so the choice does not flicker. Null when there is no active goal.
+ */
+export function leadGoal(goals: Goal[], ctx: GoalContext): { goal: Goal; progress: GoalProgress } | null {
+  let best: { goal: Goal; progress: GoalProgress } | null = null;
+  for (const goal of goals) {
+    if (goal.status !== "active") continue;
+    const progress = measure(goal, ctx);
+    if (!best || progress.progress > best.progress.progress || (progress.progress === best.progress.progress && goal.id < best.goal.id)) best = { goal, progress };
+  }
+  return best;
+}
+
 export function closestGoal(goals: Goal[], ctx: GoalContext): { goal: Goal; progress: GoalProgress } | null {
   let best: { goal: Goal; progress: GoalProgress } | null = null;
   for (const goal of goals) {

@@ -15,7 +15,7 @@ export function ProgressRing({ progress, size = 44, stroke = 5, label, color = c
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round"
           strokeDasharray={`${circ * p} ${circ}`} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
       </Svg>
-      {label ? <Text v="numeral" style={{ fontSize: size * 0.34 }}>{label}</Text> : null}
+      {label ? <Text v="numeral" style={{ fontSize: size * (label.length > 3 ? 0.26 : 0.34) }}>{label}</Text> : null}
     </View>
   );
 }

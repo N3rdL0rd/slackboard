@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Platform } from "react-native";
 import { requestWidgetUpdate } from "react-native-android-widget";
 import { ACTIVITY_KINDS } from "../core/activity";
-import { measure, type Goal, type GoalContext } from "../core/goals";
+import { leadGoal, type Goal, type GoalContext } from "../core/goals";
 import { buildSnapshot, type SnapshotGoal } from "../core/widgetData";
 import { renderNamed, WIDGET_KEY, WIDGET_NAMES } from "../widgets/taskHandler";
 import { useGoalLabels, useGoals, useLogsReady } from "./goals";
@@ -12,16 +12,10 @@ import { useActivities, useToday } from "./today";
 
 const DEBOUNCE_MS = 1500;
 
-/** The active goal furthest along that is not yet reached, for the Goal widget. */
+/** The goal to show on the Goal widget: the same one the Climb tab leads with. */
 function pickGoal(goals: Goal[], ctx: GoalContext): SnapshotGoal | null {
-  let best: { goal: Goal; p: ReturnType<typeof measure> } | null = null;
-  for (const goal of goals) {
-    if (goal.status !== "active") continue;
-    const p = measure(goal, ctx);
-    if (p.done) continue;
-    if (!best || p.progress > best.p.progress) best = { goal, p };
-  }
-  return best ? { title: best.goal.title, progress: best.p.progress, summary: best.p.summary } : null;
+  const lead = leadGoal(goals, ctx);
+  return lead ? { title: lead.goal.title, progress: lead.progress.progress, summary: lead.progress.summary } : null;
 }
 
 /**

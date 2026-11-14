@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Activity, ActivityKind } from "./activity";
 import {
-  bestBoulderV, closestGoal, decodeGoal, draftProblem, encodeGoal, goalMilestone, goalTitle, GOAL_TEMPLATES, isGoalClose, makeWindow, measure, newGoal, nextWindow, parseGoal, resolveGoals, retryDraft,
+  bestBoulderV, closestGoal, leadGoal, decodeGoal, draftProblem, encodeGoal, goalMilestone, goalTitle, GOAL_TEMPLATES, isGoalClose, makeWindow, measure, newGoal, nextWindow, parseGoal, resolveGoals, retryDraft,
   shortDate, suggestNext, type Goal, type GoalContext, type GoalLabels, type GoalSpec,
 } from "./goals";
 
@@ -287,5 +287,30 @@ describe("best boulder grade", () => {
   it("is the hardest board or off-board send as a V number, ignoring attempts and roped", () => {
     expect(bestBoulderV([board("2026-11-02", 3), act("offBoard", "2026-11-03", { grade: 4.2 }), act("roped", "2026-11-03", { grade: 20 }), act("board", "2026-11-04", { send: false, grade: 9.5 })])).toBe(4);
     expect(bestBoulderV([])).toBeNull();
+  });
+});
+
+describe("the lead goal", () => {
+  const sends = (count: number, id: string, over: Partial<Goal> = {}) => goal({ type: "volume", scope: "any", metric: "sends", count }, makeWindow("month", TODAY), { id, ...over });
+  const log = Array.from({ length: 4 }, (_, i) => board(`2026-11-0${i + 2}`, 4));
+
+  it("is the active goal furthest along, close or not", () => {
+    const far = sends(100, "far");
+    const nearer = sends(8, "nearer");
+    expect(leadGoal([far, nearer], ctx(log))?.goal.id).toBe("nearer");
+    expect(leadGoal([far], ctx(log))?.goal.id).toBe("far");
+  });
+  it("ignores goals that are not active", () => {
+    const done = sends(4, "done", { status: "achieved" });
+    const missed = sends(4, "missed", { status: "missed" });
+    const paused = sends(4, "paused", { status: "paused" });
+    expect(leadGoal([done, missed, paused], ctx(log))).toBeNull();
+    expect(leadGoal([done, sends(100, "live")], ctx(log))?.goal.id).toBe("live");
+  });
+  it("breaks ties by id so the choice is stable", () => {
+    expect(leadGoal([sends(100, "b"), sends(100, "a")], ctx(log))?.goal.id).toBe("a");
+  });
+  it("is null with no goals", () => {
+    expect(leadGoal([], ctx(log))).toBeNull();
   });
 });

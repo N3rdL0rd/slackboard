@@ -11,7 +11,7 @@ import type { WorkingGrades } from "../core/load";
 import { streakInfo, weekDots, type StreakInfo, type WeekDot } from "../core/streak";
 import { useData } from "./data";
 import { useDayNotes, useDayNotesStore } from "./dayNotes";
-import { closestGoal, goalMilestone, measure, type Goal } from "../core/goals";
+import { closestGoal, goalMilestone, leadGoal, measure, type Goal } from "../core/goals";
 import { useGoalLabels, useGoals } from "./goals";
 import { useCurrentPlan } from "./planner";
 import { useOutsideLogs } from "./outside";
@@ -61,8 +61,8 @@ export interface TodayInfo {
   climbingDays: Day[];
   /** The motivation line, or null when it is off, hidden for today, or there is nothing close and true to say. */
   motivation: Milestone | null;
-  /** A ring for an active weekly or monthly volume goal, or null. Shown whatever the motivation setting says: it is the user's own goal. */
-  ring: { progress: number; label: string; text: string } | null;
+  /** The goal furthest along, or null with no active goal. Shown whatever the motivation setting says: it is the user's own goal. */
+  goal: { id: string; title: string; summary: string; progress: number; label: string } | null;
   /** The rest nudge, or null when it is off, snoozed, or the log doesn't call for it. */
   nudge: Nudge | null;
   /** Every milestone, close or not, for the sheet that explains the line. */
@@ -91,19 +91,18 @@ export function useTodayInfo(): TodayInfo {
     const hidden = (snoozes[MOTIVATION_KEY] ?? "") >= today;
     const nudge = withPlan(nudge0, !!(plan && plan.status === "active" && todaysSession(plan, today)?.light));
     const goalCtx = { activities, today, labels };
-    // A goal that is close takes the place of the usual line.
-    const close = closestGoal(goals, goalCtx);
-    const motivation = motivationOn && !hidden ? (close ? goalMilestone(close.goal, close.progress) : motivationLine({ activities, today, streak })) : null;
-    return { today, streak, dots: weekDots(days, today), climbingDays: days, motivation, ring: ringFor(goals, goalCtx), nudge, notes };
+    // The goal has its own place in the row, so the motivation line is only the milestones that are not goals.
+    const motivation = motivationOn && !hidden ? motivationLine({ activities, today, streak }) : null;
+    return { today, streak, dots: weekDots(days, today), climbingDays: days, motivation, goal: goalFor(goals, goalCtx), nudge, notes };
   }, [activities, notes, roped, today, motivationOn, level, snoozes, boulderWorking, goals, labels, plan]);
 }
 
-/** The ring for the first active volume goal that runs over a week or a month. */
-function ringFor(goals: Goal[], ctx: Parameters<typeof measure>[1]): TodayInfo["ring"] {
-  const g = goals.find((x) => x.status === "active" && x.spec.type === "volume" && (x.window.kind === "week" || x.window.kind === "month"));
-  if (!g) return null;
-  const p = measure(g, ctx);
-  return { progress: p.progress, label: String(p.current), text: `${g.title}. ${p.summary}` };
+/** The goal to keep in view, with the short label that sits in its ring: the count for a volume goal, otherwise the percentage. */
+function goalFor(goals: Goal[], ctx: Parameters<typeof measure>[1]): TodayInfo["goal"] {
+  const lead = leadGoal(goals, ctx);
+  if (!lead) return null;
+  const { goal, progress: p } = lead;
+  return { id: goal.id, title: goal.title, summary: p.summary, progress: p.progress, label: goal.spec.type === "volume" ? `${p.current}/${p.target}` : `${Math.round(p.progress * 100)}%` };
 }
 
 /** The grades a rest nudge and the notifications judge a hard day against: the boulder working grade and the roped one. */
