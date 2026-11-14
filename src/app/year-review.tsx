@@ -5,11 +5,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { shortDate } from "../core/goals";
 import { bandForV } from "../core/grades";
 import { latestYear, yearlyReview, yearsWithEntries } from "../core/review";
+import { yearCardFacts } from "../core/reviewShare";
 import { ropedBand } from "../data/ropedGrades";
 import { useGoalLabels, useGoals } from "../state/goals";
 import { useActivities, useToday } from "../state/today";
 import { Sparkline } from "../ui/charts";
 import { Figure, ReviewCard } from "../ui/ReviewCard";
+import { ReviewShareSheet } from "../ui/ReviewShare";
 import { IconButton } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c } from "../theme";
@@ -46,6 +48,8 @@ export default function YearReview() {
   const [picked, setPicked] = useState<number | null>(null);
   const year = picked ?? latestYear(activities, today);
   const y = useMemo(() => yearlyReview({ activities, goals, year, labels }), [activities, goals, year, labels]);
+  const [sharing, setSharing] = useState(false);
+  const card = useMemo(() => yearCardFacts(y, labels), [y, labels]);
   const older = years.filter((v) => v < year).slice(-1)[0];
   const newer = years.filter((v) => v > year)[0];
   const inner = width - 32 - 32;
@@ -55,6 +59,7 @@ export default function YearReview() {
       <View style={{ flexDirection: "row", alignItems: "center", height: 56, paddingHorizontal: 4 }}>
         <IconButton icon="back" label="Back" onPress={() => router.back()} />
         <Text v="sheetTitle" style={{ flex: 1 }}>{`${year} in review`}</Text>
+        {card ? <IconButton icon="share" label="Share this year" onPress={() => setSharing(true)} /> : null}
         <IconButton icon="chevL" label="Earlier year" onPress={() => older && setPicked(older)} color={older ? c.text : c.muted} />
         <IconButton icon="chevR" label="Later year" onPress={() => newer && setPicked(newer)} color={newer ? c.text : c.muted} />
       </View>
@@ -120,6 +125,7 @@ export default function YearReview() {
           </>
         )}
       </ScrollView>
+      <ReviewShareSheet facts={sharing ? card : null} onClose={() => setSharing(false)} />
     </View>
   );
 }

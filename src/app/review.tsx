@@ -5,13 +5,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { addDays, isDay, weekStartDay } from "../core/days";
 import { shortDate } from "../core/goals";
 import { bandForV } from "../core/grades";
+import { climbingDays } from "../core/activity";
 import { weeklyReview } from "../core/review";
-import { streakLabel } from "../core/streak";
+import { weekCardFacts } from "../core/reviewShare";
+import { dayMarks, streakLabel } from "../core/streak";
 import { ropedBand } from "../data/ropedGrades";
 import { useDayNotes } from "../state/dayNotes";
 import { useGoalLabels, useGoals } from "../state/goals";
 import { useActivities, useToday, useWorkingGrades } from "../state/today";
 import { Figure, ReviewCard } from "../ui/ReviewCard";
+import { ReviewShareSheet } from "../ui/ReviewShare";
 import { GradeChip, IconButton, LinkButton } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c } from "../theme";
@@ -34,12 +37,15 @@ export default function Review() {
   const [start, setStart] = useState(() => weekStartDay(param && isDay(param) ? param : today));
   const r = useMemo(() => weeklyReview({ activities, notes, goals, today, day: start, labels, working }), [activities, notes, goals, today, start, labels, working]);
   const title = start === thisWeek ? "This week" : `Week of ${shortDate(start)}`;
+  const [sharing, setSharing] = useState(false);
+  const card = useMemo(() => weekCardFacts(r, [...dayMarks(climbingDays(activities), today, r.weekStart, r.weekEnd).values()], labels), [r, activities, today, labels]);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.ground, paddingTop: insets.top }}>
       <View style={{ flexDirection: "row", alignItems: "center", height: 56, paddingHorizontal: 4 }}>
         <IconButton icon="back" label="Back" onPress={() => router.back()} />
         <Text v="sheetTitle" style={{ flex: 1 }}>{title}</Text>
+        {card ? <IconButton icon="share" label="Share this week" onPress={() => setSharing(true)} /> : null}
         <IconButton icon="chevL" label="Previous week" onPress={() => setStart(addDays(start, -7))} />
         <IconButton icon="chevR" label="Next week" onPress={() => start < thisWeek && setStart(addDays(start, 7))} color={start < thisWeek ? c.text : c.muted} />
       </View>
@@ -79,6 +85,7 @@ export default function Review() {
         )}
         <LinkButton label="Year in review" icon="chevR" onPress={() => router.push("/year-review")} />
       </ScrollView>
+      <ReviewShareSheet facts={sharing ? card : null} onClose={() => setSharing(false)} />
     </View>
   );
 }

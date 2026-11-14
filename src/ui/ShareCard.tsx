@@ -1,13 +1,13 @@
-import { forwardRef, useRef, useState } from "react";
+import { forwardRef, useRef } from "react";
 import { View, useWindowDimensions } from "react-native";
 import { cardComment, communityLine, isFlash, sendHeadline, shortDate, type ShareFacts } from "../core/shareCard";
 import { grades } from "../data/grades";
-import { captureCard, saveImage, shareImage, type ViewHandle } from "../state/shareImage";
+import type { ViewHandle } from "../state/shareImage";
 import { c, font, r, role } from "../theme";
 import { BoardView, boardHeight } from "./BoardView";
-import { haptic } from "./haptics";
 import { Button, ClassicTag, GradeChip, Sheet, Stars } from "./parts";
 import { Text } from "./Text";
+import { useCardActions } from "./useCardActions";
 
 /** The width the card is designed at; everything scales from it. The card is landscape: info on the left, the board on the right. */
 const BASE = 560;
@@ -77,40 +77,20 @@ export const ShareCard = forwardRef<ViewHandle, { facts: ShareFacts; width: numb
 export function ShareSheet({ facts, onClose }: { facts: ShareFacts | null; onClose: () => void }) {
   const { width: screenW } = useWindowDimensions();
   const ref = useRef<ViewHandle>(null);
-  const [busy, setBusy] = useState<null | "save" | "share">(null);
-  const [note, setNote] = useState("");
+  const { busy, note, run } = useCardActions(ref);
   // The last facts stay for the sheet's closing animation.
   const kept = useRef<ShareFacts | null>(null);
   if (facts) kept.current = facts;
   const f = facts ?? kept.current;
   const send = f?.kind === "send";
-  const run = async (what: "save" | "share") => {
-    if (!f) return;
-    setBusy(what);
-    setNote("");
-    try {
-      const uri = await captureCard(ref, f.kind, f.name);
-      if (what === "share") {
-        const ok = await shareImage(uri, send ? "Share your send" : "Share this climb");
-        if (!ok) setNote("This device has no share sheet. Use Save image instead.");
-      } else {
-        const res = await saveImage(uri);
-        if (res === "saved") { haptic.success(); setNote("Saved to your photos."); }
-        else setNote(res === "denied" ? "Slackboard needs permission to save photos. You can allow it in the phone's settings." : "Couldn't save the image.");
-      }
-    } catch {
-      setNote("Couldn't make the image. Try again.");
-    }
-    setBusy(null);
-  };
   return (
     <Sheet visible={!!facts} onClose={onClose} title={send ? "Share your send" : "Share this climb"}
       footer={
         <View style={{ gap: 8 }}>
           {note ? <Text v="caption" style={{ textAlign: "center" }} aria-live="polite">{note}</Text> : null}
           <View style={{ flexDirection: "row", gap: 10 }}>
-            <Button variant="secondary" label={busy === "save" ? "Saving" : "Save image"} disabled={!!busy} style={{ flex: 1 }} onPress={() => void run("save")} />
-            <Button label={busy === "share" ? "Opening" : "Share"} disabled={!!busy} style={{ flex: 1 }} onPress={() => void run("share")} />
+            <Button variant="secondary" label={busy === "save" ? "Saving" : "Save image"} disabled={!!busy} style={{ flex: 1 }} onPress={() => void (f && run("save", f.kind, f.name, send ? "Share your send" : "Share this climb"))} />
+            <Button label={busy === "share" ? "Opening" : "Share"} disabled={!!busy} style={{ flex: 1 }} onPress={() => void (f && run("share", f.kind, f.name, send ? "Share your send" : "Share this climb"))} />
           </View>
         </View>
       }>

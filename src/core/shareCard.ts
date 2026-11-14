@@ -8,7 +8,7 @@ import type { Frame } from "./frames";
 import type { GradeDisplay } from "./grades";
 import type { AngleStat, BoardSpec, Placement, Role } from "./types";
 
-export type ShareKind = "climb" | "send";
+export type ShareKind = "climb" | "send" | "week" | "year";
 
 /** The user's own record of a send, shown on a send card. */
 export interface SendFacts {
