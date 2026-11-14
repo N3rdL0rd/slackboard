@@ -28,7 +28,7 @@ export interface Overview {
   /** Consecutive weeks, ending this one (or last), with something logged. */
   streakWeeks: number;
   /** Sends by whole V grade on the shared scale, ascending. */
-  byGrade: { v: number; sends: number }[];
+  byGrade: { v: number; sends: number; flashes: number }[];
   weeks: WeekPoint[];
   /** Working grade now (shared scale), or null. */
   working: number | null;
@@ -60,8 +60,14 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
   const since = now.getTime() - 30 * DAY;
   const recent = entries.filter((_, i) => stamps[i].getTime() >= since);
 
-  const byV = new Map<number, number>();
-  for (const { g } of graded) { const v = Math.floor(g); byV.set(v, (byV.get(v) ?? 0) + 1); }
+  const byV = new Map<number, { sends: number; flashes: number }>();
+  for (const { e, g } of graded) {
+    const v = Math.floor(g);
+    const row = byV.get(v) ?? { sends: 0, flashes: 0 };
+    row.sends++;
+    if (e.bidCount <= 1) row.flashes++;
+    byV.set(v, row);
+  }
 
   // Weekly buckets from the first logged week to this one, so gaps show as empty weeks.
   const thisWeek = weekStart(now).getTime();
@@ -111,9 +117,33 @@ export function overview(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) 
     hardest,
     last30: { sends: recent.filter((e) => e.isSend).length, sessions: new Set(recent.map((e) => dayOf(e.climbedAt))).size },
     streakWeeks: streak,
-    byGrade: [...byV.entries()].sort((a, b) => a[0] - b[0]).map(([v, n]) => ({ v, sends: n })),
+    byGrade: [...byV.entries()].sort((a, b) => a[0] - b[0]).map(([v, n]) => ({ v, sends: n.sends, flashes: n.flashes })),
     weeks: trailing,
     working: last,
     trend: last != null && prior != null ? last - prior : null,
   };
+}
+
+/** The entries at one wall angle, or all of them when no angle is chosen. */
+export const atAngle = (entries: LogEntry[], angle: number | null): LogEntry[] => (angle === null ? entries : entries.filter((e) => e.angle === angle));
+
+export interface AngleRow {
+  angle: number;
+  sends: number;
+  attempts: number;
+  flashRate: number | null;
+  /** Hardest send at this angle on the shared grade scale. */
+  hardest: number | null;
+  /** Working grade at this angle now (shared scale), or null without enough recent sends. */
+  working: number | null;
+}
+
+/** Every angle with something logged, most-sent first (ties by angle), each summarised on its own. */
+export function angleTable(entries: LogEntry[], now: Date, gradeOf: (e: LogEntry) => number): AngleRow[] {
+  const angles = [...new Set(entries.map((e) => e.angle))];
+  const rows = angles.map((angle) => {
+    const o = overview(atAngle(entries, angle), now, gradeOf, 1);
+    return { angle, sends: o.sends, attempts: o.attempts, flashRate: o.flashRate, hardest: o.hardest?.grade ?? null, working: o.working };
+  });
+  return rows.sort((a, b) => b.sends - a.sends || a.angle - b.angle);
 }

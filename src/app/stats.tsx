@@ -1,15 +1,15 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { gradeColor } from "../core/grades";
-import { WORKING_WINDOW } from "../core/stats";
+import { angleTable, atAngle, overview, WORKING_WINDOW } from "../core/stats";
 import { grades } from "../data/grades";
-import { commonLabel, trendLabel, useOverview } from "../state/stats";
+import { commonLabel, gradeOfEntry, trendLabel, useOverview, useStatsEntries } from "../state/stats";
 import { useStore } from "../state/store";
 import { useOutsideLogs } from "../state/outside";
 import { ProgressionChart, VolumeBars } from "../ui/charts";
-import { IconButton, Segmented, SectionLabel, SwitchRow } from "../ui/parts";
+import { Chip, IconButton, Segmented, SectionLabel, SwitchRow, Tap } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c, r } from "../theme";
 
@@ -26,7 +26,15 @@ export default function Stats() {
   const patchSettings = useStore((s) => s.patchSettings);
   const offCount = useOutsideLogs().length;
   const [range, setRange] = useState<Range>("26");
-  const o = useOverview(range === "all" ? 100000 : Number(range));
+  const weeks = range === "all" ? 100000 : Number(range);
+  const all = useOverview(weeks);
+  const entries = useStatsEntries();
+  const rows = useMemo(() => angleTable(entries, new Date(), gradeOfEntry), [entries]);
+  const [picked, setPicked] = useState<number | null>(null);
+  // An angle that has no entries any more (a log was deleted) falls back to all angles.
+  const angle = picked !== null && rows.some((x) => x.angle === picked) ? picked : null;
+  const one = useMemo(() => (angle === null ? null : overview(atAngle(entries, angle), new Date(), gradeOfEntry, weeks)), [entries, angle, weeks]);
+  const o = one ?? all;
   const label = (g: number) => commonLabel(g, display);
   const trend = trendLabel(o);
   const w = width - 32 - 24;
@@ -47,6 +55,13 @@ export default function Stats() {
           </View>
         ) : (
           <>
+            {rows.length >= 2 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
+                <Chip label="All angles" selected={angle === null} onPress={() => setPicked(null)} />
+                {rows.map((x) => <Chip key={x.angle} label={`${x.angle}\u00B0`} selected={angle === x.angle} onPress={() => setPicked(x.angle)} />)}
+              </ScrollView>
+            ) : null}
+            {angle !== null && o.sends < 3 ? <Text v="caption" style={{ marginBottom: 10 }}>{`Only ${o.sends} ${o.sends === 1 ? "send" : "sends"} at ${angle}\u00B0, so the charts are rough.`}</Text> : null}
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
               <Tile label="Sends" value={String(o.sends)} />
               <Tile label="Attempts" value={String(o.attempts)} />
@@ -71,6 +86,23 @@ export default function Stats() {
               <View style={{ marginTop: 12, paddingHorizontal: 14, borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.line }}>
                 <SwitchRow label="Include gym and outdoor climbs" help={"Counted with your board sends. Outdoor counts +1 V and gym \u22120.5 V."} value={includeOff} onChange={(v) => patchSettings({ statsOffBoard: v })} />
               </View>
+            ) : null}
+
+            {angle === null && rows.length >= 2 ? (
+              <>
+                <SectionLabel>By angle</SectionLabel>
+                <View style={{ borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.line, overflow: "hidden" }}>
+                  {rows.map((x, i) => (
+                    <Tap key={x.angle} accessibilityRole="button" accessibilityLabel={`${x.angle} degrees: ${x.sends} sends${x.working != null ? `, working grade ${label(x.working)}` : ""}. Show only this angle`} onPress={() => setPicked(x.angle)}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 48, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderTopColor: c.divider }}>
+                      <Text v="bodyStrong" style={{ width: 44 }}>{`${x.angle}\u00B0`}</Text>
+                      <Text v="secondary" style={{ flex: 1 }}>{`${x.sends} ${x.sends === 1 ? "send" : "sends"}`}</Text>
+                      <Text v="numeral" style={{ fontSize: 20, color: x.working != null ? gradeColor(x.working) : c.muted }}>{x.working != null ? label(x.working) : "-"}</Text>
+                    </Tap>
+                  ))}
+                </View>
+                <Text v="caption" style={{ marginTop: 6 }}>Working grade at each angle.</Text>
+              </>
             ) : null}
 
             <SectionLabel>Progression</SectionLabel>
@@ -100,7 +132,7 @@ export default function Stats() {
                   <View style={{ flex: 1, height: 16, justifyContent: "center" }}>
                     <View style={{ width: `${Math.max(3, (g.sends / maxGrade) * 100)}%`, height: 16, borderRadius: 4, backgroundColor: grades.band(grades.rangeForV(g.v, g.v)[0]).bar }} />
                   </View>
-                  <Text v="secondary" style={{ width: 36, textAlign: "right" }}>{g.sends}</Text>
+                  <Text v="secondary" style={{ width: 84, textAlign: "right" }}>{g.flashes > 0 ? `${g.sends} \u00B7 ${g.flashes} flash` : g.sends}</Text>
                 </View>
               ))}
               {o.byGrade.length === 0 ? <Text v="secondary">Grades appear once you log a send with a grade.</Text> : null}

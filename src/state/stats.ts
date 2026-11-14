@@ -35,6 +35,17 @@ export function useRopedForWorking(): RopedForWorking {
 // One memo per range: the screens ask for a few (8, 16, the stats range), and each is computed once for all the components that use it.
 const overviews = new Map<number, (lb: LogEntry[], out: OutsideLog[], inc: boolean, rp: RopedForWorking) => Overview>();
 
+const buildEntries = memoLast((lb: LogEntry[], out: OutsideLog[], inc: boolean, rp: RopedForWorking): LogEntry[] => [...lb, ...(inc ? outsideAsEntries(out) : []), ...rp.entries]);
+
+/** Everything the stats count as one list of entries: every provider's logbook, then gym and outdoor climbs and roped sends when they are on. */
+export function useStatsEntries(): LogEntry[] {
+  const logbook = useData((d) => d.logbook);
+  const outside = useOutsideLogs();
+  const include = useStore((s) => s.settings.statsOffBoard !== false);
+  const roped = useRopedForWorking();
+  return buildEntries(logbook, outside, include, roped);
+}
+
 /** The logbook summarised, across every provider and, unless turned off in the stats, gym and outdoor climbs. */
 export function useOverview(weeksShown = WEEKS_SHOWN): Overview {
   const logbook = useData((d) => d.logbook);

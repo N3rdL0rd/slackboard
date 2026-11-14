@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { weekStart } from "./days";
-import { overview } from "./stats";
+import { angleTable, atAngle, overview } from "./stats";
 import type { LogEntry } from "./types";
 
 const e = (over: Partial<LogEntry>): LogEntry => ({ id: Math.random().toString(), provider: "tension", climbUuid: "c" + Math.random(), climbName: "x", angle: 40, isMirror: false, bidCount: 1, quality: 3, difficulty: 14, comment: "", climbedAt: "2026-10-28 18:00:00", isSend: true, ...over });
@@ -28,7 +28,7 @@ describe("overview", () => {
     expect(o.sessions).toBe(2);
     expect(o.flashRate).toBe(0.5);
     expect(o.hardest?.name).toBe("b");
-    expect(o.byGrade).toEqual([{ v: 2, sends: 1 }, { v: 5, sends: 1 }]);
+    expect(o.byGrade).toEqual([{ v: 2, sends: 1, flashes: 1 }, { v: 5, sends: 1, flashes: 0 }]);
   });
   it("ignores ungraded sends on grade charts but still counts them", () => {
     const o = overview([e({ difficulty: 0 })], NOW, v);
@@ -67,12 +67,49 @@ describe("overview", () => {
     const grade = (x: LogEntry) => (x.provider === "moon" ? x.difficulty - 100 : (x.difficulty - 10) / 2);
     const o = overview([e({ provider: "tension", difficulty: 16, climbName: "t" }), e({ provider: "moon", difficulty: 105, climbName: "m" })], NOW, grade);
     expect(o.hardest).toMatchObject({ name: "m", grade: 5, provider: "moon" });
-    expect(o.byGrade).toEqual([{ v: 3, sends: 1 }, { v: 5, sends: 1 }]);
+    expect(o.byGrade).toEqual([{ v: 3, sends: 1, flashes: 1 }, { v: 5, sends: 1, flashes: 1 }]);
   });
   it("handles an empty logbook", () => {
     const o = overview([], NOW, v);
     expect(o.sends).toBe(0);
     expect(o.flashRate).toBeNull();
     expect(o.weeks).toHaveLength(1);
+  });
+});
+
+describe("stats by angle", () => {
+  const list = [
+    e({ climbName: "a", angle: 40, difficulty: 14, bidCount: 1, climbedAt: "2026-10-28 18:00:00" }),
+    e({ climbName: "b", angle: 40, difficulty: 18, bidCount: 3, climbedAt: "2026-10-28 18:30:00" }),
+    e({ climbName: "c", angle: 30, difficulty: 20, bidCount: 1, climbedAt: "2026-10-29 10:00:00" }),
+    e({ climbName: "d", angle: 30, isSend: false, bidCount: 2, difficulty: 0, climbedAt: "2026-10-29 10:20:00" }),
+  ];
+
+  it("all angles is the plain overview, untouched", () => {
+    expect(atAngle(list, null)).toBe(list);
+    expect(overview(atAngle(list, null), NOW, v)).toEqual(overview(list, NOW, v));
+  });
+  it("one angle counts only its own entries", () => {
+    const o = overview(atAngle(list, 40), NOW, v);
+    expect(o).toMatchObject({ sends: 2, attempts: 4, flashRate: 0.5 });
+    expect(o.hardest?.name).toBe("b");
+    expect(overview(atAngle(list, 30), NOW, v)).toMatchObject({ sends: 1, attempts: 3 });
+  });
+  it("counts flashes by grade", () => {
+    expect(overview(list, NOW, v).byGrade).toEqual([{ v: 2, sends: 1, flashes: 1 }, { v: 4, sends: 1, flashes: 0 }, { v: 5, sends: 1, flashes: 1 }]);
+  });
+  it("lists each angle once, most sends first, with its own numbers", () => {
+    const rows = angleTable(list, NOW, v);
+    expect(rows.map((r) => r.angle)).toEqual([40, 30]);
+    expect(rows[0]).toMatchObject({ sends: 2, attempts: 4, flashRate: 0.5, hardest: 4 });
+    expect(rows[1]).toMatchObject({ sends: 1, attempts: 3, flashRate: 1, hardest: 5 });
+  });
+  it("breaks ties by angle and gives an angle with no send no grade", () => {
+    const rows = angleTable([e({ angle: 50, isSend: false, difficulty: 0 }), e({ angle: 20, isSend: false, difficulty: 0 })], NOW, v);
+    expect(rows.map((r) => r.angle)).toEqual([20, 50]);
+    expect(rows[0]).toMatchObject({ sends: 0, flashRate: null, hardest: null, working: null });
+  });
+  it("is empty for an empty logbook", () => {
+    expect(angleTable([], NOW, v)).toEqual([]);
   });
 });
