@@ -1,3 +1,4 @@
+import { UpdateBanner } from "../../ui/UpdateBanner";
 import { usePermissions, useUserId, useUsername } from "../../state/useActive";
 import { getProvider } from "../../providers";
 import { useRouter } from "expo-router";
@@ -66,6 +67,7 @@ export default function You() {
         <IconButton icon="gear" label="Settings" onPress={() => router.push("/settings")} />
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 18, paddingBottom: 24 }}>
+        <UpdateBanner />
         <Tap accessibilityRole="button" accessibilityLabel="Your profile" onPress={() => me != null && router.push({ pathname: "/profile/[id]", params: { id: String(me) } })} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           <Avatar path={profile?.avatar} name={profile?.name || username} size={64} />
           <View style={{ flex: 1 }}>
