@@ -11,7 +11,7 @@
  */
 import { fingerHoldOff, noteFor, type DayNote } from "./body";
 import type { Activity } from "./activity";
-import { addDays, daysBetween, type Day } from "./days";
+import { addDays, dayOf, daysBetween, type Day } from "./days";
 import { isHardDay, typicalDayEntries, type WorkingGrades } from "./load";
 import { isFingerIntense, lighten, sessionMinutes, type BlockKind, type Plan, type PlanSession, type Tests } from "./planner";
 import type { TestKind } from "../data/protocols";
@@ -42,6 +42,42 @@ const HANGS = ["max-hang", "min-edge-hang"];
 const isWorkSet = (t: { timeS: number | null }) => t.timeS !== null && t.timeS >= 7;
 
 type Verdict = "progress" | "hold" | "back" | "follow";
+
+/** The effort (1 to 10) a hang session is meant to feel like. Sessions rated well above it hold the load; well below it allow a small step up. */
+export const INTENDED_EFFORT = 7;
+export const EFFORT_HIGH = INTENDED_EFFORT + 1.5;
+export const EFFORT_VERY_HIGH = INTENDED_EFFORT + 2.5;
+export const EFFORT_LOW = INTENDED_EFFORT - 2;
+/** Only the last few sessions in this many days count, and at least `EFFORT_MIN_RATINGS` of them must have a rating. */
+export const EFFORT_DAYS = 28;
+export const EFFORT_SESSIONS = 3;
+export const EFFORT_MIN_RATINGS = 2;
+
+/**
+ * What the effort ratings say about one exercise: the average of the last few rated sessions, against the effort it is meant to feel
+ * like. Well above holds the load, far above steps back, well below allows a small step up. Too few ratings say nothing.
+ */
+export function effortVerdict(entries: TrainingEntry[], exerciseId: string, today: Day): { verdict: Verdict; avg: number | null } {
+  const rated = entries
+    .filter((e) => e.exerciseId === exerciseId && e.effort !== null && daysBetween(dayOf(e.performedAt), today) <= EFFORT_DAYS && dayOf(e.performedAt) <= today)
+    .sort((a, b) => b.performedAt.localeCompare(a.performedAt))
+    .slice(0, EFFORT_SESSIONS);
+  if (rated.length < EFFORT_MIN_RATINGS) return { verdict: "follow", avg: null };
+  const avg = rated.reduce((n, e) => n + (e.effort ?? 0), 0) / rated.length;
+  const rounded = Math.round(avg * 10) / 10;
+  if (avg >= EFFORT_VERY_HIGH) return { verdict: "back", avg: rounded };
+  if (avg >= EFFORT_HIGH) return { verdict: "hold", avg: rounded };
+  if (avg <= EFFORT_LOW) return { verdict: "progress", avg: rounded };
+  return { verdict: "follow", avg: rounded };
+}
+
+/** Two signals, one answer: any step back wins, then any hold, then a step up only when nothing else objects. */
+export function combineVerdicts(a: Verdict, b: Verdict): Verdict {
+  if (a === "back" || b === "back") return "back";
+  if (a === "hold" || b === "hold") return "hold";
+  if (a === "progress" || b === "progress") return "progress";
+  return "follow";
+}
 
 /** What last time says about this exercise: progress, hold, step back, or follow the schedule. */
 export function verdictFor(prev: TrainingEntry | undefined): { verdict: Verdict; easyAll: boolean } {
@@ -78,8 +114,16 @@ function progress(s: PlanSession, ctx: AdaptContext, reasons: string[]): PlanSes
   const items = s.items.map((item) => {
     if (!HANGS.includes(item.exerciseId)) return item;
     const prev = lastTime(ctx.entries, item.exerciseId);
-    const { verdict, easyAll } = verdictFor(prev);
+    const feel = verdictFor(prev);
+    const effort = effortVerdict(ctx.entries, item.exerciseId, ctx.today);
+    const easyAll = feel.easyAll;
+    // Never a step up in a starter block, whichever signal asks for it.
+    const combined = combineVerdicts(feel.verdict, effort.verdict);
+    const verdict = combined === "progress" && ctx.blockKind === "starter" ? "follow" : combined;
     if (verdict === "follow" || !prev) return item;
+    // The reason names what actually decided it: the effort ratings when the feel of the sets did not say the same thing.
+    const viaEffort = feel.verdict !== verdict && effort.verdict === verdict && effort.avg !== null;
+    const cause = (name: string) => (viaEffort ? `Your last ${name} sessions averaged ${effort.avg} of 10 effort, ${verdict === "progress" ? "under" : "over"} the plan's ${INTENDED_EFFORT}` : `${name} ${verdict === "progress" ? "felt easy" : "was hard"} last time`);
     const lastWork = [...prev.sets].reverse().find((t) => t.done && isWorkSet(t));
     const planned = item.sets.find((t) => t.onS === 10) ?? item.sets[item.sets.length - 1];
     if (!lastWork) return item;
@@ -94,7 +138,7 @@ function progress(s: PlanSession, ctx: AdaptContext, reasons: string[]): PlanSes
       else if (verdict === "back") load = Math.min(plannedLoad, last) - LOAD_STEP_KG;
       if (ctx.blockKind === "starter") load = Math.min(load, 0);
       if (load === plannedLoad) return item;
-      reasons.push(load > plannedLoad ? `${name} felt easy last time, so a little more: ${load} kg.` : `${name} was hard last time, so ${verdict === "hold" ? "holding at" : "stepping back to"} ${load} kg.`);
+      reasons.push(load > plannedLoad ? `${cause(name)}, so a little more: ${load} kg.` : `${cause(name)}, so ${verdict === "hold" ? "holding at" : "stepping back to"} ${load} kg.`);
       return { ...item, sets: withLoad(item.sets, load, null) };
     }
     const lastEdge = lastWork.edgeMm ?? planned.edgeMm ?? 20;
@@ -104,7 +148,7 @@ function progress(s: PlanSession, ctx: AdaptContext, reasons: string[]): PlanSes
     else if (verdict === "hold") edge = Math.max(plannedEdge, lastEdge);
     else if (verdict === "back") edge = Math.max(plannedEdge, lastEdge + EDGE_STEP_MM);
     if (edge === plannedEdge) return item;
-    reasons.push(edge < plannedEdge ? `${name} felt easy last time, so a smaller edge: ${edge} mm.` : `${name} was hard last time, so ${verdict === "hold" ? "staying on" : "going back to"} ${edge} mm.`);
+    reasons.push(edge < plannedEdge ? `${cause(name)}, so a smaller edge: ${edge} mm.` : `${cause(name)}, so ${verdict === "hold" ? "staying on" : "going back to"} ${edge} mm.`);
     return { ...item, sets: item.sets.map((t) => (t.onS === 10 || (t.onS !== null && t.onS >= 7) ? { ...t, edgeMm: edge } : { ...t, edgeMm: edge + 2 })) };
   });
   return { ...s, items, minutes: sessionMinutes(items) };

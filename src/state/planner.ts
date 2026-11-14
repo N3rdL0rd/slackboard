@@ -2,17 +2,18 @@ import { useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { getLocalDb } from "../data/sqlite";
 import { deletePlan, deleteTest, loadPlans, loadProfile, loadTests, savePlan, saveProfile, saveTest } from "../core/planLocal";
-import { completeSession, lighten, type PlanSession, moveSession, skipSession, swapExercise, updateSession, type MoveResult, type Plan, type Profile, type TestResult } from "../core/planner";
+import { completeSession, lighten, lightenBetween, type PlanSession, moveSession, skipSession, swapExercise, updateSession, type MoveResult, type Plan, type Profile, type TestResult } from "../core/planner";
 import { adaptSession, settleMissed, type Adapted } from "../core/adapt";
-import { dayOf } from "../core/days";
+import { addDays, dayOf, weekStartDay } from "../core/days";
+import { deloadAdvice, DELOAD_KEY, planIsLightNow, snoozeUntil, type DeloadAdvice } from "../core/deload";
 import { angleSamples, outsideEvidence } from "../core/outside";
 import { isSend, ropedWorking } from "../core/roped";
 import { ropedAsV } from "../core/ropedEquivalence";
 import { workingGrade } from "../core/suggest";
 import { styleInsight, type StyleInsight } from "../core/styleProfile";
 import { useData } from "./data";
-import { useActivities, useWorkingGrades } from "./today";
-import { useDayNotes } from "./dayNotes";
+import { useActivities, useToday, useWorkingGrades } from "./today";
+import { useDayNotes, useDayNotesStore } from "./dayNotes";
 import { useTraining } from "./training";
 import { useOutsideLogs } from "./outside";
 import { useRopedLogs } from "./roped";
@@ -116,6 +117,8 @@ export function planActions() {
     skip: (id: string) => apply((p) => skipSession(p, id)),
     complete: (id: string) => apply((p) => completeSession(p, id)),
     lighten: (id: string) => apply((p) => updateSession(p, id, lighten)),
+    /** Everything still to do from today to the end of this week, made lighter. */
+    lightenWeek: (today: string) => apply((p) => lightenBetween(p, today, addDays(weekStartDay(today), 6))),
     swap: (id: string, from: string, to: string) => apply((p) => updateSession(p, id, (s) => swapExercise(s, from, to))),
     setStatus: (status: Plan["status"]) => apply((p) => ({ ...p, status })),
     /** Returns the result, so the screen can show why a move was refused. */
@@ -140,3 +143,20 @@ export function useAdapted(session: PlanSession | null, blockKind: Plan["block"]
     return adaptSession(session, { today: dayOf(new Date()), entries, notes, activities, working, blockKind: blockKind ?? "balanced" });
   }, [session, entries, notes, activities, working, blockKind]);
 }
+
+/** A lighter week suggested from the load, or null: no plan, nothing calling for it, or it was dismissed this week. */
+export function useDeloadAdvice(): DeloadAdvice | null {
+  const activities = useActivities();
+  const training = useTraining();
+  const working = useWorkingGrades();
+  const today = useToday();
+  const plan = useCurrentPlan();
+  const snoozes = useDayNotesStore((s) => s.snoozes);
+  return useMemo(() => {
+    if (!plan || plan.status !== "active" || (snoozes[DELOAD_KEY] ?? "") >= today) return null;
+    return deloadAdvice({ activities, training, working, today, inLightWeek: planIsLightNow(plan, today) });
+  }, [activities, training, working, today, plan, snoozes]);
+}
+
+/** Puts the suggestion away for a week. */
+export const dismissDeload = (today: string): Promise<void> => useDayNotesStore.getState().snooze(DELOAD_KEY, snoozeUntil(today));

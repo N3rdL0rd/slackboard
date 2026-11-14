@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adaptSession, blockOver, nextBlockProposal, retestDue, retestReport, settleMissed, verdictFor, type AdaptContext } from "./adapt";
+import { adaptSession, blockOver, combineVerdicts, effortVerdict, nextBlockProposal, retestDue, retestReport, settleMissed, verdictFor, type AdaptContext } from "./adapt";
 import { blankNote, type DayNote } from "./body";
 import { addDays, type Day } from "./days";
 import { buildPlan, DEFAULT_PROFILE, type Plan, type PlanSession, type Tests } from "./planner";
@@ -109,5 +109,44 @@ describe("retests and the next block", () => {
     const flat = nextBlockProposal(p, [{ test: "hang7", before: 30, after: 30, delta: 0, percent: 0 }]);
     expect(gain.emphasis).not.toBe(p.block.emphasis);
     expect(flat.emphasis).toBe(p.block.emphasis);
+  });
+});
+
+describe("effort ratings", () => {
+  const s = fingerSession(plan());
+  const base = loadOf(s);
+  const rated = (...efforts: number[]) => efforts.map((effort, i) => entry(null, { id: `e${i}`, effort, performedAt: `2026-11-0${5 - i} 18:00:00`, sets: [set({ loadKg: base }), set({ loadKg: base })] }));
+
+  it("needs two ratings and ignores old sessions", () => {
+    expect(effortVerdict(rated(9.5), "max-hang", MON)).toEqual({ verdict: "follow", avg: null });
+    const old = [entry(null, { effort: 9.5, performedAt: "2026-08-01 18:00:00" }), entry(null, { effort: 9.5, performedAt: "2026-07-01 18:00:00" })];
+    expect(effortVerdict(old, "max-hang", MON).verdict).toBe("follow");
+  });
+  it("holds the load after sessions well above the plan's effort, and says why", () => {
+    // Last time was two kilograms under what the plan now asks for, so holding means staying there.
+    const lighter = rated(8, 9, 8.5).map((e) => ({ ...e, sets: e.sets.map((t) => ({ ...t, loadKg: base - 2 })) }));
+    const r = adaptSession(s, ctx({ entries: lighter }));
+    expect(loadOf(r.session)).toBe(base - 2);
+    expect(r.reasons.join(" ")).toMatch(/averaged 8.5 of 10 effort, over the plan's 7/);
+  });
+  it("steps back after sessions that were nearly maximal", () => {
+    expect(effortVerdict(rated(10, 10, 9.5), "max-hang", MON).verdict).toBe("back");
+    expect(loadOf(adaptSession(s, ctx({ entries: rated(10, 10, 10) })).session)).toBe(base - 1);
+  });
+  it("allows a small step up after sessions well under the plan's effort", () => {
+    const r = adaptSession(s, ctx({ entries: rated(4, 5, 4) }));
+    expect(loadOf(r.session)).toBe(base + 1);
+    expect(r.reasons.join(" ")).toMatch(/under the plan's 7/);
+  });
+  it("never steps up in a starter block", () => {
+    expect(loadOf(adaptSession(s, ctx({ blockKind: "starter", entries: rated(4, 4, 4) })).session)).toBeLessThanOrEqual(base);
+  });
+  it("lets the more cautious signal win when feel and effort disagree", () => {
+    const hardFeel = [entry("hard", { id: "a", effort: 4, performedAt: "2026-11-05 18:00:00" }), entry("hard", { id: "b", effort: 4, performedAt: "2026-11-03 18:00:00" })];
+    expect(loadOf(adaptSession(s, ctx({ entries: hardFeel })).session)).toBeLessThan(loadOf(s) + 1);
+    expect(combineVerdicts("progress", "hold")).toBe("hold");
+    expect(combineVerdicts("follow", "progress")).toBe("progress");
+    expect(combineVerdicts("back", "progress")).toBe("back");
+    expect(combineVerdicts("follow", "follow")).toBe("follow");
   });
 });

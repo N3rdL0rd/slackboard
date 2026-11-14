@@ -395,6 +395,11 @@ export const sessionsInWeek = (plan: Plan, weekStart: Day): PlanSession[] => pla
 
 export const updateSession = (plan: Plan, id: string, f: (s: PlanSession) => PlanSession): Plan => ({ ...plan, sessions: plan.sessions.map((s) => (s.id === id ? f(s) : s)) });
 
+/** Makes every session still to do between `from` and `to` (inclusive) lighter. Done, skipped and already light sessions are left alone. */
+export function lightenBetween(plan: Plan, from: Day, to: Day): Plan {
+  return { ...plan, sessions: plan.sessions.map((s) => (s.status === "planned" && !s.light && s.day >= from && s.day <= to ? lighten(s) : s)) };
+}
+
 export const skipSession = (plan: Plan, id: string): Plan => updateSession(plan, id, (s) => ({ ...s, status: "skipped" }));
 export const completeSession = (plan: Plan, id: string): Plan => updateSession(plan, id, (s) => ({ ...s, status: "done" }));
 

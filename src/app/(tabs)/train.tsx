@@ -10,7 +10,7 @@ import { useStore } from "../../state/store";
 import { useToday } from "../../state/today";
 import { useTraining } from "../../state/training";
 import { Icon } from "../../ui/Icon";
-import { BlockCard, PlanTodayCard, WeekStrip } from "../../ui/PlanCard";
+import { BlockCard, DeloadCard, PlanTodayCard, WeekStrip } from "../../ui/PlanCard";
 import { Button, IconButton, LinkButton, SectionLabel, Sheet, Tap } from "../../ui/parts";
 import { Text } from "../../ui/Text";
 import { c, font, r } from "../../theme";
@@ -66,6 +66,7 @@ export default function Train() {
         {plan && plan.status === "active" && profile ? (
           <>
             <BlockCard plan={plan} today={today} />
+            <DeloadCard today={today} />
             <PlanTodayCard plan={plan} profile={profile} today={today} />
             <View style={{ gap: 8 }}>
               <SectionLabel>This week</SectionLabel>

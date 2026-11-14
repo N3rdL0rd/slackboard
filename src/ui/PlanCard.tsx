@@ -1,5 +1,5 @@
 import { blockOver, nextBlockProposal, retestDue, retestReport } from "../core/adapt";
-import { useAdapted, usePlanner } from "../state/planner";
+import { dismissDeload, planActions as planActionsFor, useAdapted, useDeloadAdvice, usePlanner } from "../state/planner";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
@@ -197,6 +197,21 @@ export function BlockCard({ plan, today }: { plan: Plan; today: Day }) {
       {proposal?.lines.map((l) => <Text key={l} v="secondary">{l}</Text>)}
       <Button label={report.length ? "Retest again" : "Retest"} variant={over ? "secondary" : "primary"} onPress={() => router.push("/plan-test")} />
       {over ? <Button label="Plan the next block" onPress={() => router.push("/plan-setup")} /> : null}
+    </View>
+  );
+}
+
+/** A lighter week might help: the reasons from the load, and one tap to make the rest of this week lighter. Shown only when it applies. */
+export function DeloadCard({ today }: { today: Day }) {
+  const advice = useDeloadAdvice();
+  if (!advice) return null;
+  return (
+    <View style={{ padding: 16, gap: 8, borderRadius: r.card, backgroundColor: c.card, borderWidth: 1, borderColor: c.lineStrong }}>
+      <Text v="section">A lighter week might help</Text>
+      {advice.reasons.map((x) => <Text key={x} v="body">{x}</Text>)}
+      <Text v="caption">General advice, not a rule.</Text>
+      <Button label="Make this week lighter" onPress={() => void planActionsFor().lightenWeek(today)} />
+      <Button variant="secondary" label="Not now" onPress={() => void dismissDeload(today)} />
     </View>
   );
 }
