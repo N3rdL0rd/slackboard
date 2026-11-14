@@ -25,6 +25,12 @@ other tools, and cannot be restored.
 
 A text field that begins with `=`, `+`, `-` or `@` gets a leading apostrophe so a spreadsheet does not read it as a formula.
 
+## Automatic backup
+
+**You > Export and backup > Automatic backup** writes the full backup (below) to a folder you choose, once a day when the app is opened,
+and keeps the newest 3, 7, 14 or 30 files named `slackboard-auto-yyyy-mm-dd.json`. Other files in that folder are never touched. The
+folder is remembered on this phone only, and is not part of a backup. Android only.
+
 ## Full backup (JSON)
 
 Everything on the phone, in one file, which **Restore** can read back.

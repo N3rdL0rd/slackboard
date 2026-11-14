@@ -26,6 +26,7 @@ import { useGoals, useGoalsStore } from "../state/goals";
 import { usePlanner, usePlannerStore } from "../state/planner";
 import { useDayNotes, useDayNotesStore } from "../state/dayNotes";
 import { useStore } from "../state/store";
+import { AutoBackupSection } from "../ui/AutoBackupSection";
 import { Button, IconButton, Segmented, SectionLabel } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c } from "../theme";
@@ -168,6 +169,8 @@ export default function Export() {
           </Text>
           {pending > 0 ? <Text v="caption">{pending} not uploaded yet are included.</Text> : null}
         </View>
+
+        <AutoBackupSection />
 
         <SectionLabel>Restore</SectionLabel>
         <Text v="secondary">Pick a backup file. Sends, likes and circuits kept on a service come back when you sign in. A restore brings back what only this phone had: gym and outdoor climbs, MoonBoard boards, problems, logs, likes and blocks, unpublished circuits, lit history, spaces and settings.</Text>
