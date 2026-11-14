@@ -7,6 +7,7 @@
  */
 import { ACTIVITY_KINDS, type Activity } from "./activity";
 import { addDays, dayOf, isDay, monthStartDay, stampOf, weekStartDay, type Day } from "./days";
+import { ROPED_GRADES } from "../data/ropedGrades";
 import { sendsIn } from "./logTimeline";
 import { CLOSE_LEFT, CLOSE_SHARE, vOf, type Milestone } from "./milestones";
 import { streakInfo } from "./streak";
@@ -135,6 +136,9 @@ const kindsFor = (scope: GoalScope): Set<string> =>
 const inWindow = (a: Activity, w: GoalWindow): boolean => a.day >= w.start && (w.end === null || a.day <= w.end);
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
+/** Where a grade goal's progress starts from: one step below the easiest grade of the scale, so a first send already counts for something. */
+const gradeFloor = (scope: "board" | "boulder" | "roped"): number => (scope === "roped" ? Math.min(...ROPED_GRADES.map((g) => g.value)) - 1 : -1);
+
 function counted(current: number, target: number, noun: string, w: GoalWindow, remainingNoun: string): GoalProgress {
   const left = Math.max(0, target - current);
   const tail = windowText(w);
@@ -152,14 +156,21 @@ export function measure(goal: Goal, ctx: GoalContext): GoalProgress {
   switch (spec.type) {
     case "grade": {
       const kinds = kindsFor(spec.scope);
-      const grades = inside.filter((a) => kinds.has(a.kind) && a.facts.send && a.facts.grade !== null).map((a) => (spec.scope === "roped" ? a.facts.grade! : vOf(a.facts.grade!)));
-      const best = grades.length ? Math.max(...grades) : null;
+      const gradeOf = (a: Activity) => (spec.scope === "roped" ? a.facts.grade! : vOf(a.facts.grade!));
+      const sends = (list: Activity[]) => list.filter((a) => kinds.has(a.kind) && a.facts.send && a.facts.grade !== null).map(gradeOf);
+      const bestOf = (grades: number[]) => (grades.length ? Math.max(...grades) : null);
+      // Progress starts from the best send in scope whenever it was made, so a goal set today already shows how far you are. Reaching
+      // the goal still takes a send from the goal's start on, so an old send above the target does not finish it the moment it is set.
+      const best = bestOf(sends(ctx.activities.filter((a) => w.end === null || a.day <= w.end)));
+      const inWindowBest = bestOf(sends(inside));
       const label = (g: number) => (spec.scope === "roped" ? ctx.labels.roped(g) : ctx.labels.boulder(g));
-      const done = best !== null && best >= spec.grade;
+      const done = inWindowBest !== null && inWindowBest >= spec.grade;
+      const floor = gradeFloor(spec.scope);
+      const share = best === null ? 0 : clamp01((best - floor) / Math.max(1, spec.grade - floor));
       const tail = windowText(w);
       return {
-        current: best ?? 0, target: spec.grade, progress: done ? 1 : best === null ? 0 : clamp01(best / spec.grade), done,
-        remaining: best !== null && !done && spec.grade - best <= 1 ? `Your best is ${label(best)}` : null,
+        current: best ?? 0, target: spec.grade, progress: done ? 1 : Math.min(share, 0.99), done,
+        remaining: best !== null && !done && best < spec.grade && spec.grade - best <= 1 ? `Your best is ${label(best)}` : null,
         summary: `${best === null ? "No send yet" : `Best so far: ${label(best)}`}${tail ? `, ${tail}` : ""}`,
       };
     }

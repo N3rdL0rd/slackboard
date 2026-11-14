@@ -55,8 +55,8 @@ describe("titles", () => {
 describe("measuring a grade goal", () => {
   const g = goal({ type: "grade", scope: "boulder", grade: 5 }, makeWindow("none", "2026-11-01"));
 
-  it("is the best send in scope on or after the window start, and reaches at the target", () => {
-    const p = measure(g, ctx([board("2026-11-03", 4), act("offBoard", "2026-11-04", { grade: 3.2 }), board("2026-10-30", 7)]));
+  it("is the best send in scope, and reaches at the target", () => {
+    const p = measure(g, ctx([board("2026-11-03", 4), act("offBoard", "2026-11-04", { grade: 3.2 })]));
     expect(p).toMatchObject({ current: 4, target: 5, done: false });
     expect(p.summary).toBe("Best so far: V4");
     expect(measure(g, ctx([board("2026-11-05", 5)])).done).toBe(true);
@@ -73,6 +73,38 @@ describe("measuring a grade goal", () => {
     const r = goal({ type: "grade", scope: "roped", grade: 13 }, g.window);
     expect(measure(r, ctx([act("roped", "2026-11-03", { grade: 13 })])).done).toBe(true);
     expect(measure(r, ctx([board("2026-11-03", 12)])).done).toBe(false);
+  });
+});
+
+describe("progress towards a grade goal", () => {
+  const v3 = goal({ type: "grade", scope: "board", grade: 3 }, makeWindow("none", TODAY));
+
+  it("starts from your best send in scope, whenever it was made", () => {
+    const p = measure(v3, ctx([board("2026-09-01", 1)]));
+    expect(p).toMatchObject({ current: 1, target: 3, done: false, summary: "Best so far: V1" });
+    expect(p.progress).toBeCloseTo(0.5); // V0 and V1 of the four steps from nothing to V3
+    expect(measure(v3, ctx([board("2026-09-01", 2)])).progress).toBeCloseTo(0.75);
+    expect(measure(v3, ctx([])).progress).toBe(0);
+  });
+  it("rises with a better send, and is complete only for a send made from the goal's start on", () => {
+    expect(measure(v3, ctx([board("2026-09-01", 1), board(TODAY, 2)])).progress).toBeCloseTo(0.75);
+    const reached = measure(v3, ctx([board("2026-09-01", 1), board(TODAY, 3)]));
+    expect(reached).toMatchObject({ done: true, progress: 1 });
+  });
+  it("is not complete just because an older send is already above the target", () => {
+    const p = measure(v3, ctx([board("2026-09-01", 5)]));
+    expect(p.done).toBe(false);
+    expect(p.progress).toBeLessThan(1);
+  });
+  it("counts only sends up to the end of a goal that has a deadline", () => {
+    const dated = goal({ type: "grade", scope: "board", grade: 3 }, makeWindow("until", TODAY, "2026-11-20"));
+    expect(measure(dated, ctx([board("2026-11-25", 2)])).current).toBe(0);
+  });
+  it("uses the roped scale from its own floor", () => {
+    const r = goal({ type: "grade", scope: "roped", grade: 15 }, makeWindow("none", TODAY));
+    const p = measure(r, ctx([act("roped", "2026-09-01", { grade: 12 })]));
+    expect(p.progress).toBeGreaterThan(0.4);
+    expect(p.progress).toBeLessThan(1);
   });
 });
 
