@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hold tagger</title>
+<style>
+  :root { --bg:#121618; --card:#1A2023; --line:#2F383D; --text:#EDEBE4; --muted:#A3ABA9; --accent:#E8C766; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 system-ui, sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:10px 16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  select, button { background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 12px; font:inherit; cursor:pointer; }
+  button:hover, select:hover { border-color:var(--muted); }
+  button.on { background:var(--text); color:var(--bg); }
+  .types { display:flex; flex-wrap:wrap; gap:6px; }
+  .types button { display:flex; gap:6px; align-items:center; }
+  .types kbd { background:var(--line); color:var(--text); border-radius:4px; padding:0 6px; font-size:12px; }
+  main { display:grid; grid-template-columns: 1fr 300px; gap:16px; padding:16px; }
+  #grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap:8px; align-content:start; }
+  .cell { position:relative; background:var(--card); border:2px solid var(--line); border-radius:10px; overflow:hidden; cursor:pointer; }
+  .cell.sel { border-color:var(--accent); }
+  .cell img { width:100%; display:block; aspect-ratio:1; object-fit:cover; }
+  .cell .k { position:absolute; left:6px; top:4px; font-size:12px; background:#000a; border-radius:4px; padding:0 5px; }
+  .cell .t { padding:3px 8px; font-size:12px; color:var(--muted); min-height:22px; }
+  .cell.done .t { color:var(--text); }
+  aside { position:sticky; top:74px; align-self:start; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  aside img { width:100%; border-radius:8px; display:block; }
+  aside h2 { margin:10px 0 2px; font-size:20px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .bar { height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin:8px 0; }
+  .bar i { display:block; height:100%; background:var(--accent); }
+  dl { margin:10px 0 0; font-size:13px; } dt { font-weight:600; margin-top:8px; } dd { margin:0; color:var(--muted); }
+  @media (max-width:800px) { main { grid-template-columns:1fr; } aside { position:static; } }
+</style>
+</head>
+<body>
+<header>
+  <select id="board"></select>
+  <select id="filter"></select>
+  <div class="types" id="types"></div>
+  <button id="next">Next untagged (U)</button>
+  <button id="export">Export JSON</button>
+  <button id="csv">Export CSV</button>
+  <button id="import">Import JSON</button>
+  <input id="file" type="file" accept=".json" hidden>
+</header>
+<main>
+  <div id="grid"></div>
+  <aside>
+    <img id="big" alt="">
+    <h2 id="title"></h2>
+    <div class="muted" id="meta"></div>
+    <div class="bar"><i id="fill"></i></div>
+    <div class="muted" id="count"></div>
+    <dl>
+      <dt>Arrow keys</dt><dd>Move between holds. Number keys tag the selected hold and move on. Backspace clears it.</dd>
+      <dt>Jug</dt><dd>Big, positive, whole hand wraps it. You can rest on it.</dd>
+      <dt>Incut edge</dt><dd>A ledge with a lip; fingers hook behind it, deeper than a fingertip pad.</dd>
+      <dt>Crimp</dt><dd>A thin edge, about one finger pad deep or less.</dd>
+      <dt>Sloper</dt><dd>Rounded, no lip; friction and body position.</dd>
+      <dt>Pinch</dt><dd>You squeeze it, thumb against fingers.</dd>
+      <dt>Pocket</dt><dd>A hole for one to three fingers.</dd>
+      <dt>Volume or other</dt><dd>Large surface feature, or anything that does not fit above.</dd>
+      <dt>Foot only</dt><dd>A chip or dot meant only for feet.</dd>
+    </dl>
+  </aside>
+</main>
+<script>
+const DATA = /*DATA*/null;
+const LABELS = { jug:"Jug", incut:"Incut edge", crimp:"Crimp", sloper:"Sloper", pinch:"Pinch", pocket:"Pocket", volume:"Volume or other", foot:"Foot only" };
+const $ = (id) => document.getElementById(id);
+let board = DATA.boards[0], tags = {}, sel = 0, filter = "all";
+
+const storeKey = () => "holdtags:" + board.id;
+const load = () => { try { tags = JSON.parse(localStorage.getItem(storeKey()) || "{}"); } catch { tags = {}; } };
+const save = () => localStorage.setItem(storeKey(), JSON.stringify(tags));
+const visible = () => board.holds.filter((h) => filter === "all" ? true : filter === "untagged" ? !tags[h.key] : tags[h.key] === filter);
+
+function renderTypes() {
+  $("types").innerHTML = DATA.types.map((t, i) => `<button data-t="${t}"><kbd>${i + 1}</kbd>${LABELS[t]}</button>`).join("");
+  $("types").onclick = (e) => { const b = e.target.closest("button"); if (b) tag(b.dataset.t); };
+  $("filter").innerHTML = ["all", "untagged", ...DATA.types].map((f) => `<option value="${f}">${f === "all" ? "Show all" : f === "untagged" ? "Untagged only" : "Only " + LABELS[f]}</option>`).join("");
+  $("board").innerHTML = DATA.boards.map((b, i) => `<option value="${i}">${b.name}</option>`).join("");
+}
+
+function render() {
+  const list = visible();
+  if (sel >= list.length) sel = Math.max(0, list.length - 1);
+  $("grid").innerHTML = list.map((h, i) => `<div class="cell ${i === sel ? "sel" : ""} ${tags[h.key] ? "done" : ""}" data-i="${i}"><img loading="lazy" src="${h.image}"><span class="k">${h.key}</span><div class="t">${tags[h.key] ? LABELS[tags[h.key]] : "untagged"}</div></div>`).join("");
+  const h = list[sel];
+  if (h) {
+    $("big").src = h.image; $("title").textContent = `${board.keyLabel} ${h.key}`;
+    $("meta").textContent = Object.entries(h).filter(([k, v]) => !["key", "image", "pixels", "hole"].includes(k) && v !== "").map(([k, v]) => `${k}: ${v}`).join(" \u00B7 ");
+  }
+  const done = board.holds.filter((x) => tags[x.key]).length;
+  $("fill").style.width = (100 * done / board.holds.length) + "%";
+  $("count").textContent = `${done} of ${board.holds.length} tagged` + DATA.types.map((t) => { const n = board.holds.filter((x) => tags[x.key] === t).length; return n ? ` \u00B7 ${LABELS[t]} ${n}` : ""; }).join("");
+  [...$("types").children].forEach((b) => b.classList.toggle("on", h && tags[h.key] === b.dataset.t));
+  const el = $("grid").children[sel]; if (el) el.scrollIntoView({ block: "nearest" });
+}
+
+function tag(type) {
+  const list = visible(); const h = list[sel]; if (!h) return;
+  if (type === null) delete tags[h.key]; else tags[h.key] = type;
+  save();
+  // After tagging, stay put when the filter would drop this hold from view, otherwise move to the next one.
+  if (type !== null && filter === "untagged") render(); else { sel = Math.min(list.length - 1, sel + 1); render(); }
+}
+function nextUntagged() {
+  const list = visible(); for (let i = 1; i <= list.length; i++) { const j = (sel + i) % list.length; if (!tags[list[j].key]) { sel = j; break; } } render();
+}
+function download(name, text, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); }
+
+$("grid").onclick = (e) => { const c = e.target.closest(".cell"); if (c) { sel = Number(c.dataset.i); render(); } };
+$("board").onchange = () => { board = DATA.boards[Number($("board").value)]; load(); sel = 0; render(); };
+$("filter").onchange = () => { filter = $("filter").value; sel = 0; render(); };
+$("next").onclick = nextUntagged;
+$("export").onclick = () => download(`${board.id}-hold-types.json`, JSON.stringify({ board: board.id, version: 1, holds: Object.fromEntries(Object.entries(tags).sort()) }, null, 2), "application/json");
+$("csv").onclick = () => download(`${board.id}-hold-types.csv`, "key,type\n" + board.holds.map((h) => `${h.key},${tags[h.key] || ""}`).join("\n"), "text/csv");
+$("import").onclick = () => $("file").click();
+$("file").onchange = async () => { try { const j = JSON.parse(await $("file").files[0].text()); if (j.holds && typeof j.holds === "object") { Object.assign(tags, Object.fromEntries(Object.entries(j.holds).filter(([k, v]) => DATA.types.includes(v)))); save(); render(); } } catch { alert("That is not a hold-types file."); } };
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "SELECT") return;
+  const n = Number(e.key);
+  if (n >= 1 && n <= DATA.types.length) tag(DATA.types[n - 1]);
+  else if (e.key === "Backspace" || e.key === "Delete") tag(null);
+  else if (e.key === "ArrowRight") { sel = Math.min(visible().length - 1, sel + 1); render(); }
+  else if (e.key === "ArrowLeft") { sel = Math.max(0, sel - 1); render(); }
+  else if (e.key === "ArrowDown" || e.key === "ArrowUp") { const cols = Math.max(1, Math.floor($("grid").clientWidth / 120)); sel = Math.max(0, Math.min(visible().length - 1, sel + (e.key === "ArrowDown" ? cols : -cols))); render(); e.preventDefault(); }
+  else if (e.key.toLowerCase() === "u") nextUntagged();
+});
+renderTypes(); load(); render();
+</script>
+</body>
+</html>
