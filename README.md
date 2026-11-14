@@ -51,6 +51,8 @@ combining happens on your phone.
 - Train: a library of about twenty exercises (hangboard, pulling, core, mobility), a session runner that counts hangs and repeaters
   down for you with haptic cues, steppers for load, time and edge between sets, and a "Something hurts" button that goes on the day's
   body note. Training is saved as it goes, shows in the Log, and counts as a climbing day for your streak.
+- Automatic backup to a folder you choose (daily, newest few kept). Home-screen widgets (Android): streak, today's session with Start,
+  this week, quick log and goal progress. Optional daily update check for the nightly Android build, and an opt-in crash log you can share.
 - Training plan: a block of 6 to 12 weeks built from your profile, tests and logs, with sessions placed around your climbing days
   (48 hours between finger sessions, always a rest day). Move, skip, swap or lighten any session in one step. Each session adapts to
   how the last one felt, your body notes, your energy and yesterday's climbing; the reason is shown. Sharp finger pain holds finger

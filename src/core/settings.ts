@@ -50,6 +50,10 @@ export interface Settings {
   ropedEquivalence: RopedEquivalence;
   /** Show the Train tab. */
   trainTab: boolean;
+  /** Ask GitHub once a day whether a newer Android build exists. Off until turned on. */
+  updateCheck: boolean;
+  /** Keep unhandled JavaScript errors on the phone for sharing. Off until turned on. */
+  crashLog: boolean;
   units: Units;
   /** The "3 more V4s until you have 10" lines. */
   motivation: boolean;
@@ -65,7 +69,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
 
 export const DEFAULT_SETTINGS: Settings = {
   gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, logLit: true, haptics: true,
-  ropedWorking: false, ropedEquivalence: DEFAULT_EQUIVALENCE, trainTab: true, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS, notificationsDeclined: false,
+  ropedWorking: false, ropedEquivalence: DEFAULT_EQUIVALENCE, trainTab: true, updateCheck: false, crashLog: false, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS, notificationsDeclined: false,
 };
 
 /** Pounds and feet where people use them. `region` is the two-letter country of the phone's locale ("US"). */
@@ -76,7 +80,7 @@ const DISPLAYS: GradeDisplay[] = ["both", "v", "font"];
 const NUDGES: NudgeLevel[] = ["off", "relaxed", "standard", "keen"];
 const NOTIFICATION_SWITCHES = ["plan", "review", "streak", "rest", "milestone", "sessionRest"] as const;
 const NOTIFICATION_TIMES = ["planTime", "reviewTime", "quietStart", "quietEnd"] as const;
-const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "ropedWorking", "trainTab", "motivation", "notificationsDeclined"] as const;
+const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "ropedWorking", "trainTab", "updateCheck", "crashLog", "motivation", "notificationsDeclined"] as const;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 type Obj = Record<string, unknown>;

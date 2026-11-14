@@ -10,6 +10,9 @@ import type { Board } from "../core/types";
 import { DEFAULT_PROVIDER } from "../providers";
 import { useData } from "./data";
 
+/** Where automatic backups go. `dir` is an Android folder URI. */
+export interface AutoBackupState { dir: string | null; folder: string; keep: number; lastDay: string; error: string }
+
 interface State {
   /** One signed-in account per provider. Tokens are kept in the keystore (state/session.ts). */
   accounts: Accounts;
@@ -29,6 +32,12 @@ interface State {
   activitySeen: string;
   /** A link the user opened while signed out; opened after sign-in. */
   pendingLink: string | null;
+  /** The folder for automatic backups, on this device only (never in a backup file), and how the last run went. */
+  autoBackup: AutoBackupState;
+  setAutoBackup: (p: Partial<AutoBackupState>) => void;
+  /** The newest Android build seen on the last update check, and the day it was made. Not part of a backup. */
+  updates: { checkedDay: string; latest: number };
+  setUpdates: (p: Partial<{ checkedDay: string; latest: number }>) => void;
   signIn: (provider: ProviderId, username: string, userId: number) => void;
   /** Removes one provider's account; boards and cross-board data stay. */
   signOut: (provider: ProviderId) => void;
@@ -65,6 +74,10 @@ export const useStore = create<State>()(
       randomSeed: 1,
       activitySeen: "",
       pendingLink: null,
+      autoBackup: { dir: null, folder: "", keep: 7, lastDay: "", error: "" },
+      updates: { checkedDay: "", latest: 0 },
+      setUpdates: (p) => set((s) => ({ updates: { ...s.updates, ...p } })),
+      setAutoBackup: (p) => set((s) => ({ autoBackup: { ...s.autoBackup, ...p } })),
       signIn: (provider, username, userId) => set((s) => ({ accounts: { ...s.accounts, [provider]: { userId, username } } })),
       signOut: (provider) => set((s) => { const { [provider]: _gone, ...rest } = s.accounts; return { accounts: rest, ...(Object.keys(rest).length ? {} : { boardId: null, angles: {}, boardUsed: {}, filters: {}, activitySeen: "" }) }; }),
       setAngle: (angle) => {

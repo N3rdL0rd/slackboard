@@ -117,6 +117,77 @@
           "color": "#121618",
           "defaultChannel": "plans-reviews"
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/barlow-condensed/700Bold/BarlowCondensed_700Bold.ttf",
+            "./node_modules/@expo-google-fonts/barlow/400Regular/Barlow_400Regular.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "Streak",
+              "label": "Streak",
+              "description": "Your climbing streak",
+              "minWidth": "110dp",
+              "minHeight": "56dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 1,
+              "previewImage": "./assets/widget-preview/streak.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Today",
+              "label": "Today's session",
+              "description": "Today's planned session, with Start",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/widget-preview/today.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Week",
+              "label": "This week",
+              "description": "Seven days and your sends",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/widget-preview/week.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "QuickLog",
+              "label": "Quick log",
+              "description": "Open the gym, roped or train screens",
+              "minWidth": "250dp",
+              "minHeight": "56dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "previewImage": "./assets/widget-preview/quicklog.png",
+              "resizeMode": "horizontal",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Goal",
+              "label": "Goal",
+              "description": "Your goal and its progress",
+              "minWidth": "250dp",
+              "minHeight": "56dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "previewImage": "./assets/widget-preview/goal.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
       ]
     ],
     "experiments": {

@@ -21,8 +21,11 @@ phone's secure keystore. Signing out removes that brand's data from the phone, a
 - **Board photos** are downloaded from the brand's image server.
 - **Forgot password** opens the brand's own reset page inside the app. That page uses Google reCAPTCHA.
 - **Mountain Project** links open in your browser only when you tap them.
+- **Update check** (Android, off by default). If you turn on "Check for updates" or tap "Check now", the app asks api.github.com for the
+  newest build number. GitHub sees your IP address and the request; nothing from your data is sent.
 
-Nothing else leaves your phone, and nothing is shared between brands: the combining happens on the phone.
+Automatic backups, the crash log and home-screen widgets stay on your phone. Backups go only to the folder you choose, and the crash log
+only leaves when you share it. Nothing else leaves your phone, and nothing is shared between brands: the combining happens on the phone.
 
 ## Permissions
 
