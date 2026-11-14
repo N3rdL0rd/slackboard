@@ -1,3 +1,5 @@
+import { sessionLines, type TimedSession } from "../../core/attempts";
+import { useTiming } from "../../state/timing";
 import { useRouter } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
@@ -61,6 +63,7 @@ export default function LogTab() {
   const logSpaces = useSpaces((s) => s.logSpaces);
   const ropedSystem = useRopedLogs()[0]?.gradeSystem ?? "yds";
   const units = useStore((s) => s.settings.units);
+  const timing = useTiming();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [range, setRange] = useState<Range>("month");
   const [kind, setKind] = useState<KindFilter>("all");
@@ -176,7 +179,7 @@ export default function LogTab() {
           </View>
         }
         renderItem={({ item: g }) => (
-          <DayCardView card={g} today={today} open={expanded === g.day} labels={labels} display={display} ropedSystem={ropedSystem} units={units}
+          <DayCardView card={g} sessions={timing.byDay.get(g.day) ?? []} nameOf={timing.nameOf} today={today} open={expanded === g.day} labels={labels} display={display} ropedSystem={ropedSystem} units={units}
             note={noteFor(notes, g.day)} onToggle={() => setExpanded(expanded === g.day ? null : g.day)} onEntry={openEntry} onBody={() => setBodyDay(g.day)} />
         )}
       />
@@ -216,13 +219,14 @@ export default function LogTab() {
 }
 
 /** One day: the title, where, and a one-line summary; open it for the entries, each with the icon of its kind, and the day's check-in. */
-function DayCardView({ card, today, open, labels, display, ropedSystem, units, note, onToggle, onEntry, onBody }: {
-  card: DayCard; today: string; open: boolean; labels: CardLabels; display: GradeDisplay; ropedSystem: RopedSystem; units: Units;
+function DayCardView({ card, sessions, nameOf, today, open, labels, display, ropedSystem, units, note, onToggle, onEntry, onBody }: {
+  card: DayCard; sessions: TimedSession[]; nameOf: (id: string) => string | null; today: string; open: boolean; labels: CardLabels; display: GradeDisplay; ropedSystem: RopedSystem; units: Units;
   note: DayNote | undefined; onToggle: () => void; onEntry: (a: Activity) => void; onBody: () => void;
 }) {
   const title = dayTitle(card.day, today);
   const where = card.places.join(" \u00B7 ");
   const check = note ? noteSummary(note) : "";
+  const lines = sessions.map((s) => sessionLines(s, nameOf));
   return (
     <View style={{ marginHorizontal: 16, marginTop: 14, backgroundColor: c.card, borderRadius: r.card, borderWidth: 1, borderColor: c.line, overflow: "hidden" }}>
       <Tap accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${title}${where ? `, ${where}` : ""}. ${card.summary}. ${open ? "Collapse" : "Expand"}`}
@@ -231,6 +235,7 @@ function DayCardView({ card, today, open, labels, display, ropedSystem, units, n
           <Text v="climbName">{title}</Text>
           {where ? <Text v="bodyStrong">{where}</Text> : null}
           <Text v="secondary">{card.summary}</Text>
+          {lines.slice(0, 2).map((l) => <Text key={l.headline} v="caption">{l.headline}</Text>)}
           {check ? <Text v="caption">{check}</Text> : null}
         </View>
         <View style={{ alignItems: "flex-end", gap: 4 }}>
@@ -240,6 +245,17 @@ function DayCardView({ card, today, open, labels, display, ropedSystem, units, n
         <Icon name={open ? "chevD" : "chevR"} size={20} color={c.muted} />
       </Tap>
       {open && card.entries.map((a) => <EntryRow key={a.id} a={a} display={display} ropedSystem={ropedSystem} units={units} onPress={() => onEntry(a)} />)}
+      {open && lines.length ? (
+        <View style={{ gap: 6, padding: 14, borderTopWidth: 1, borderTopColor: c.divider }}>
+          {lines.map((l, i) => (
+            <View key={i} style={{ gap: 2 }}>
+              {lines.length > 1 ? <Text v="bodyStrong" style={{ fontSize: 14 }}>{l.headline}</Text> : null}
+              {l.details.map((d) => <Text key={d} v="secondary">{d}</Text>)}
+            </View>
+          ))}
+          {lines.some((l) => l.note) ? <Text v="caption">Estimated from when you logged.</Text> : null}
+        </View>
+      ) : null}
       {open && (
         <Tap accessibilityRole="button" accessibilityLabel={note ? "Edit how you felt this day" : "Add how you felt this day"} onPress={onBody}
           style={{ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, borderTopWidth: 1, borderTopColor: c.divider }}>
