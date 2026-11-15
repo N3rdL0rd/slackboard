@@ -132,19 +132,30 @@ export async function ingestWatchMessages(db: Db, items: Received[], recordBatch
 
 export interface WatchSessionListing extends WatchSession {
   counts: { hr: number; elevation: number; motion: number; labels: number };
+  /** First and last sample time of each stream, null when it has none: enough for a mean interval without loading the samples. */
+  spans: Record<StreamKind, [number, number] | null>;
 }
 
 /** Every session, newest first, with how many samples of each kind it holds. */
 export async function loadWatchSessions(db: Db): Promise<WatchSessionListing[]> {
-  const rows = await db.all<SessionRow & { hrN: number; elevN: number; motionN: number; labelN: number }>(
+  type Span = { lo: number | null; hi: number | null };
+  const rows = await db.all<SessionRow & { hrN: number; elevN: number; motionN: number; labelN: number; hrLo: number | null; hrHi: number | null; elevLo: number | null; elevHi: number | null; motionLo: number | null; motionHi: number | null }>(
     `SELECT ${SESSION_COLUMNS},
+       (SELECT MIN(at) FROM l_watch_hr x WHERE x.session = s.id) AS hrLo, (SELECT MAX(at) FROM l_watch_hr x WHERE x.session = s.id) AS hrHi,
+       (SELECT MIN(at) FROM l_watch_elev x WHERE x.session = s.id) AS elevLo, (SELECT MAX(at) FROM l_watch_elev x WHERE x.session = s.id) AS elevHi,
+       (SELECT MIN(at) FROM l_watch_motion x WHERE x.session = s.id) AS motionLo, (SELECT MAX(at) FROM l_watch_motion x WHERE x.session = s.id) AS motionHi,
        (SELECT COUNT(*) FROM l_watch_hr x WHERE x.session = s.id) AS hrN,
        (SELECT COUNT(*) FROM l_watch_elev x WHERE x.session = s.id) AS elevN,
        (SELECT COUNT(*) FROM l_watch_motion x WHERE x.session = s.id) AS motionN,
        (SELECT COUNT(*) FROM l_watch_labels x WHERE x.session = s.id) AS labelN
      FROM l_watch_sessions s ORDER BY started_at DESC`,
   );
-  return rows.map((r) => ({ ...sessionOf(r), counts: { hr: r.hrN, elevation: r.elevN, motion: r.motionN, labels: r.labelN } }));
+  const span = (s: Span): [number, number] | null => (s.lo !== null && s.hi !== null ? [s.lo, s.hi] : null);
+  return rows.map((r) => ({
+    ...sessionOf(r),
+    counts: { hr: r.hrN, elevation: r.elevN, motion: r.motionN, labels: r.labelN },
+    spans: { hr: span({ lo: r.hrLo, hi: r.hrHi }), elevation: span({ lo: r.elevLo, hi: r.elevHi }), motion: span({ lo: r.motionLo, hi: r.motionHi }) },
+  }));
 }
 
 /** One session with all its samples, labels and batch records; null when there is no such session. */

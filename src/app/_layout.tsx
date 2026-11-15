@@ -17,6 +17,7 @@ import { useWidgetSync } from "../state/widgetSync";
 import { useCrashLog } from "../state/crashLog";
 import { useUpdateCheck } from "../state/updates";
 import { useNotificationSync } from "../state/notificationSync";
+import { useWatchSync } from "../state/wear";
 import { installNotificationHandler, onNotificationTap } from "../state/notifications";
 import { useData } from "../state/data";
 import { getProvider } from "../providers";
@@ -36,6 +37,7 @@ export default function Root() {
   const hydrated = useHydrated();
   useGoalSync();
   useBoardKeepAwake();
+  useWatchSync();
   useNotificationSync();
   useAutoBackup();
   useUpdateCheck();

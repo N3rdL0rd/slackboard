@@ -19,7 +19,6 @@ import { commonLabel } from "../state/stats";
 import { Text } from "../ui/Text";
 import { CrashLogSettings } from "../ui/CrashLogSettings";
 import { WidgetSettings } from "../ui/WidgetSettings";
-import { WatchSettings } from "../ui/WatchSettings";
 import { UpdateSettings } from "../ui/UpdateSettings";
 import { c, r, role as roleTokens, type RoleName } from "../theme";
 
@@ -105,8 +104,6 @@ export default function Settings() {
 
         <WidgetSettings />
 
-        <WatchSettings />
-
         <UpdateSettings />
 
         <CrashLogSettings />
@@ -125,7 +122,7 @@ export default function Settings() {
           <>
             <SectionLabel>Developer</SectionLabel>
             <View style={{ gap: 8 }}>
-              <Button variant="secondary" label="Hold survey" onPress={() => router.push("/dev/hold-survey")} />
+              <Button variant="secondary" label="Developer hub" onPress={() => router.push("/dev")} />
               <Button variant="secondary" label="Hide the developer menu" onPress={() => patch({ developer: false })} />
             </View>
           </>

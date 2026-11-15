@@ -12,8 +12,6 @@ export function WatchSettings() {
   useEffect(() => {
     if (!Wear) return;
     void w.check();
-    const sub = Wear.addListener("onWatchMessage", () => void useWear.getState().drain());
-    return () => sub.remove();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   if (!w.available) return null;

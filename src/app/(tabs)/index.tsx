@@ -48,6 +48,7 @@ export default function ClimbTab() {
   const liked = useData((d) => d.liked);
   const boardsLoaded = useData((d) => d.boardsLoaded);
   const boardData = useData((d) => d.boardData);
+  const devOn = useStore((s) => s.settings.developer);
   const canSet = useCanSet();
   const drafts = useDrafts();
   const draftIds = useMemo(() => new Set(drafts.map((d) => d.uuid)), [drafts]);
@@ -189,6 +190,7 @@ export default function ClimbTab() {
       />
       <SpeedDial bottom={16} items={[
         ...(canSet.any ? [{ icon: "edit" as const, label: "Set a climb", primary: true, onPress: () => router.push("/set-climb") }] : []),
+        ...(devOn ? [{ icon: "gear" as const, label: "Developer", onPress: () => router.push("/dev") }] : []),
         { icon: "log" as const, label: "Log gym climb", primary: !canSet.any, onPress: () => setQuickLog(true) },
         { icon: "climb" as const, label: "Log roped climb", onPress: () => router.push("/roped") },
         { icon: "spark" as const, label: "Suggested", onPress: () => router.push("/suggestions") },
