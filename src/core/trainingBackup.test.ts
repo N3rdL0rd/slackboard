@@ -84,7 +84,7 @@ describe("training in a backup", () => {
   it("says what a backup holds and what was restored", () => {
     const b = parse([entry(), entry({ id: "t2" })]);
     expect(describeBackup(b)).toContain("2 training entries");
-    expect(describeRestored({ offBoard: 0, roped: 0, training: 1, goals: 0, plans: 0, tests: 0, profile: false, dayNotes: 0, holdTags: 0, boardScales: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 training entry.");
+    expect(describeRestored({ offBoard: 0, roped: 0, training: 1, goals: 0, plans: 0, tests: 0, profile: false, dayNotes: 0, holdTags: 0, boardScales: 0, watchSessions: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 training entry.");
   });
 });
 

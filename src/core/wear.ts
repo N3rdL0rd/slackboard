@@ -82,8 +82,8 @@ export const MIN_ELEVATION = -500;
 export const MAX_ELEVATION = 9000;
 
 export type WatchMessage =
-  | { kind: "motion"; session: string; rows: MotionRow[] }
-  | { kind: "elevation"; session: string; samples: ElevationSample[] }
+  | { kind: "motion"; session: string; rows: MotionRow[]; /** Rows or values that were refused as impossible. */ dropped: number }
+  | { kind: "elevation"; session: string; samples: ElevationSample[]; dropped: number }
   | { kind: "stats"; session: string; stats: WorkoutStats }
   | { kind: "capabilities"; capabilities: WatchCapabilities }
   | {
@@ -91,12 +91,14 @@ export type WatchMessage =
       /** True when this answered a ping rather than announcing a change. */
       pong: boolean;
       state: "idle" | "running";
+      /** "workout" or "heart-rate" (heart rate only), while running. */
+      mode: "workout" | "heart-rate" | null;
       session: string | null;
       startedAt: number | null;
       bpm: number | null;
       error: string | null;
     }
-  | { kind: "hr"; session: string; samples: HrSample[] }
+  | { kind: "hr"; session: string; samples: HrSample[]; dropped: number }
   | ({ kind: "summary"; session: string; startedAt: number; endedAt: number } & WorkoutStats);
 
 type Obj = Record<string, unknown>;
@@ -111,6 +113,7 @@ function parseState(o: Obj, pong: boolean): WatchMessage | null {
     kind: "state",
     pong,
     state: o.state,
+    mode: o.mode === "workout" || o.mode === "heart-rate" ? o.mode : null,
     session: str(o.session),
     startedAt: ms(o.startedAt),
     bpm,
@@ -130,7 +133,7 @@ function parseHr(o: Obj): WatchMessage | null {
     if (at === null || typeof bpm !== "number" || bpm < MIN_BPM || bpm > MAX_BPM) continue;
     samples.push({ at, bpm: Math.round(bpm) });
   }
-  return { kind: "hr", session, samples };
+  return { kind: "hr", session, samples, dropped: o.t.length - samples.length };
 }
 
 const names = (v: unknown): string[] =>
@@ -163,10 +166,16 @@ function statsOf(o: Obj): WorkoutStats {
   return { calories: inRange(o.calories, 0, 20000), gain: inRange(o.gain, 0, 10000), hrAvg: hr(o.hrAvg), hrMin: hr(o.hrMin), hrMax: hr(o.hrMax) };
 }
 
-/** Columns of equal length: null for a missing or unbelievable value in a column that may hold nulls. */
-function column(v: unknown, n: number, lo: number, hi: number): (number | null)[] | null {
+/** A column of equal length, null where a value is missing. `rejected` counts the values that were there but not believable. */
+function column(v: unknown, n: number, lo: number, hi: number): { values: (number | null)[]; rejected: number } | null {
   if (!Array.isArray(v) || v.length !== n) return null;
-  return v.map((x) => inRange(x, lo, hi, 3));
+  let rejected = 0;
+  const values = v.map((x) => {
+    const r = inRange(x, lo, hi, 3);
+    if (r === null && x !== null && x !== undefined) rejected++;
+    return r;
+  });
+  return { values, rejected };
 }
 
 function parseMotion(o: Obj): WatchMessage | null {
@@ -177,12 +186,13 @@ function parseMotion(o: Obj): WatchMessage | null {
   const p = column(o.p, n, MIN_PRESSURE, MAX_PRESSURE), gx = column(o.gx, n, -50, 50), gy = column(o.gy, n, -50, 50), gz = column(o.gz, n, -50, 50);
   if (!a || !am || !g || !gm || !p || !gx || !gy || !gz) return null;
   const rows: MotionRow[] = [];
+  let dropped = a.rejected + am.rejected + g.rejected + gm.rejected + p.rejected + gx.rejected + gy.rejected + gz.rejected;
   for (let i = 0; i < n; i++) {
     const at = ms(o.t[i]);
-    if (at === null) continue;
-    rows.push({ at, accRms: a[i], accMax: am[i], gyroRms: g[i], gyroMax: gm[i], pressure: p[i], gx: gx[i], gy: gy[i], gz: gz[i] });
+    if (at === null) { dropped++; continue; }
+    rows.push({ at, accRms: a.values[i], accMax: am.values[i], gyroRms: g.values[i], gyroMax: gm.values[i], pressure: p.values[i], gx: gx.values[i], gy: gy.values[i], gz: gz.values[i] });
   }
-  return { kind: "motion", session, rows };
+  return { kind: "motion", session, rows, dropped };
 }
 
 function parseElevation(o: Obj): WatchMessage | null {
@@ -194,7 +204,7 @@ function parseElevation(o: Obj): WatchMessage | null {
     const metres = inRange(o.m[i], MIN_ELEVATION, MAX_ELEVATION, 2);
     if (at !== null && metres !== null) samples.push({ at, metres });
   }
-  return { kind: "elevation", session, samples };
+  return { kind: "elevation", session, samples, dropped: o.t.length - samples.length };
 }
 
 function parseStats(o: Obj): WatchMessage | null {
@@ -225,8 +235,13 @@ export function parseInboxLine(line: string): WatchMessage | null {
   } catch {
     return null;
   }
+  return parseMessageBody(outer.path, body);
+}
+
+/** A message from its path and decoded body. Used for inbox lines and for restoring stored sessions, so both are checked the same way. */
+export function parseMessageBody(path: string, body: unknown): WatchMessage | null {
   if (!isObj(body)) return null;
-  switch (outer.path) {
+  switch (path) {
     case WEAR_PATHS.state:
       return parseState(body, false);
     case WEAR_PATHS.pong:
@@ -248,15 +263,29 @@ export function parseInboxLine(line: string): WatchMessage | null {
   }
 }
 
-export function parseInbox(lines: string[]): { messages: WatchMessage[]; skipped: number } {
+/** One inbox line with the time the phone received it (the inbox stamps each line on arrival). */
+export function parseInboxEntry(line: string): { message: WatchMessage; receivedAt: number } | null {
+  const message = parseInboxLine(line);
+  if (!message) return null;
+  let at = 0;
+  try {
+    const outer = JSON.parse(line) as { at?: unknown };
+    at = typeof outer.at === "number" && Number.isFinite(outer.at) && outer.at > 0 ? outer.at : 0;
+  } catch {
+    // Already parsed once above; nothing to do.
+  }
+  return { message, receivedAt: at };
+}
+
+export function parseInbox(lines: string[]): { messages: WatchMessage[]; receivedAt: number[]; skipped: number } {
   const messages: WatchMessage[] = [];
+  const receivedAt: number[] = [];
   let skipped = 0;
   for (const l of lines) {
-    const m = parseInboxLine(l);
-    if (m) messages.push(m);
-    else skipped++;
+    const e = parseInboxEntry(l);
+    if (e) { messages.push(e.message); receivedAt.push(e.receivedAt); } else skipped++;
   }
-  return { messages, skipped };
+  return { messages, receivedAt, skipped };
 }
 
 /** The watch's report as plain text, for reading and sharing. */

@@ -25,8 +25,7 @@ import { useTraining, useTrainingStore } from "../state/training";
 import { useGoals, useGoalsStore } from "../state/goals";
 import { usePlanner, usePlannerStore } from "../state/planner";
 import { useDayNotes, useDayNotesStore } from "../state/dayNotes";
-import { loadHoldTags } from "../core/holdTagsLocal";
-import { loadBoardScales } from "../core/boardScaleLocal";
+import { localBackupExtras } from "../state/backupExtras";
 import { useStore } from "../state/store";
 import { AutoBackupSection } from "../ui/AutoBackupSection";
 import { Button, IconButton, Segmented, SectionLabel } from "../ui/parts";
@@ -84,10 +83,9 @@ export default function Export() {
         const state = useStore.getState();
         const moon = state.accounts[MOON] ? await exportMoon(await getDb(MOON)) : EMPTY_MOON;
         const spaces = await exportSpaces(await getLocalDb());
-        const holdTags = await loadHoldTags(await getLocalDb());
-        const boardScales = await loadBoardScales(await getLocalDb());
+        const { holdTags, boardScales, watch } = await localBackupExtras();
         body = exportJson({
-          now, user: { id: userId, username }, range: "all", logbook, circuits, offBoard, roped, training, goals, profile: planner.profile, tests: planner.tests, plans: planner.plans, dayNotes, holdTags, boardScales, litHistory, moon, spaces, preferences: preferencesOf(state), liked, blocked, boards, gradeOf,
+          now, user: { id: userId, username }, range: "all", logbook, circuits, offBoard, roped, training, goals, profile: planner.profile, tests: planner.tests, plans: planner.plans, dayNotes, holdTags, boardScales, watch, litHistory, moon, spaces, preferences: preferencesOf(state), liked, blocked, boards, gradeOf,
         });
       }
       const file = new File(Paths.cache, exportFileName(format, now, username));

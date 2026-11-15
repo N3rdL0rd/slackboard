@@ -1,4 +1,5 @@
 import { exportJson } from "../core/export";
+import { localBackupExtras } from "./backupExtras";
 import { EMPTY_MOON, exportMoon } from "../core/moonBackup";
 import { preferencesOf } from "../core/prefsBackup";
 import { exportSpaces } from "../core/spacesBackup";
@@ -34,11 +35,12 @@ export async function buildBackupJson(now: Date): Promise<string> {
   const planner = usePlannerStore.getState();
   const account = Object.values(store.accounts)[0];
   const moon = store.accounts[MOON] ? await exportMoon(await getDb(MOON)) : EMPTY_MOON;
+  const extras = await localBackupExtras();
   return exportJson({
     now, user: { id: account?.userId ?? null, username: account?.username ?? "" }, range: "all",
     logbook: d.logbook, circuits: d.circuits, offBoard: useOutside.getState().logs, roped: useRoped.getState().logs,
     training: useTrainingStore.getState().entries, goals: useGoalsStore.getState().goals, profile: planner.profile, tests: planner.tests, plans: planner.plans,
-    dayNotes: useDayNotesStore.getState().notes, litHistory: useLit.getState().entries, moon, spaces: await exportSpaces(await getLocalDb()),
+    dayNotes: useDayNotesStore.getState().notes, ...extras, litHistory: useLit.getState().entries, moon, spaces: await exportSpaces(await getLocalDb()),
     preferences: preferencesOf(store), liked: d.liked, blocked: d.blocked, boards: d.boards, gradeOf,
   });
 }

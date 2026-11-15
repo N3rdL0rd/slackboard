@@ -24,6 +24,7 @@ describe("watch messages", () => {
         { at: 1000, bpm: 88 },
         { at: 4000, bpm: 92 },
       ],
+      dropped: 2,
     });
   });
 
@@ -108,7 +109,7 @@ describe("motion, elevation and workout totals", () => {
 
   it("reads elevation samples and skips one outside the range of the planet", () => {
     const m = parseInboxLine(line("/slackboard/elevation", { session: "s1", t: [1000, 2000, 3000], m: [120.456, 99999, -3] }));
-    expect(m).toEqual({ kind: "elevation", session: "s1", samples: [{ at: 1000, metres: 120.46 }, { at: 3000, metres: -3 }] });
+    expect(m).toEqual({ kind: "elevation", session: "s1", samples: [{ at: 1000, metres: 120.46 }, { at: 3000, metres: -3 }], dropped: 1 });
     expect(parseInboxLine(line("/slackboard/elevation", { session: "s1", t: [1], m: [] }))).toBeNull();
   });
 

@@ -69,9 +69,10 @@ describe("local migrations", () => {
   it("leaves a database that is newer than this build exactly as it is", async () => {
     const db = openNodeDb();
     await migrateLocal(db, [LOCAL_MIGRATIONS[0]]);
-    await db.run("INSERT OR REPLACE INTO l_meta (key, value) VALUES ('schema_version', '9')");
-    expect(await migrateLocal(db)).toBe(9);
-    expect(await storedLocalVersion(db)).toBe(9);
+    const newer = LOCAL_SCHEMA_VERSION + 1;
+    await db.run("INSERT OR REPLACE INTO l_meta (key, value) VALUES ('schema_version', ?)", [String(newer)]);
+    expect(await migrateLocal(db)).toBe(newer);
+    expect(await storedLocalVersion(db)).toBe(newer);
   });
 });
 

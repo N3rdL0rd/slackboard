@@ -9,7 +9,7 @@ import type { Db } from "./db";
  * The key of the full backup file that carries a table's records, or `"none"` for a table that is not backed up (with the reason in a
  * comment next to it). A test checks every table names a section the backup really has, so a new table cannot be forgotten.
  */
-export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "goals" | "plans" | "dayNotes" | "holdTags" | "boardScales" | "litHistory" | "spaces" | "none";
+export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "goals" | "plans" | "dayNotes" | "holdTags" | "boardScales" | "watch" | "litHistory" | "spaces" | "none";
 
 /** A table in the local database. `clearable` tables are emptied when the user removes their data (signs out everywhere). */
 export interface LocalTable {
@@ -82,6 +82,21 @@ CREATE TABLE IF NOT EXISTS l_hold_tags (board TEXT NOT NULL, key TEXT NOT NULL, 
 const V9 = `
 ALTER TABLE l_hold_tags ADD COLUMN face INTEGER;
 CREATE TABLE IF NOT EXISTS l_board_scales (board TEXT PRIMARY KEY, cm_per_unit REAL NOT NULL, ref_a TEXT NOT NULL, ref_b TEXT NOT NULL, ref_cm REAL NOT NULL, measured_at TEXT NOT NULL);
+`;
+
+/**
+ * What the watch recorded (developer data): sessions, and their heart rate, elevation, motion, labels and the record of each message's
+ * arrival. Times are epoch milliseconds. Samples are keyed by session and time, so storing one twice changes nothing.
+ */
+const V10 = `
+CREATE TABLE IF NOT EXISTS l_watch_sessions (id TEXT PRIMARY KEY, started_at INTEGER NOT NULL, ended_at INTEGER, mode TEXT, calories REAL, gain REAL, hr_avg REAL, hr_min REAL, hr_max REAL);
+CREATE TABLE IF NOT EXISTS l_watch_hr (session TEXT NOT NULL, at INTEGER NOT NULL, bpm INTEGER NOT NULL, PRIMARY KEY (session, at));
+CREATE TABLE IF NOT EXISTS l_watch_elev (session TEXT NOT NULL, at INTEGER NOT NULL, m REAL NOT NULL, PRIMARY KEY (session, at));
+CREATE TABLE IF NOT EXISTS l_watch_motion (session TEXT NOT NULL, at INTEGER NOT NULL, acc_rms REAL, acc_max REAL, gyro_rms REAL, gyro_max REAL, pressure REAL, gx REAL, gy REAL, gz REAL, PRIMARY KEY (session, at));
+CREATE TABLE IF NOT EXISTS l_watch_labels (id TEXT PRIMARY KEY, session TEXT NOT NULL, at INTEGER NOT NULL, kind TEXT NOT NULL, note TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS l_watch_batches (id INTEGER PRIMARY KEY AUTOINCREMENT, session TEXT NOT NULL, kind TEXT NOT NULL, received_at INTEGER NOT NULL, first_at INTEGER NOT NULL, last_at INTEGER NOT NULL, count INTEGER NOT NULL, dropped INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS l_watch_batches_session ON l_watch_batches (session);
+CREATE INDEX IF NOT EXISTS l_watch_labels_session ON l_watch_labels (session);
 `;
 
 export const LOCAL_MIGRATIONS: LocalMigration[] = [
@@ -159,6 +174,20 @@ export const LOCAL_MIGRATIONS: LocalMigration[] = [
     version: 9,
     tables: [{ name: "l_board_scales", clearable: false, backup: "boardScales" }],
     up: (db) => db.exec(V9),
+  },
+  {
+    version: 10,
+    // Recorded data worth keeping, but only carried in a backup when the developer menu's watch-data switch is on (it can be large).
+    tables: [
+      { name: "l_watch_sessions", clearable: false, backup: "watch" },
+      { name: "l_watch_hr", clearable: false, backup: "watch" },
+      { name: "l_watch_elev", clearable: false, backup: "watch" },
+      { name: "l_watch_motion", clearable: false, backup: "watch" },
+      { name: "l_watch_labels", clearable: false, backup: "watch" },
+      // A record of when messages arrived; it describes the link, not the climbing, so it is not backed up.
+      { name: "l_watch_batches", clearable: false, backup: "none" },
+    ],
+    up: (db) => db.exec(V10),
   },
 ];
 
