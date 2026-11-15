@@ -46,7 +46,7 @@ export function Slider<T extends string | number>({ label, stops, value, onChang
 
   return (
     <View>
-      <Text v="numeral" style={{ fontSize: 30, lineHeight: 38, color: index >= 0 ? tint : c.muted, marginBottom: 2 }}>
+      <Text v="numeral" style={{ fontSize: 18, lineHeight: 24, color: index >= 0 ? tint : c.muted, marginBottom: 0 }}>
         {index >= 0 ? stops[index].label : unsetText ?? "Not set"}
       </Text>
       <View
