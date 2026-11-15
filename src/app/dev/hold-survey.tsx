@@ -108,12 +108,24 @@ export default function HoldSurvey() {
     <View style={{ flexDirection: "row", alignItems: "center", height: 56, paddingHorizontal: 4 }}>
       <IconButton icon="back" label="Back" onPress={() => router.back()} />
       <Text v="sheetTitle" style={{ flex: 1 }}>Hold survey</Text>
-      <IconButton icon="search" label="Guide to the tags" onPress={() => setGuide(true)} />
+      <IconButton icon="bulb" label="Guide to the tags" onPress={() => setGuide(true)} />
     </View>
   );
 
+  const guideSheet = (
+    <Sheet visible={guide} onClose={() => setGuide(false)} title="Tag guide">
+      <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 10, paddingBottom: 12 }}>
+        <Text v="secondary">Tag every one that applies: a crimpy wooden hold that is also a pinch gets crimp, pinch and wood. When two tags both fit, take both. Use Unsure rather than guess; the filter only trusts holds you were sure of.</Text>
+        <Text v="secondary">Not sure what a hold is? Hold it and see what your hand does. Fingertips only fit: crimp or pocket. Fingers hook behind a lip: incut. Nothing to hook, held by friction: sloper. Thumb squeezes against fingers: pinch. Whole hand wraps and you can rest: jug.</Text>
+        {TAG_GROUPS.flatMap((g) => g.tags).concat(["unsure"]).map((t) => (
+          <View key={t}><Text v="bodyStrong">{TAG_INFO[t].label}</Text><Text v="secondary">{TAG_INFO[t].hint}</Text></View>
+        ))}
+      </ScrollView>
+    </Sheet>
+  );
+
   if (!board || !placements) {
-    return <View style={{ flex: 1, backgroundColor: c.ground, paddingTop: insets.top }}>{header}<Text v="secondary" style={{ padding: 20 }}>Open the board you are at first.</Text></View>;
+    return <View style={{ flex: 1, backgroundColor: c.ground, paddingTop: insets.top }}>{header}<Text v="secondary" style={{ padding: 20 }}>Open the board you are at first.</Text>{guideSheet}</View>;
   }
   if (!connected) {
     return (
@@ -123,6 +135,7 @@ export default function HoldSurvey() {
           <Text v="secondary">Connect to the controller of {board.name} (the board open in the Climb tab). The survey lights each hold, so it needs the link.</Text>
           <Button label="Connect to a board" onPress={() => showBluetooth()} />
         </View>
+        {guideSheet}
       </View>
     );
   }
@@ -167,15 +180,7 @@ export default function HoldSurvey() {
         <View style={{ flex: 2 }}><Button label="Save, next" onPress={() => void save()} /></View>
       </View>
 
-      <Sheet visible={guide} onClose={() => setGuide(false)} title="Tag guide">
-        <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 10, paddingBottom: 12 }}>
-          <Text v="secondary">Tag every one that applies: a crimpy wooden hold that is also a pinch gets crimp, pinch and wood. When two tags both fit, take both. Use Unsure rather than guess; the filter only trusts holds you were sure of.</Text>
-          <Text v="secondary">Not sure what a hold is? Hold it and see what your hand does. Fingertips only fit: crimp or pocket. Fingers hook behind a lip: incut. Nothing to hook, held by friction: sloper. Thumb squeezes against fingers: pinch. Whole hand wraps and you can rest: jug.</Text>
-          {TAG_GROUPS.flatMap((g) => g.tags).concat(["unsure"]).map((t) => (
-            <View key={t}><Text v="bodyStrong">{TAG_INFO[t].label}</Text><Text v="secondary">{TAG_INFO[t].hint}</Text></View>
-          ))}
-        </ScrollView>
-      </Sheet>
+      {guideSheet}
     </View>
   );
 }
