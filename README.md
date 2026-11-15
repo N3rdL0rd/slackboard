@@ -20,6 +20,8 @@ combining happens on your phone.
 - Browse every climb for your board with the board drawn properly: real hold art, role colours, mirrored boards, multi-frame routes
   with playback, and a pinch-to-zoom view.
 - Filter by grade range, progress, classics, likes, setter, circuits, beta videos and more. Sort by best, newest, hardest and others.
+- Mark dead holds (missing, broken or spinning) in Edit board, and climbs that use them are hidden unless you ask to see them.
+- Measure on the board: tap two holds for the distance between them, and get a rough count of a climb's hand moves. Real lengths need the board's scale, measured once in the developer menu's hold survey.
 - Swipe between climbs in a list, a circuit, a climb workout or search results.
 - An angle dial for adjustable boards.
 - Set your own climbs (boulders and routes), save drafts, publish, edit and delete.

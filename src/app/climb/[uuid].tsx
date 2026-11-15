@@ -23,6 +23,7 @@ import { useData } from "../../state/data";
 import { holesFor } from "../../core/led";
 import { lightBoard } from "../../state/ble";
 import { useGeometry } from "../../state/layouts";
+import { MeasurePanel } from "../../ui/MeasurePanel";
 import { useLedStatus } from "../../state/useLedStatus";
 import { useProviderContext } from "../../state/useActive";
 import { useSequence } from "../../state/sequence";
@@ -53,11 +54,13 @@ const HEADER_H = 112;
  * One climb's name, grade and board: a page of the swipe pager. The next and previous climb are rendered as pages too, so they
  * are on screen, complete, while the finger is still moving. Only the current page is interactive and plays frames.
  */
-function ClimbTop({ climb, stat, viewAngle, spec, placements, roles, boardW, frame, mirror, index, count, counterLabel, shapes, highContrast, gradeDisplay, onGo, onToggleMirror, onZoomedChange }: {
+function ClimbTop({ climb, stat, viewAngle, spec, placements, roles, boardW, frame, mirror, index, count, counterLabel, shapes, highContrast, gradeDisplay, measure, onGo, onToggleMirror, onZoomedChange }: {
   climb: Climb; stat: AngleStat | undefined; viewAngle: number; spec: BoardSpec; placements: Placement[]; roles: Role[]; boardW: number;
   /** The frame to show; a page that is not the current one shows its first. */
   frame: Frame | undefined; mirror: boolean; index: number; count: number; counterLabel: string | null | undefined;
   shapes: boolean; highContrast: boolean; gradeDisplay: GradeDisplay;
+  /** While measuring: the holds picked so far and what to do when one is tapped. Null otherwise. */
+  measure: { picks: number[]; onPick: (id: number) => void } | null;
   onGo: (delta: number) => void; onToggleMirror: () => void; onZoomedChange: (zoomed: boolean) => void;
 }) {
   const d = difficultyOf(stat);
@@ -90,7 +93,10 @@ function ClimbTop({ climb, stat, viewAngle, spec, placements, roles, boardW, fra
 
         <View style={{ marginTop: 14 }}>
           <ZoomView width={boardW} height={boardHeight(spec, boardW)} resetKey={climb.uuid} onZoomedChange={onZoomedChange}>
-            <BoardView spec={spec} placements={placements} roles={roles} images={spec.images} width={boardW} frame={frame} mirror={mirror} shapes={shapes} highContrast={highContrast} />
+            <BoardView spec={spec} placements={placements} roles={roles} images={spec.images} width={boardW} frame={frame} mirror={mirror} shapes={shapes} highContrast={highContrast}
+              onPressHole={measure ? measure.onPick : undefined}
+              marks={measure?.picks.map((id, i) => ({ id, color: "#FFFFFF", label: i === 0 ? "A" : "B" }))}
+              line={measure && measure.picks.length === 2 ? [measure.picks[0], measure.picks[1]] : undefined} />
           </ZoomView>
           <View style={{ position: "absolute", left: 8, right: 8, top: 8, flexDirection: "row", alignItems: "center" }}>
             {spec.isMirrored && (
@@ -157,6 +163,9 @@ export default function ClimbView() {
   const [zoomed, setZoomed] = useState(false);
   const [mirror, setMirror] = useState(false);
   const [sheet, setSheet] = useState<null | "log" | "more" | "timer">(null);
+  // The measuring tool: on or off, and the (at most two) holds picked.
+  const [measuring, setMeasuring] = useState(false);
+  const [picks, setPicks] = useState<number[]>([]);
   const [mode, setMode] = useState<"send" | "attempt">("send");
   const blocked = useData((d) => d.blocked);
   const [timerEnd, setTimerEnd] = useState<number | null>(null);
@@ -327,6 +336,7 @@ export default function ClimbView() {
                     <ClimbTop climb={page} stat={active ? byAngle[viewAngle] ?? statFor(id) : statFor(id)} viewAngle={viewAngle} spec={spec} placements={placements} roles={roles} boardW={boardW}
                       frame={active ? frame : undefined} mirror={mirror} index={i} count={ids.length} counterLabel={inSeq ? seqLabel : null}
                       shapes={settings.shapes} highContrast={settings.highContrast} gradeDisplay={settings.gradeDisplay}
+                      measure={active && measuring ? { picks, onPick: (id) => setPicks((p) => (p.length === 1 && p[0] !== id ? [p[0], id] : [id])) } : null}
                       onGo={go} onToggleMirror={() => setMirror(!mirror)} onZoomedChange={active ? setZoomed : noop} />
                   ) : (
                     <View style={{ padding: 40, alignItems: "center" }}><Spinner size="large" /></View>
@@ -337,6 +347,7 @@ export default function ClimbView() {
           />
         </View>
         <View style={{ paddingHorizontal: 16 }}>
+        {measuring && spec ? <MeasurePanel climb={climb} spec={spec} placements={placements} roles={roles} picks={picks} onClear={() => setPicks([])} onClose={() => { setMeasuring(false); setPicks([]); }} /> : null}
         {allFrames.length > 1 && (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 }}>
             <IconButton icon={playing ? "pause" : "play"} label={playing ? "Pause" : "Play"} filled={!playing} onPress={() => setPlaying((p) => !p)} />
@@ -416,7 +427,7 @@ export default function ClimbView() {
 
       <LogSheet visible={sheet === "log"} onClose={() => setSheet(null)} mode={mode} setMode={setMode} climbUuid={current} climbName={climb.name} angle={viewAngle}
         isMirrored={spec.isMirrored} mirror={mirror} setMirror={setMirror} saving={saving} error={saveError} stat={stat} onSave={save} />
-      <MoreSheet visible={sheet === "more"} onClose={() => setSheet(null)} climb={climb} blocked={blocked.has(current)} onShare={(k) => { if (k === "send") shareMySend(); else openShare("climb"); }} canShareSend={mySend} />
+      <MoreSheet visible={sheet === "more"} onClose={() => setSheet(null)} climb={climb} blocked={blocked.has(current)} onShare={(k) => { if (k === "send") shareMySend(); else openShare("climb"); }} canShareSend={mySend} onMeasure={() => { setPicks([]); setMeasuring(true); }} />
       <ShareSheet facts={share} onClose={() => setShare(null)} />
       {confetti > 0 ? <Confetti key={confetti} onDone={() => setConfetti(0)} /> : null}
       <TimerSheet visible={sheet === "timer"} onClose={() => setSheet(null)} running={timerEnd != null} onStart={(sec) => { setSheet(null); setTimerEnd(Date.now() + sec * 1000); setTimerLen(sec); }} onStop={() => { setSheet(null); setTimerEnd(null); }} />
@@ -524,7 +535,7 @@ function TimerButton({ end, onPress }: { end: number | null; onPress: () => void
   );
 }
 
-function MoreSheet({ visible, onClose, climb, blocked, onShare, canShareSend }: { visible: boolean; onClose: () => void; climb: Climb; blocked: boolean; onShare: (kind: ShareKind) => void; canShareSend: boolean }) {
+function MoreSheet({ visible, onClose, climb, blocked, onShare, canShareSend, onMeasure }: { visible: boolean; onClose: () => void; climb: Climb; blocked: boolean; onShare: (kind: ShareKind) => void; onMeasure: () => void; canShareSend: boolean }) {
   const router = useRouter();
   const username = useUsername();
   const board = useBoard();
@@ -557,6 +568,7 @@ function MoreSheet({ visible, onClose, climb, blocked, onShare, canShareSend }: 
         <View style={{ gap: 8 }}>
           <Item label={blocked ? "Unblock this climb" : "Block this climb"} onPress={() => { void setTag(climb.uuid, "~block", !blocked); onClose(); }} />
           <Item label="Share image" onPress={() => { onClose(); onShare("climb"); }} />
+          <Item label="Measure on the board" onPress={() => { onClose(); onMeasure(); }} />
 {canShareSend && <Item label="Share your send" onPress={() => { onClose(); onShare("send"); }} />}
           {others.length > 0 && <Item label="Show on another board" onPress={() => setMode("boards")} />}
           {!local && <Item label="Report" onPress={() => setMode("report")} />}

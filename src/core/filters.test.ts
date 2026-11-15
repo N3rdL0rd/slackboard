@@ -98,6 +98,15 @@ describe("more filters", () => {
     expect(run({ setter: "bob" })).toEqual(["other"]);
     expect(run({ beta: true }, { hasBeta: (u) => u === "route" })).toEqual(["route"]);
   });
+  it("hides climbs that use a dead hold unless asked to show them, and says so as a chip", () => {
+    const withFrames = [mk("a", { frames: "p5r12p11r13" }), mk("b", { frames: "p12r12p5r13" })];
+    const dead = /p(?:11)r/;
+    expect(applyFilter(withFrames, DEFAULT_FILTER, ctx({ dead })).map((c) => c.name)).toEqual(["b"]);
+    expect(applyFilter(withFrames, { ...DEFAULT_FILTER, withDead: true }, ctx({ dead })).map((c) => c.name)).toEqual(["a", "b"]);
+    expect(applyFilter(withFrames, DEFAULT_FILTER, ctx({ dead: null })).map((c) => c.name)).toEqual(["a", "b"]);
+    expect(activeChips({ ...DEFAULT_FILTER, withDead: true }).map((c) => c.label)).toEqual(["With dead holds"]);
+    expect(activeChips(DEFAULT_FILTER)).toEqual([]);
+  });
   it("applies circuit rules: any, all and none", () => {
     const circuits = new Map([["A", new Set(["route", "other"])], ["B", new Set(["other"])]]);
     expect(run({ circuitsAny: ["A", "B"] }, { circuits })).toEqual(["other", "route"]);

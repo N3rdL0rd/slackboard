@@ -38,7 +38,7 @@ Everything on the phone, in one file, which **Restore** can read back.
 ```jsonc
 {
   "app": "slackboard",
-  "version": 8,
+  "version": 9,
   "exportedAt": "2026-11-02T12:00:00.000Z",
   "user": { "id": 7, "username": "..." },
   "logbook": [ /* every board entry, with grade_v and grade_font added */ ],
@@ -48,7 +48,8 @@ Everything on the phone, in one file, which **Restore** can read back.
   "goals": [ /* goals: kind, target, window and status; a goal that was reached stays reached */ ],
   "training": [ /* one exercise on one day, with its sets: reps, time, load, edge, grip, rest */ ],
   "dayNotes": [ /* daily body check-ins */ ],
-  "holdTags": [ /* developer menu, hold survey: per hold, its tags (shape, how it is pulled, material), a note and when */ ],
+  "holdTags": [ /* developer menu, hold survey: per hold, its tags (shape, how it is pulled, edge depth, fingers that fit, texture, use, material, problems), the direction its face points, a note and when */ ],
+  "boardScales": [ /* developer menu: how many centimetres one board unit is, per board, and how it was measured */ ],
   "litHistory": [ /* climbs lit on boards */ ],
   "moon": { "boards": [], "problems": [], "tags": [] },
   "spaces": { "places": [], "names": {}, "lineage": {}, "logSpaces": [] },
@@ -90,7 +91,24 @@ fails is skipped and counted, never half-applied. A file with a newer `version` 
 ## Hold survey (developer menu)
 
 Settings > About, tapped seven times quickly, unlocks a developer menu with the **Hold survey**. Connect to a board, and it lights each hold
-in turn along the LED strip; you give each hold any number of tags: shape (jug, incut edge, crimp, sloper, pinch, pocket, volume, foot),
-how it is pulled (undercling, gaston, side pull), material (wood, plastic) and Unsure. Tags are saved as you go, kept when you sign out,
-and carried in the backup. "Share the tags" writes the hold-types file format (`holds`: one type per hold, the first shape tag) plus
-`tags`, `unsure` and `notes`.
+in turn along the LED strip; you give each hold any number of tags:
+
+- shape: jug, incut edge, crimp, sloper, pinch, pocket, volume, foot only
+- how it is pulled: undercling, gaston, side pull (with a dial for the direction the useful face points)
+- edge depth, fingers that fit, and texture (one answer each)
+- use: rest hold, mostly a foothold
+- material: wood, plastic
+- problems with the board: wrong light, no light, dead hold
+- unsure, to come back to
+
+Tags are saved as you go, kept when you sign out, and carried in the backup. "Share the tags" writes the hold-types file format
+(`holds`: one type per hold, the first shape tag) plus `tags`, `faces`, `unsure` and `notes`.
+
+"Measure the scale" asks for two holds far apart and the distance between their centres in centimetres. The scale is saved per board and
+lets the climb screen's **Measure on the board** (More menu) show real distances, and a rough count of a climb's hand moves.
+
+## Dead holds
+
+Edit board > **Mark dead holds** shows the board; tap a hold that is missing, broken or spinning to mark it (tap again to clear it). A
+climb that uses a dead hold is hidden from the list unless **With dead holds** is chosen in the filters. Dead holds are the same data as
+the survey's "Dead hold" tag.

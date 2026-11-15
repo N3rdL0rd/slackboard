@@ -9,7 +9,7 @@ import type { Db } from "./db";
  * The key of the full backup file that carries a table's records, or `"none"` for a table that is not backed up (with the reason in a
  * comment next to it). A test checks every table names a section the backup really has, so a new table cannot be forgotten.
  */
-export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "goals" | "plans" | "dayNotes" | "holdTags" | "litHistory" | "spaces" | "none";
+export type BackupSection = "circuits" | "offBoard" | "roped" | "training" | "goals" | "plans" | "dayNotes" | "holdTags" | "boardScales" | "litHistory" | "spaces" | "none";
 
 /** A table in the local database. `clearable` tables are emptied when the user removes their data (signs out everywhere). */
 export interface LocalTable {
@@ -76,6 +76,12 @@ ALTER TABLE l_training_sets ADD COLUMN feel TEXT;
 /** The hold survey (a developer tool): the tags (shape, how it is pulled, material) each hold of a board was given by the person at the board. */
 const V8 = `
 CREATE TABLE IF NOT EXISTS l_hold_tags (board TEXT NOT NULL, key TEXT NOT NULL, tags TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', tagged_at TEXT NOT NULL, PRIMARY KEY (board, key));
+`;
+
+/** Hold directions, and each board's measured real-world scale. */
+const V9 = `
+ALTER TABLE l_hold_tags ADD COLUMN face INTEGER;
+CREATE TABLE IF NOT EXISTS l_board_scales (board TEXT PRIMARY KEY, cm_per_unit REAL NOT NULL, ref_a TEXT NOT NULL, ref_b TEXT NOT NULL, ref_cm REAL NOT NULL, measured_at TEXT NOT NULL);
 `;
 
 export const LOCAL_MIGRATIONS: LocalMigration[] = [
@@ -148,6 +154,11 @@ export const LOCAL_MIGRATIONS: LocalMigration[] = [
     // Hand-made data worth keeping: not cleared on sign-out, and carried in the backup.
     tables: [{ name: "l_hold_tags", clearable: false, backup: "holdTags" }],
     up: (db) => db.exec(V8),
+  },
+  {
+    version: 9,
+    tables: [{ name: "l_board_scales", clearable: false, backup: "boardScales" }],
+    up: (db) => db.exec(V9),
   },
 ];
 

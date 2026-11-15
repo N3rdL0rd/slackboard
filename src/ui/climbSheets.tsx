@@ -7,6 +7,7 @@ import { boardColor, orderBoards } from "../core/boards";
 import { settersOf } from "../core/repo";
 import { grades } from "../data/grades";
 import { useData } from "../state/data";
+import { useDeadPlacements } from "../state/holdKeys";
 import { useBoard, useFilter, useStore } from "../state/store";
 import { useSpaces } from "../state/spaces";
 import { c, r } from "../theme";
@@ -138,6 +139,7 @@ export function FilterSheet({ visible, onClose, count }: { visible: boolean; onC
   const [picker, setPicker] = useState<null | "setter" | "circuits">(null);
   const router = useRouter();
   const blockedCount = useData((d) => d.blocked.size);
+  const deadCount = useDeadPlacements(useBoard()).length;
   const patch = (p: Partial<ClimbFilter>) => setFilter({ ...f, ...p });
   // Only needed once the sheet is open: a board of 14k climbs would otherwise be scanned on every board load.
   const setters = useMemo(() => (climbs && (visible || picker !== null) ? settersOf(climbs) : []), [climbs, visible, picker]);
@@ -182,6 +184,16 @@ export function FilterSheet({ visible, onClose, count }: { visible: boolean; onC
           <Chip label="Blocked" selected={f.blocked} onPress={() => patch({ blocked: !f.blocked })} />
         </View>
         {blockedCount > 0 ? <LinkButton label={`${blockedCount} blocked ${blockedCount === 1 ? "climb" : "climbs"}: review`} onPress={() => { onClose(); router.push("/blocked"); }} style={{ marginTop: 10, alignSelf: "flex-start" }} /> : null}
+
+        {deadCount > 0 ? (
+          <>
+            <SectionLabel>Dead holds</SectionLabel>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              <Chip label="With dead holds" selected={f.withDead} onPress={() => patch({ withDead: !f.withDead })} />
+            </View>
+            <Text v="caption" style={{ marginTop: 8 }}>{deadCount} marked dead on this board. Climbs that use one are hidden unless this is chosen.</Text>
+          </>
+        ) : null}
 
         <SectionLabel>More</SectionLabel>
         <PickerRow label="Setter" value={f.setter ?? "Anyone"} onPress={() => setPicker("setter")} />

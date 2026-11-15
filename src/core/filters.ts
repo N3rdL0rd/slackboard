@@ -30,6 +30,8 @@ export interface ClimbFilter {
   side: boolean;
   /** Only climbs with a beta video. */
   beta: boolean;
+  /** Show climbs that use a hold marked dead (missing, broken or spinning). Off: they are hidden. */
+  withDead: boolean;
   /** Exact setter username, or null for anyone. */
   setter: string | null;
   /** Circuit uuids: in any of these / in all of these / in none of these. */
@@ -57,6 +59,7 @@ export const DEFAULT_FILTER: ClimbFilter = {
   tall: false,
   side: false,
   beta: false,
+  withDead: false,
   setter: null,
   circuitsAny: [],
   circuitsAll: [],
@@ -93,6 +96,8 @@ export interface FilterContext {
   /** Your own unpublished climbs. They have no community stats, so grade and status rules do not apply to them. */
   isDraft: (uuid: string) => boolean;
   hasBeta: (uuid: string) => boolean;
+  /** A test for a climb's frames that is true when it uses a dead hold; null when no hold is dead. */
+  dead?: RegExp | null;
   /** Climb uuids in each circuit, keyed by circuit uuid. */
   circuits: Map<string, Set<string>>;
   /** The board's size, to judge tall and side climbs. */
@@ -154,6 +159,7 @@ export function applyFilter(all: Climb[], f: ClimbFilter, ctx: FilterContext): C
     if (f.tall && !isTall(c, ctx.board)) return false;
     if (f.side && !isSide(c, ctx.board)) return false;
     if (f.beta && !ctx.hasBeta(c.uuid)) return false;
+    if (!f.withDead && ctx.dead && ctx.dead.test(c.frames)) return false;
     if (f.circuitsAny.length && !f.circuitsAny.some((id) => ctx.circuits.get(id)?.has(c.uuid))) return false;
     if (f.circuitsAll.length && !f.circuitsAll.every((id) => ctx.circuits.get(id)?.has(c.uuid))) return false;
     if (f.circuitsNone.some((id) => ctx.circuits.get(id)?.has(c.uuid))) return false;
@@ -215,6 +221,7 @@ export function activeChips(f: ClimbFilter): FilterChip[] {
   if (f.tall) chips.push({ key: "tall", label: "Tall" });
   if (f.side) chips.push({ key: "side", label: "Side" });
   if (f.beta) chips.push({ key: "beta", label: "Has beta" });
+  if (f.withDead) chips.push({ key: "withDead", label: "With dead holds" });
   if (f.setter) chips.push({ key: "setter", label: `Set by ${f.setter}` });
   const circuitCount = f.circuitsAny.length + f.circuitsAll.length + f.circuitsNone.length;
   if (circuitCount) chips.push({ key: "circuitsAny", label: circuitCount === 1 ? "1 circuit rule" : `${circuitCount} circuit rules` });

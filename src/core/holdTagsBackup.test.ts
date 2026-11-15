@@ -4,13 +4,14 @@ import type { Db } from "./db";
 import { exportJson } from "./export";
 import type { HoldTag } from "./holdSurvey";
 import { deleteHoldTag, loadHoldTags, saveHoldTag } from "./holdTagsLocal";
+import { loadBoardScales, saveBoardScale } from "./boardScaleLocal";
 import { clearLocalData, ensureLocalSchema } from "./logicalCircuits";
 import { EMPTY_MOON } from "./moonBackup";
 import { openNodeDb } from "./nodeDb";
 import { EMPTY_PREFS } from "./prefsBackup";
 import { EMPTY_SPACES } from "./spacesBackup";
 
-const tag = (key: string, tags: HoldTag["tags"], over: Partial<HoldTag> = {}): HoldTag => ({ board: "tension-11-8", key, tags, note: "", taggedAt: "2026-11-15 10:00:00", ...over });
+const tag = (key: string, tags: HoldTag["tags"], over: Partial<HoldTag> = {}): HoldTag => ({ board: "tension-11-8", key, tags, note: "", taggedAt: "2026-11-15 10:00:00", face: null, ...over });
 const file = (holdTags: unknown[]) => {
   const bundle = JSON.parse(exportJson({
     now: new Date("2026-11-15T12:00:00Z"), user: { id: 7, username: "n" }, range: "all", logbook: [], circuits: [], offBoard: [], roped: [], training: [], goals: [], profile: null, tests: [], plans: [],
@@ -74,5 +75,30 @@ describe("hold tags in a backup", () => {
     delete old.holdTags;
     const p = parseBackup(JSON.stringify(old), isLocal);
     expect(p.ok && p.backup.holdTags).toEqual([]);
+  });
+});
+
+describe("board scales and directions in a backup", () => {
+  let src: Db, dst: Db;
+  beforeEach(async () => { src = openNodeDb(); dst = openNodeDb(); await ensureLocalSchema(src); await ensureLocalSchema(dst); });
+
+  it("come back exactly, and a direction on a tag survives the round trip", async () => {
+    await saveHoldTag(src, tag("1", ["gaston", "wood"], { face: 135 }));
+    await saveBoardScale(src, { board: "tension-11-8", cmPerUnit: 1.2, refA: "100", refB: "200", refCm: 120, measuredAt: "2026-11-15 10:00:00" });
+    const raw = JSON.parse(file([]));
+    const bundle = JSON.stringify({ ...raw, holdTags: await loadHoldTags(src), boardScales: await loadBoardScales(src) });
+    const p = parseBackup(bundle, isLocal);
+    if (!p.ok) throw new Error(p.error);
+    expect(describeBackup(p.backup)).toBe("1 hold tag, 1 board scale");
+    expect((await restoreBackup(targets(dst), p.backup)).boardScales).toBe(1);
+    expect(await loadHoldTags(dst)).toEqual(await loadHoldTags(src));
+    expect(await loadBoardScales(dst)).toEqual(await loadBoardScales(src));
+    expect((await loadHoldTags(dst))[0].face).toBe(135);
+  });
+
+  it("skips a damaged scale and counts it", () => {
+    const p = parseBackup(JSON.stringify({ ...JSON.parse(file([])), boardScales: [{ board: "b", cmPerUnit: -1 }, "x"] }), isLocal);
+    expect(p.ok && p.backup.boardScales).toEqual([]);
+    expect(p.ok && p.backup.skipped).toBe(2);
   });
 });

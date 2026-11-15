@@ -6,6 +6,7 @@ import { grades } from "../data/grades";
 import { statsKeyOf, useData } from "./data";
 import { useDrafts } from "./useActive";
 import { useBoard, useFilter, useStore } from "./store";
+import { useDeadPattern } from "./holdKeys";
 
 type Query = { [k: string]: unknown };
 // The Climb tab and the open climb both ask for this list; the second one reuses the first's result when the inputs are the same objects.
@@ -26,6 +27,7 @@ export function useClimbList() {
   const circuits = useData((d) => d.circuits);
   const blocked = useData((d) => d.blocked);
   const drafts = useDrafts();
+  const dead = useDeadPattern(board);
   const seed = useStore((s) => s.randomSeed);
   const angle = board?.angle ?? 0;
   const provider = board?.spec.provider ?? "";
@@ -33,7 +35,7 @@ export function useClimbList() {
 
   // The list is recomputed from a deferred copy of the inputs, so taps (chips, segments, angle)
   // repaint immediately and the heavy filter/sort runs afterwards without blocking input.
-  const query = useDeferredValue({ climbs, drafts, provider, stats, filter, liked, blocked, seed, done, angle, ready, betaSet, circuits, edges: board?.spec.edges });
+  const query = useDeferredValue({ climbs, drafts, provider, stats, filter, liked, blocked, seed, done, angle, ready, betaSet, circuits, dead, edges: board?.spec.edges });
   const list = useMemo(() => {
     if (!query.ready || !query.climbs || !query.stats) return [];
     if (lastQuery && Object.keys(query).every((k) => Object.is((query as Query)[k], lastQuery![k]))) return lastList;
@@ -48,6 +50,7 @@ export function useClimbList() {
       blocked: (u) => query.blocked.has(u),
       isDraft: (u) => draftIds.has(u),
       hasBeta: (u) => query.betaSet?.has(u) ?? false,
+      dead: query.dead,
       circuits: new Map(query.circuits.map((c) => [c.uuid, new Set(c.climbs)])),
       board: query.edges ?? { left: 0, right: 0, bottom: 0, top: 0 },
     };

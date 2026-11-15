@@ -2,10 +2,12 @@ import { getProvider } from "../providers";
 import { useMemo } from "react";
 import { Image, Pressable, View } from "react-native";
 import { MOON_ART } from "../data/moonArt";
-import Svg, { Circle, G, Path } from "react-native-svg";
+import Svg, { Circle, G, Line, Path, Text as SvgText } from "react-native-svg";
 import type { Frame } from "../core/frames";
 import type { BoardSpec, Placement, Role } from "../core/types";
 import { c, r, role as roleTokens, type RoleName } from "../theme";
+
+export interface BoardMark { id: number; color: string; label?: string; cross?: boolean }
 
 export interface BoardViewProps {
   spec: BoardSpec;
@@ -21,6 +23,10 @@ export interface BoardViewProps {
   bare?: boolean;
   shapes?: boolean;
   highContrast?: boolean;
+  /** Extra marks over holes: a coloured ring, with a letter or a cross. */
+  marks?: BoardMark[];
+  /** A line between two holes (placement ids), such as the distance being measured. */
+  line?: [number, number];
   /** Called with the nearest placement id when the board is tapped. */
   onPressHole?: (placementId: number) => void;
 }
@@ -75,7 +81,7 @@ export function boardHeight(spec: BoardSpec, width: number, bare = false): numbe
   return spanY * ((width - pad * 2) / spanX) + pad * 2;
 }
 
-export function BoardView({ bare, images, spec, placements, roles, width, frame, mirror, shapes, highContrast, onPressHole }: BoardViewProps) {
+export function BoardView({ bare, images, spec, placements, roles, width, frame, mirror, shapes, highContrast, marks, line, onPressHole }: BoardViewProps) {
   const geo = useMemo(() => {
     const pad = bare ? 3 : 14;
     const spanX = spec.edges.right - spec.edges.left;
@@ -146,6 +152,25 @@ export function BoardView({ bare, images, spec, placements, roles, width, frame,
               ) : (
                 <Circle cx={cx} cy={cy} r={geo.ring} stroke={color} strokeWidth={stroke} fill="none" />
               )}
+            </G>
+          );
+        })}
+        {line && byId.get(line[0]) && byId.get(line[1]) ? (
+          <Line x1={geo.px(byId.get(line[0])!.x)} y1={geo.py(byId.get(line[0])!.y)} x2={geo.px(byId.get(line[1])!.x)} y2={geo.py(byId.get(line[1])!.y)}
+            stroke="#FFFFFF" strokeWidth={2} strokeDasharray="6 5" opacity={0.9} />
+        ) : null}
+        {marks?.map((m) => {
+          const p = byId.get(m.id);
+          if (!p) return null;
+          const cx = geo.px(p.x);
+          const cy = geo.py(p.y);
+          const k = geo.ring * 0.9;
+          return (
+            <G key={m.id}>
+              <Circle cx={cx} cy={cy} r={geo.ring * 1.3} fill="#000" opacity={0.45} />
+              <Circle cx={cx} cy={cy} r={geo.ring * 1.3} stroke={m.color} strokeWidth={stroke} fill="none" />
+              {m.cross ? <Path d={`M${cx - k} ${cy - k}L${cx + k} ${cy + k}M${cx + k} ${cy - k}L${cx - k} ${cy + k}`} stroke={m.color} strokeWidth={stroke} strokeLinecap="round" /> : null}
+              {m.label ? <SvgText x={cx} y={cy + geo.ring * 0.5} fontSize={geo.ring * 1.5} fontWeight="bold" fill="#FFFFFF" textAnchor="middle">{m.label}</SvgText> : null}
             </G>
           );
         })}

@@ -7,6 +7,9 @@ import { getDb } from "../data/sqlite";
 import { removeBoard, updateBoard } from "../state/boards";
 import { getProvider } from "../providers";
 import { useData } from "../state/data";
+import { surveyBoardId } from "../core/holdSurvey";
+import { useHoldTags } from "../state/holdTags";
+import { useStore } from "../state/store";
 import { Button, Chip, IconButton, Segmented, Sheet } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c, r } from "../theme";
@@ -27,6 +30,8 @@ export default function EditBoard() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const holdTags = useHoldTags();
+  const deadCount = board ? holdTags.filter((t) => t.board === surveyBoardId(board.spec.provider, board.spec.layoutId, board.spec.productSizeId) && t.tags.includes("dead")).length : 0;
 
   useEffect(() => {
     if (!board) return;
@@ -86,6 +91,12 @@ export default function EditBoard() {
         <TextInput value={serial} onChangeText={setSerial} placeholder="Optional" placeholderTextColor={c.placeholder} keyboardType="number-pad" accessibilityLabel="Controller serial number" style={input} />
         <Text v="caption">Needed for Recently lit. It's printed on the controller.</Text>
         </>}
+        <Text v="section" style={{ marginTop: 8 }}>Dead holds</Text>
+        <Pressable accessibilityRole="button" onPress={() => { useStore.getState().setBoard(board.id); router.push("/dead-holds"); }}
+          style={{ minHeight: 56, borderRadius: r.input, borderWidth: 1, borderColor: c.line, backgroundColor: c.card, paddingHorizontal: 16, justifyContent: "center" }}>
+          <Text v="bodyStrong">Mark dead holds</Text>
+          <Text v="caption">{deadCount === 0 ? "None marked. Missing, broken or spinning holds can be hidden from climbs." : `${deadCount} marked. Climbs that use them are hidden.`}</Text>
+        </Pressable>
         {error ? <Text v="secondary" style={{ color: c.danger }} aria-live="polite">{error}</Text> : null}
         <Pressable accessibilityRole="button" onPress={() => setConfirm(true)} style={{ minHeight: 48, justifyContent: "center", marginTop: 16 }}>
           <Text v="bodyStrong" style={{ color: c.danger }}>Remove this board</Text>

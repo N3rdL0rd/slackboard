@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { canonicalTags, nextUnsure, nextUntagged, parseHoldTag, primaryType, surveyOrder, surveyProgress, toSurveyFile, type HoldTag } from "./holdSurvey";
+import { canonicalTags, deadPattern, deadPlacementIds, faceWords, hasDirection, isDone, nextUnsure, nextUntagged, parseHoldTag, primaryType, snapFace, surveyOrder, surveyProgress, toggleTag, toSurveyFile, type HoldTag } from "./holdSurvey";
 
-const tag = (key: string, tags: HoldTag["tags"], over: Partial<HoldTag> = {}): HoldTag => ({ board: "b", key, tags, note: "", taggedAt: "2026-11-15 10:00:00", ...over });
+const tag = (key: string, tags: HoldTag["tags"], over: Partial<HoldTag> = {}): HoldTag => ({ board: "b", key, tags, note: "", taggedAt: "2026-11-15 10:00:00", face: null, ...over });
 const p = (id: number, led: number) => ({ id, x: 0, y: 0, led });
 
 describe("survey order", () => {
@@ -64,5 +64,63 @@ describe("parseHoldTag", () => {
     expect(parseHoldTag({ ...ok, taggedAt: "yesterday" })).toBeNull();
     expect(parseHoldTag({ ...ok, key: "" })).toBeNull();
     expect(parseHoldTag(null)).toBeNull();
+  });
+});
+
+describe("tag groups, direction and dead holds", () => {
+  it("lets one edge depth, finger count and texture stand at a time, but several shapes", () => {
+    let s = toggleTag(new Set(), "crimp");
+    s = toggleTag(s, "pinch");
+    s = toggleTag(s, "edgeTip");
+    s = toggleTag(s, "edgeHalf");
+    s = toggleTag(s, "dualTexture");
+    s = toggleTag(s, "smooth");
+    expect(canonicalTags(s)).toEqual(["crimp", "pinch", "smooth", "edgeHalf"]);
+    expect(canonicalTags(toggleTag(s, "pinch"))).toEqual(["crimp", "smooth", "edgeHalf"]);
+    expect(canonicalTags(toggleTag(s, "smooth"))).toEqual(["crimp", "pinch", "edgeHalf"]);
+  });
+
+  it("asks for a direction only when the hold is pulled sideways or from underneath", () => {
+    expect(hasDirection(["crimp", "wood"])).toBe(false);
+    expect(hasDirection(["gaston"])).toBe(true);
+  });
+
+  it("snaps a direction to 15 degrees and says it in words", () => {
+    expect(snapFace(7)).toBe(0);
+    expect(snapFace(8)).toBe(15);
+    expect(snapFace(359)).toBe(0);
+    expect(snapFace(-20)).toBe(345);
+    expect(faceWords(90)).toBe("right");
+    expect(faceWords(180)).toBe("down");
+    expect(faceWords(315)).toBe("up and left");
+  });
+
+  it("counts a hold with only light problems as still to do, but a dead hold as done", () => {
+    expect(isDone(["wrongLight"])).toBe(false);
+    expect(isDone(["wrongLight", "noLight"])).toBe(false);
+    expect(isDone(["wrongLight", "crimp"])).toBe(true);
+    expect(isDone(["dead"])).toBe(true);
+    const o = surveyOrder([p(1, 1), p(2, 2)], String);
+    expect(nextUntagged(o, new Map([["1", tag("1", ["noLight"])]]), 0)).toBe(0);
+  });
+
+  it("finds dead holds on one board and tests a climb's frames against them", () => {
+    const o = surveyOrder([p(11, 1), p(12, 2), p(120, 3)], String);
+    const rows = [tag("11", ["dead"]), tag("12", ["jug"]), tag("120", ["dead", "wood"]), tag("12", ["dead"], { board: "other" })];
+    const ids = deadPlacementIds(o, rows, "b");
+    expect(ids).toEqual([11, 120]);
+    const re = deadPattern(ids)!;
+    expect(re.test("p5r12p11r13")).toBe(true);
+    expect(re.test("p12r12p5r13")).toBe(false);
+    expect(re.test("p1120r12")).toBe(false);
+    expect(deadPattern([])).toBeNull();
+  });
+
+  it("keeps a direction in the file and drops one that is not a whole number of degrees", () => {
+    expect(toSurveyFile("b", [tag("3", ["gaston"], { face: 90 })]).faces).toEqual({ "3": 90 });
+    const base = { board: "b", key: "5", tags: ["gaston"], taggedAt: "2026-11-15 10:00:00" };
+    expect(parseHoldTag({ ...base, face: 135 })?.face).toBe(135);
+    expect(parseHoldTag({ ...base, face: 12.5 })?.face).toBeNull();
+    expect(parseHoldTag({ ...base, face: 360 })?.face).toBeNull();
   });
 });
