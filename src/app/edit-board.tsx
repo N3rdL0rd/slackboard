@@ -93,7 +93,7 @@ export default function EditBoard() {
         </>}
         <Text v="section" style={{ marginTop: 8 }}>Dead holds</Text>
         <Pressable accessibilityRole="button" onPress={() => { useStore.getState().setBoard(board.id); router.push("/dead-holds"); }}
-          style={{ minHeight: 56, borderRadius: r.input, borderWidth: 1, borderColor: c.line, backgroundColor: c.card, paddingHorizontal: 16, justifyContent: "center" }}>
+          style={{ minHeight: 56, borderRadius: r.input, borderWidth: 1, borderColor: c.line, backgroundColor: c.card, paddingHorizontal: 16, paddingVertical: 14, gap: 4, justifyContent: "center" }}>
           <Text v="bodyStrong">Mark dead holds</Text>
           <Text v="caption">{deadCount === 0 ? "None marked. Missing, broken or spinning holds can be hidden from climbs." : `${deadCount} marked. Climbs that use them are hidden.`}</Text>
         </Pressable>
