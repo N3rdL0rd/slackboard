@@ -27,6 +27,7 @@ class PhoneListener : WearableListenerService() {
                 }
             }
             Protocol.STOP -> ExerciseService.stop(this)
+            Protocol.CAPABILITIES_REQUEST -> Capabilities.sendToPhone(this)
             Protocol.PING -> {
                 val ui = WatchState.ui.value
                 Uplink.send(

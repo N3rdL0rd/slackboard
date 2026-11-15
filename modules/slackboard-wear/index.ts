@@ -4,6 +4,7 @@ import { requireOptionalNativeModule } from "expo-modules-core";
 export interface SlackboardWearNative {
   isWatchReachable(): Promise<boolean>;
   ping(): Promise<boolean>;
+  requestCapabilities(): Promise<boolean>;
   startSession(session: string): Promise<boolean>;
   stopSession(): Promise<boolean>;
   drainInbox(): Promise<string[]>;

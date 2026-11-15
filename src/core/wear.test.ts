@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseInbox, parseInboxLine, watchStatusText } from "./wear";
+import { describeCapabilities, parseInbox, parseInboxLine, watchStatusText } from "./wear";
 
 const line = (path: string, body: unknown) => JSON.stringify({ path, data: JSON.stringify(body), at: 1 });
 
@@ -56,5 +56,31 @@ describe("watchStatusText", () => {
     expect(watchStatusText({ reachable: null, running: false, bpm: null })).toBe("Not checked");
     expect(watchStatusText({ reachable: false, running: false, bpm: null })).toBe("No watch with Slackboard found");
     expect(watchStatusText({ reachable: true, running: true, bpm: 120 })).toBe("Recording, 120 bpm");
+  });
+});
+
+describe("the watch's capabilities report", () => {
+  const body = { model: "SM-R940", sdk: 36, workout: ["HEART_RATE_BPM", "CALORIES_TOTAL"], measure: ["HEART_RATE_BPM"], passive: [], sensors: ["accelerometer", "pressure"], samsungSensors: false, errors: [] };
+
+  it("is read into lists, and written out as plain text", () => {
+    const m = parseInboxLine(line("/slackboard/capabilities", body));
+    expect(m).toMatchObject({ kind: "capabilities", capabilities: { model: "SM-R940", sdk: 36, workout: ["HEART_RATE_BPM", "CALORIES_TOTAL"], samsungSensors: false } });
+    if (m?.kind !== "capabilities") throw new Error("not a capabilities message");
+    const text = describeCapabilities(m.capabilities);
+    expect(text).toContain("Watch: SM-R940, Android API 36");
+    expect(text).toContain("Workout data (climbing): HEART_RATE_BPM, CALORIES_TOTAL");
+    expect(text).toContain("Passive monitoring: none reported");
+    expect(text).toContain("Samsung health sensor service: not installed");
+  });
+
+  it("keeps what is usable: drops non-text and oversized names and too many items, and reads a missing answer as unknown", () => {
+    const many = Array.from({ length: 150 }, (_, i) => `T${i}`);
+    const m = parseInboxLine(line("/slackboard/capabilities", { ...body, workout: ["A", 5, "", "x".repeat(200), "B"], sensors: many, samsungSensors: "yes", sdk: "36" }));
+    expect(m).toMatchObject({ capabilities: { workout: ["A", "B"], samsungSensors: null, sdk: null } });
+    expect((m as { capabilities: { sensors: string[] } }).capabilities.sensors).toHaveLength(100);
+  });
+
+  it("is refused without a model", () => {
+    expect(parseInboxLine(line("/slackboard/capabilities", { ...body, model: "" }))).toBeNull();
   });
 });

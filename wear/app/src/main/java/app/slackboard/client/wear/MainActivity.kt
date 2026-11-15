@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -109,7 +110,7 @@ private fun Screen(autostart: String?, clearAutostart: () -> Unit) {
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                if (ui.running && ui.startedAt != null) clock(now - ui.startedAt!!) else "bpm",
+                if (ui.running && ui.startedAt != null) clock(now - ui.startedAt!!) + (if (ui.mode == ExerciseService.MODE_HEART_RATE) " · heart rate only" else "") else "bpm",
                 color = Muted,
                 fontSize = 14.sp,
             )
@@ -120,6 +121,17 @@ private fun Screen(autostart: String?, clearAutostart: () -> Unit) {
                 modifier = Modifier.height(40.dp),
             ) {
                 Text(if (ui.running) "Stop" else "Start", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+            if (!ui.running) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "What can this watch do?", color = Muted, fontSize = 11.sp, textAlign = TextAlign.Center,
+                    modifier = Modifier.clickable {
+                        WatchState.update { it.copy(info = "Sending to the phone...") }
+                        Capabilities.sendToPhone(activity) { WatchState.update { it.copy(info = "Sent to the phone.") } }
+                    },
+                )
+                if (ui.info != null) Text(ui.info!!, color = Muted, fontSize = 10.sp, textAlign = TextAlign.Center)
             }
             if (ui.message != null) {
                 Spacer(Modifier.height(4.dp))

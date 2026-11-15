@@ -11,6 +11,7 @@ export const WEAR_PATHS = {
   pong: "/slackboard/pong",
   hr: "/slackboard/hr",
   summary: "/slackboard/summary",
+  capabilities: "/slackboard/capabilities",
 } as const;
 
 export const MIN_BPM = 20;
@@ -24,7 +25,27 @@ export interface HrSample {
   bpm: number;
 }
 
+/** What a watch says it can report (see wear/.../Capabilities.kt). Names are as the watch gives them. */
+export interface WatchCapabilities {
+  model: string;
+  /** Android API level of the watch. */
+  sdk: number | null;
+  /** Data types for a climbing workout, for live measuring, and for passive monitoring. */
+  workout: string[];
+  measure: string[];
+  passive: string[];
+  /** The raw sensors the system lists, such as accelerometer, gyroscope, pressure, heart_rate. */
+  sensors: string[];
+  /** Whether Samsung's health sensor service is installed; null when the watch could not tell. */
+  samsungSensors: boolean | null;
+  /** Parts that could not be read, and why. */
+  errors: string[];
+}
+
+export const MAX_CAPABILITY_ITEMS = 100;
+
 export type WatchMessage =
+  | { kind: "capabilities"; capabilities: WatchCapabilities }
   | {
       kind: "state";
       /** True when this answered a ping rather than announcing a change. */
@@ -72,6 +93,27 @@ function parseHr(o: Obj): WatchMessage | null {
   return { kind: "hr", session, samples };
 }
 
+const names = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length <= 120).slice(0, MAX_CAPABILITY_ITEMS) : [];
+
+function parseCapabilities(o: Obj): WatchMessage | null {
+  const model = str(o.model, 60);
+  if (!model) return null;
+  return {
+    kind: "capabilities",
+    capabilities: {
+      model,
+      sdk: typeof o.sdk === "number" && Number.isInteger(o.sdk) && o.sdk > 0 && o.sdk < 1000 ? o.sdk : null,
+      workout: names(o.workout),
+      measure: names(o.measure),
+      passive: names(o.passive),
+      sensors: names(o.sensors),
+      samsungSensors: typeof o.samsungSensors === "boolean" ? o.samsungSensors : null,
+      errors: names(o.errors),
+    },
+  };
+}
+
 function parseSummary(o: Obj): WatchMessage | null {
   const session = str(o.session);
   const startedAt = ms(o.startedAt);
@@ -107,6 +149,8 @@ export function parseInboxLine(line: string): WatchMessage | null {
       return parseHr(body);
     case WEAR_PATHS.summary:
       return parseSummary(body);
+    case WEAR_PATHS.capabilities:
+      return parseCapabilities(body);
     default:
       return null;
   }
@@ -121,6 +165,20 @@ export function parseInbox(lines: string[]): { messages: WatchMessage[]; skipped
     else skipped++;
   }
   return { messages, skipped };
+}
+
+/** The watch's report as plain text, for reading and sharing. */
+export function describeCapabilities(c: WatchCapabilities): string {
+  const list = (title: string, items: string[]) => `${title}: ${items.length ? items.join(", ") : "none reported"}`;
+  return [
+    `Watch: ${c.model}${c.sdk !== null ? `, Android API ${c.sdk}` : ""}`,
+    list("Workout data (climbing)", c.workout),
+    list("Live measuring", c.measure),
+    list("Passive monitoring", c.passive),
+    list("Sensors", c.sensors),
+    `Samsung health sensor service: ${c.samsungSensors === null ? "unknown" : c.samsungSensors ? "installed" : "not installed"}`,
+    ...(c.errors.length ? [list("Could not read", c.errors)] : []),
+  ].join("\n");
 }
 
 /** One word for the Settings screen. */

@@ -9,8 +9,12 @@ data class WatchUi(
     val session: String? = null,
     val startedAt: Long? = null,
     val bpm: Int? = null,
+    /** "workout" or "heart-rate" (heart rate only), while recording. */
+    val mode: String? = null,
     val linked: Boolean = false,
     val message: String? = null,
+    /** A neutral line under the button, such as "Sent to the phone". */
+    val info: String? = null,
 )
 
 /** What the screen shows. The service and the listener write it; the screen only reads it. */

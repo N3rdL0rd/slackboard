@@ -47,6 +47,11 @@ class SlackboardWearModule : Module() {
             runCatching { send(PING, JSONObject()) }.getOrDefault(false)
         }
 
+        /** Ask the watch what it supports. The answer arrives in the inbox as /slackboard/capabilities. */
+        AsyncFunction("requestCapabilities") {
+            runCatching { send(CAPABILITIES_REQUEST, JSONObject()) }.getOrDefault(false)
+        }
+
         AsyncFunction("startSession") { session: String ->
             runCatching { send(START, JSONObject().put("session", session)) }.getOrDefault(false)
         }
@@ -66,5 +71,6 @@ class SlackboardWearModule : Module() {
         const val START = "/slackboard/start"
         const val STOP = "/slackboard/stop"
         const val PING = "/slackboard/ping"
+        const val CAPABILITIES_REQUEST = "/slackboard/capabilities-request"
     }
 }

@@ -17,7 +17,7 @@ object Protocol {
     /** Phone to watch: are you there? Answered with PONG. */
     const val PING = "/slackboard/ping"
 
-    /** Watch to phone: {"state": "idle" | "running", "session": id?, "startedAt": ms?, "bpm": n?} */
+    /** Watch to phone: {"state": "idle" | "running", "session": id?, "startedAt": ms?, "bpm": n?, "mode": "workout" | "heart-rate"?} */
     const val PONG = "/slackboard/pong"
 
     /** Watch to phone: the session started or ended. Same shape as PONG. */
@@ -25,6 +25,12 @@ object Protocol {
 
     /** Watch to phone: {"session": id, "t": [ms...], "b": [bpm...]} */
     const val HR = "/slackboard/hr"
+
+    /** Phone to watch: report what this watch supports. Answered with CAPABILITIES. */
+    const val CAPABILITIES_REQUEST = "/slackboard/capabilities-request"
+
+    /** Watch to phone: {"model", "sdk", "workout": [names], "measure": [names], "passive": [names], "sensors": [names], "samsungSensors": bool, "errors": [text]} */
+    const val CAPABILITIES = "/slackboard/capabilities"
 
     /** Watch to phone, once at the end: {"session", "startedAt", "endedAt", "calories": kcal | null} */
     const val SUMMARY = "/slackboard/summary"

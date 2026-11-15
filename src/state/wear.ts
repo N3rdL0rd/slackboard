@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import Wear from "../../modules/slackboard-wear";
 import { randomHex } from "../core/api";
-import { parseInbox, type WatchMessage } from "../core/wear";
+import { parseInbox, type WatchCapabilities, type WatchMessage } from "../core/wear";
 
 /**
  * The link to the Wear OS watch app. Android only: elsewhere there is no native module and every
@@ -17,10 +17,13 @@ interface WearState {
   bpm: number | null;
   /** Samples received since the app started. */
   received: number;
+  /** The last report of what the watch supports, if it has sent one since the app started. */
+  capabilities: WatchCapabilities | null;
   note: string;
   check: () => Promise<void>;
   start: () => Promise<void>;
   stop: () => Promise<void>;
+  askCapabilities: () => Promise<void>;
   drain: () => Promise<void>;
 }
 
@@ -34,6 +37,8 @@ const apply = (s: WearState, m: WatchMessage): Partial<WearState> => {
     }
     case "summary":
       return {};
+    case "capabilities":
+      return { capabilities: m.capabilities };
   }
 };
 
@@ -45,6 +50,7 @@ export const useWear = create<WearState>((set, get) => ({
   running: false,
   bpm: null,
   received: 0,
+  capabilities: null,
   note: "",
 
   async drain() {
@@ -70,6 +76,17 @@ export const useWear = create<WearState>((set, get) => ({
     set({ note: ok ? "" : "The watch could not be reached." });
     await wait(2500);
     await get().drain();
+  },
+
+  async askCapabilities() {
+    if (!Wear) return;
+    const ok = await Wear.requestCapabilities();
+    set({ note: ok ? "" : "The watch could not be reached." });
+    // The watch reads its sensors and Health Services before it answers.
+    for (let i = 0; i < 6 && ok && get().capabilities === null; i++) {
+      await wait(1500);
+      await get().drain();
+    }
   },
 
   async stop() {

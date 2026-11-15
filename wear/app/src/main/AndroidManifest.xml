@@ -12,6 +12,8 @@
 
     <queries>
         <package android:name="com.google.android.wearable.healthservices" />
+        <package android:name="com.samsung.android.service.health.tracking" />
+        <package android:name="com.samsung.android.wear.shealth" />
     </queries>
 
     <application

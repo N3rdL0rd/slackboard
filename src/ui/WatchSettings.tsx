@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { View } from "react-native";
+import { Share, View } from "react-native";
 import Wear from "../../modules/slackboard-wear";
-import { watchStatusText } from "../core/wear";
+import { describeCapabilities, watchStatusText } from "../core/wear";
 import { useWear } from "../state/wear";
 import { Button, SectionLabel } from "./parts";
 import { Text } from "./Text";
@@ -32,7 +32,15 @@ export function WatchSettings() {
             ? <Button variant="secondary" label="Stop recording" onPress={() => void w.stop()} />
             : <Button variant="secondary" label="Start recording" onPress={() => void w.start()} />
         ) : null}
+        {w.reachable ? <Button variant="secondary" label="Ask what the watch supports" onPress={() => void w.askCapabilities()} /> : null}
       </View>
+      {w.capabilities ? (
+        <View style={{ marginTop: 12, gap: 8 }}>
+          <Text v="bodyStrong">What the watch says it supports</Text>
+          <Text v="secondary" selectable>{describeCapabilities(w.capabilities)}</Text>
+          <Button variant="secondary" label="Share this as text" onPress={() => void Share.share({ message: describeCapabilities(w.capabilities!) })} />
+        </View>
+      ) : null}
       {w.note ? <Text v="secondary" style={{ marginTop: 8 }} aria-live="polite">{w.note}</Text> : null}
     </>
   );
