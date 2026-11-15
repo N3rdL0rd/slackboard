@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { doneKey } from "../core/mergedLog";
+import { wholeV } from "../core/grades";
 import { makeRef } from "../core/provider";
 import { suggest, workingGrade, type StyleSet } from "../core/suggest";
 import { angleAdvice, angleForStyle, angleSamples, gymTarget, gymTargetText, outsideEvidence, snapAngle, styleProfile, wallStyle, type WallStyleId } from "../core/outside";
@@ -164,7 +165,7 @@ export default function Suggestions() {
           )}
           {advice?.worthTraining ? (
             <View style={{ borderTopWidth: 1, borderTopColor: c.divider, paddingTop: 4 }}>
-              <SwitchRow label="Train your weakest angle" help={`V${Math.floor(advice.best.working)} ${wallStyle(advice.best.style).label.toLowerCase()}, V${Math.floor(advice.weak.working)} ${wallStyle(advice.weak.style).label.toLowerCase()}. Shows adjustable boards at that angle.`} value={trainAngle} onChange={setTrainAngle} />
+              <SwitchRow label="Train your weakest angle" help={`V${wholeV(advice.best.working)} ${wallStyle(advice.best.style).label.toLowerCase()}, V${wholeV(advice.weak.working)} ${wallStyle(advice.weak.style).label.toLowerCase()}. Shows adjustable boards at that angle.`} value={trainAngle} onChange={setTrainAngle} />
             </View>
           ) : null}
         </View>

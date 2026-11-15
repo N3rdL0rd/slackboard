@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { FlatList, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { adviceText, angleAdvice, angleSamples, RESULT_LABEL, SETTING_LABEL, WALL_STYLES, wallStyle, type OutsideLog } from "../core/outside";
-import { bandForV, gradeColor } from "../core/grades";
+import { bandForV, gradeColor, wholeV } from "../core/grades";
 import { shortDate } from "../core/shareCard";
 import { useData } from "../state/data";
 import { useOutsideLogs } from "../state/outside";
@@ -14,7 +14,7 @@ import { JumpList } from "../ui/JumpToTop";
 import { Text } from "../ui/Text";
 import { c, r } from "../theme";
 
-const vLabel = (shared: number) => `V${Math.floor(shared)}`;
+const vLabel = (shared: number) => `V${wholeV(shared)}`;
 
 const resultLine = (l: OutsideLog) => (l.result === "attempt" ? `${l.attempts} ${l.attempts === 1 ? "attempt" : "attempts"}` : l.result === "flash" ? RESULT_LABEL.flash : `Sent in ${l.attempts}`);
 
@@ -67,7 +67,7 @@ export default function OffBoard() {
               return (
                 <View key={w.id} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Text v="secondary" style={{ width: 118 }}>{w.label}</Text>
-                  {b ? <View style={{ height: 14, width: `${(b.working / maxV) * 52}%`, backgroundColor: bandForV(Math.floor(b.working)).bar, borderRadius: 4 }} /> : null}
+                  {b ? <View style={{ height: 14, width: `${(b.working / maxV) * 52}%`, backgroundColor: bandForV(wholeV(b.working)).bar, borderRadius: 4 }} /> : null}
                   {b ? <Text v="caption"><Text v="caption" style={{ color: gradeColor(b.working), fontFamily: "Barlow_600SemiBold" }}>{vLabel(b.working)}</Text>{` \u00B7 ${b.sends}`}</Text> : <Text v="caption">not enough sends</Text>}
                 </View>
               );

@@ -58,7 +58,13 @@ export function bandForV(v: number): GradeBand {
 }
 
 /** The colour a grade shows in on a dark background: its band's visible colour, from a grade on the shared scale (V plus a fraction). */
-export const gradeColor = (shared: number): string => bandForV(Math.max(0, Math.floor(shared))).bar;
+/**
+ * The whole V grade of a grade on the shared scale, never below V0. A gym climb counts half a V under the boulder it is graded as,
+ * so a gym V0 sits at -0.5 on the scale; it is still a V0, not a V-1.
+ */
+export const wholeV = (shared: number): number => Math.max(0, Math.floor(shared + 1e-9));
+
+export const gradeColor = (shared: number): string => bandForV(wholeV(shared)).bar;
 
 export class GradeScale {
   private readonly byId = new Map<number, GradeRow>();

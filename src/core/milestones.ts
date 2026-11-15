@@ -9,6 +9,7 @@ import { daysBetween, monthStartDay, weekStartDay, type Day } from "./days";
 import { hashSeed } from "./filters";
 import type { RopedLog } from "./roped";
 import type { StreakInfo } from "./streak";
+import { wholeV } from "./grades";
 
 export type MilestoneKind = "goal" | "countAtGrade" | "newGrade" | "sendCount" | "streak" | "week" | "month" | "ropedFirst";
 
@@ -50,7 +51,7 @@ const isClose = (current: number, target: number): boolean => target - current <
 const make = (m: Omit<Milestone, "progress">): Milestone => ({ ...m, progress: Math.max(0, Math.min(1, m.current / m.target)) });
 
 /** The board send's V grade (a whole number), from its shared-scale grade. */
-export const vOf = (grade: number): number => Math.floor(grade + 1e-9);
+export const vOf = wholeV;
 
 /** Everything the milestones are computed from: every entry of every kind, the day, and the streak as of that day. */
 export interface MilestoneInput {

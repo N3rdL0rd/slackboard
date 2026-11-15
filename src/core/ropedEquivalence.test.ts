@@ -4,7 +4,10 @@ import type { RopedLog } from "./roped";
 import { DEFAULT_SETTINGS, parseSettings, withDefaults } from "./settings";
 import { overview } from "./stats";
 import { OUTSIDE_PROVIDER } from "./outside";
-import { ropedLabel } from "../data/ropedGrades";
+import { ropedLabel, ropedValue } from "../data/ropedGrades";
+import { grades } from "../data/grades";
+import { DEFAULT_PROVIDER } from "../providers";
+import { bandForV, wholeV } from "./grades";
 
 const rope = (grade: number, over: Partial<RopedLog> = {}): RopedLog => ({
   id: `r${grade}`, style: "sport", setting: "outdoor", name: "", venue: "", link: "", gradeSystem: "yds", gradeLabel: "x", grade, result: "redpoint", attempts: 3,
@@ -68,5 +71,15 @@ describe("the setting", () => {
       expect(parseSettings({ ropedEquivalence: bad }).ropedEquivalence, JSON.stringify(bad)).toBeUndefined();
       expect(parseEquivalence(bad)).toBeNull();
     }
+  });
+});
+
+describe("easy roped grades as boulder grades", () => {
+  it("come out as V0 on the shared scale, whole V0 and the V0 band, however far below the paired grade they are", () => {
+    const v = ropedAsV(ropedValue("yds", "5.6")!, DEFAULT_EQUIVALENCE);
+    expect(v).toBeGreaterThan(0);
+    expect(wholeV(v)).toBe(0);
+    expect(grades.label(DEFAULT_PROVIDER.fromCommonGrade(v), "v").primary).toBe("V0");
+    expect(bandForV(wholeV(v)).name).toBe("pink");
   });
 });

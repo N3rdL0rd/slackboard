@@ -5,6 +5,7 @@ import type { RopedLog } from "./roped";
 import { streakInfo } from "./streak";
 import { climbingDays } from "./activity";
 import type { LogEntry } from "./types";
+import { adjustedGrade, type OutsideLog } from "./outside";
 
 const shared = (e: LogEntry) => e.difficulty;
 let n = 0;
@@ -155,4 +156,20 @@ describe("the line and the toast", () => {
 it("reads roped entries without mixing them into boulder counts", () => {
   const a: Activity[] = [ropedActivity(rope({ result: "redpoint", climbedAt: "2026-10-01 10:00:00" }))];
   expect(milestoneCandidates({ activities: a, today: "2026-11-02", streak: streakInfo(["2026-10-01"], "2026-11-02") }).find((m) => m.kind === "sendCount")).toMatchObject({ current: 0 });
+});
+
+describe("whole V grades", () => {
+  it("never go below V0: a gym V0 sits half a V down on the shared scale but is still a V0", () => {
+    expect(vOf(-0.5)).toBe(0);
+    expect(vOf(-3)).toBe(0);
+    expect(vOf(0)).toBe(0);
+    expect(vOf(3.999999999)).toBe(4);
+    expect(vOf(4.5)).toBe(4);
+  });
+
+  it("put an easy gym climb in the V0 row of the Log's sends by grade, not a row of its own below V0", () => {
+    const gymV0 = { setting: "gym", grade: 0 } as OutsideLog;
+    expect(adjustedGrade(gymV0)).toBeLessThan(0);
+    expect(vOf(adjustedGrade(gymV0)!)).toBe(0);
+  });
 });
