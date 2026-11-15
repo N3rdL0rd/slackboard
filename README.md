@@ -137,3 +137,7 @@ Bug reports, fixes and new features are welcome. Please read [CONTRIBUTING.md](C
 
 Climbs you light up on a board are kept in a local **Lit history** (You > Lit history), by day, for every board, and included in the backup. Gym climbs can be logged from the round **+** button on the Climb tab, which also sets climbs, opens Suggested and builds a climb workout, with a one-tap repeat of recent combinations and a grade strip in each grade's colour.
 
+
+## Developer menu
+
+Tap **About** seven times in Settings to unlock it. It holds the hold survey, dead holds, watch sessions (timeline, labels, health, attempt detector and elevation labs, export), a live watch monitor and the app's internal values. Nothing in it is needed to climb.

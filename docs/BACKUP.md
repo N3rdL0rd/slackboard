@@ -38,7 +38,7 @@ Everything on the phone, in one file, which **Restore** can read back.
 ```jsonc
 {
   "app": "slackboard",
-  "version": 9,
+  "version": 10,
   "exportedAt": "2026-11-02T12:00:00.000Z",
   "user": { "id": 7, "username": "..." },
   "logbook": [ /* every board entry, with grade_v and grade_font added */ ],
@@ -112,3 +112,7 @@ lets the climb screen's **Measure on the board** (More menu) show real distances
 Edit board > **Mark dead holds** shows the board; tap a hold that is missing, broken or spinning to mark it (tap again to clear it). A
 climb that uses a dead hold is hidden from the list unless **With dead holds** is chosen in the filters. Dead holds are the same data as
 the survey's "Dead hold" tag.
+
+## Watch data (developer)
+
+Version 10 adds `watchSessions`: heart rate, elevation, motion rows, batch arrival times and labels recorded from the Wear OS watch. It is only written when "Include watch data in backups" is on in the developer Watch screen, since a long session adds up to hundreds of kilobytes. Restoring never deletes existing sessions.
