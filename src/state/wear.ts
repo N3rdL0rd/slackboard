@@ -19,6 +19,8 @@ interface WearState {
   received: number;
   /** The last report of what the watch supports, if it has sent one since the app started. */
   capabilities: WatchCapabilities | null;
+  /** True while waiting for the watch to answer. */
+  asking: boolean;
   note: string;
   check: () => Promise<void>;
   start: () => Promise<void>;
@@ -51,6 +53,7 @@ export const useWear = create<WearState>((set, get) => ({
   bpm: null,
   received: 0,
   capabilities: null,
+  asking: false,
   note: "",
 
   async drain() {
@@ -80,13 +83,18 @@ export const useWear = create<WearState>((set, get) => ({
 
   async askCapabilities() {
     if (!Wear) return;
+    set({ capabilities: null, asking: true, note: "Asking the watch..." });
     const ok = await Wear.requestCapabilities();
-    set({ note: ok ? "" : "The watch could not be reached." });
+    if (!ok) return set({ asking: false, note: "The watch could not be reached." });
     // The watch reads its sensors and Health Services before it answers.
-    for (let i = 0; i < 6 && ok && get().capabilities === null; i++) {
+    for (let i = 0; i < 8 && get().capabilities === null; i++) {
       await wait(1500);
       await get().drain();
     }
+    set({
+      asking: false,
+      note: get().capabilities ? "" : "The watch did not answer. It may still be running an older build of the watch app that cannot report this; install the newest one on the watch and try again.",
+    });
   },
 
   async stop() {

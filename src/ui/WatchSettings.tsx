@@ -32,7 +32,7 @@ export function WatchSettings() {
             ? <Button variant="secondary" label="Stop recording" onPress={() => void w.stop()} />
             : <Button variant="secondary" label="Start recording" onPress={() => void w.start()} />
         ) : null}
-        {w.reachable ? <Button variant="secondary" label="Ask what the watch supports" onPress={() => void w.askCapabilities()} /> : null}
+        {w.reachable ? <Button variant="secondary" label={w.asking ? "Asking the watch..." : "Ask what the watch supports"} disabled={w.asking} onPress={() => void w.askCapabilities()} /> : null}
       </View>
       {w.capabilities ? (
         <View style={{ marginTop: 12, gap: 8 }}>
