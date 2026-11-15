@@ -101,13 +101,14 @@ export function GoalWidget({ v }: { v: WidgetView }) {
       <Label text="Goal" />
       <TextWidget text={g ? g.title : "Set a goal"} maxLines={1} style={{ fontSize: 20, fontFamily: DISPLAY, color: COLOR.text }} />
       {g ? (
-        <>
+        // Not a fragment: the widget renderer calls each element type as a function.
+        <FlexWidget style={{ width: "match_parent" }}>
           <FlexWidget style={{ flexDirection: "row", width: "match_parent", height: 8, borderRadius: 4, marginTop: 8, backgroundColor: COLOR.ground, overflow: "hidden" }}>
             <FlexWidget style={{ flex: Math.max(pct, 1), height: "match_parent", backgroundColor: COLOR.green }} />
             <FlexWidget style={{ flex: Math.max(100 - pct, 1), height: "match_parent" }} />
           </FlexWidget>
           <TextWidget text={g.summary} maxLines={1} style={{ marginTop: 6, fontSize: 12, fontFamily: BODY, color: COLOR.secondary }} />
-        </>
+        </FlexWidget>
       ) : null}
     </Frame>
   );
