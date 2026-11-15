@@ -21,11 +21,33 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // The Data Layer only links a watch app and a phone app that share the application id and the signing key, so this signs the
+    // watch app the way the phone app is signed (see plugins/withReleaseSigning.js): the release keystore when SLACKBOARD_KEYSTORE is
+    // set, otherwise the debug keystore of the generated phone project (android/app/debug.keystore).
+    val phoneDebugKeystore = rootProject.file("../android/app/debug.keystore")
+    val releaseKeystore: String? = System.getenv("SLACKBOARD_KEYSTORE")
+    signingConfigs {
+        create("slackboard") {
+            if (releaseKeystore != null) {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("SLACKBOARD_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("SLACKBOARD_KEY_ALIAS")
+                keyPassword = System.getenv("SLACKBOARD_KEY_PASSWORD")
+            } else if (phoneDebugKeystore.exists()) {
+                storeFile = phoneDebugKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+    val sameKeyAsPhone = if (releaseKeystore != null || phoneDebugKeystore.exists()) "slackboard" else "debug"
+
     buildTypes {
+        debug { signingConfig = signingConfigs.getByName(sameKeyAsPhone) }
         release {
             isMinifyEnabled = false
-            // Debug key until the release key is wired in; it matches the phone's debug builds.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(sameKeyAsPhone)
         }
     }
 }
