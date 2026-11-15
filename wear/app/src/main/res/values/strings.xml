@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Slackboard</string>
+    <string-array name="android_wear_capabilities">
+        <item>slackboard_watch</item>
+    </string-array>
+</resources>
