@@ -38,7 +38,7 @@ Everything on the phone, in one file, which **Restore** can read back.
 ```jsonc
 {
   "app": "slackboard",
-  "version": 6,
+  "version": 8,
   "exportedAt": "2026-11-02T12:00:00.000Z",
   "user": { "id": 7, "username": "..." },
   "logbook": [ /* every board entry, with grade_v and grade_font added */ ],
@@ -47,6 +47,8 @@ Everything on the phone, in one file, which **Restore** can read back.
   "roped": [ /* roped climbs: style, setting, grade label and system, result, tries, length, pitches */ ],
   "goals": [ /* goals: kind, target, window and status; a goal that was reached stays reached */ ],
   "training": [ /* one exercise on one day, with its sets: reps, time, load, edge, grip, rest */ ],
+  "dayNotes": [ /* daily body check-ins */ ],
+  "holdTags": [ /* developer menu, hold survey: per hold, its tags (shape, how it is pulled, material), a note and when */ ],
   "litHistory": [ /* climbs lit on boards */ ],
   "moon": { "boards": [], "problems": [], "tags": [] },
   "spaces": { "places": [], "names": {}, "lineage": {}, "logSpaces": [] },
@@ -63,6 +65,7 @@ and Grasshopper. A restore brings back only what exists on the phone alone:
 - off-board climbs
 - roped climbs
 - goals, with their status (a goal you reached stays reached, even if you later edit the climb that completed it)
+- hold-survey tags (a developer tool; see below)
 - training entries: each exercise with its sets (a set that is not done is not saved)
 - **MoonBoard**: the boards (with their old ids), the problems you set, your logs (back in the MoonBoard database, so ticks and send
   counts return), and your likes and blocks. The downloaded problem lists are not in the file; they download again when a board is
@@ -83,3 +86,11 @@ ones they name.
 
 A backup is treated as untrusted input. Every record is checked (types, ranges, dates, link scheme, known categories) and one that
 fails is skipped and counted, never half-applied. A file with a newer `version` than the app understands is refused.
+
+## Hold survey (developer menu)
+
+Settings > About, tapped seven times quickly, unlocks a developer menu with the **Hold survey**. Connect to a board, and it lights each hold
+in turn along the LED strip; you give each hold any number of tags: shape (jug, incut edge, crimp, sloper, pinch, pocket, volume, foot),
+how it is pulled (undercling, gaston, side pull), material (wood, plastic) and Unsure. Tags are saved as you go, kept when you sign out,
+and carried in the backup. "Share the tags" writes the hold-types file format (`holds`: one type per hold, the first shape tag) plus
+`tags`, `unsure` and `notes`.

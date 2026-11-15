@@ -7,6 +7,7 @@ import type { LogicalCircuit } from "./logicalCircuits";
 import { RESULT_LABEL, wallStyle, type OutsideLog } from "./outside";
 import { isSend, ropedTitle, type RopedLog } from "./roped";
 import type { DayNote } from "./body";
+import type { HoldTag } from "./holdSurvey";
 import { ropedLabel } from "../data/ropedGrades";
 import type { Goal } from "./goals";
 import type { Plan, Profile, TestResult } from "./planner";
@@ -107,6 +108,8 @@ export interface ExportBundle {
   plans: Plan[];
   /** Daily body check-ins, which exist only on the phone. */
   dayNotes: DayNote[];
+  /** Hold-survey tags (a developer tool). */
+  holdTags: HoldTag[];
   /** Climbs lit up on a board, newest first. */
   litHistory: LitEntry[];
   /** MoonBoard boards, the problems the user set, and their likes and blocks. */
@@ -120,7 +123,7 @@ export interface ExportBundle {
 
 export function exportJson(input: {
   now: Date; user: { id: number | null; username: string }; range: ExportRange; logbook: LogEntry[]; circuits: LogicalCircuit[];
-  offBoard: OutsideLog[]; roped: RopedLog[]; training: TrainingEntry[]; goals: Goal[]; profile: Profile | null; tests: TestResult[]; plans: Plan[]; dayNotes: DayNote[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
+  offBoard: OutsideLog[]; roped: RopedLog[]; training: TrainingEntry[]; goals: Goal[]; profile: Profile | null; tests: TestResult[]; plans: Plan[]; dayNotes: DayNote[]; holdTags?: HoldTag[]; litHistory: LitEntry[]; moon: MoonBackup; spaces: SpacesBackup; preferences: Preferences; liked: Iterable<string>; blocked: Iterable<string>; boards: { name: string; spec: { layoutName: string; sizeName: string }; angle: number; isAdjustable: boolean }[];
   gradeOf: (e: LogEntry) => GradeText;
 }): string {
   const bundle: ExportBundle = {
@@ -138,6 +141,7 @@ export function exportJson(input: {
     tests: input.tests,
     plans: input.plans,
     dayNotes: input.dayNotes,
+    holdTags: input.holdTags ?? [],
     litHistory: input.litHistory,
     moon: input.moon,
     spaces: input.spaces,

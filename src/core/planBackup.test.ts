@@ -147,6 +147,6 @@ describe("planner data in a backup", () => {
   it("says what it holds and what was restored", () => {
     const b = parse({ profile: wire(profile), tests: [wire(test())], plans: [wire(mkPlan())] });
     expect(describeBackup(b)).toMatch(/1 training plan.*1 test result.*your training profile/);
-    expect(describeRestored({ offBoard: 0, roped: 0, training: 0, goals: 0, plans: 1, tests: 2, profile: true, dayNotes: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 training plan, 2 test results, your training profile.");
+    expect(describeRestored({ offBoard: 0, roped: 0, training: 0, goals: 0, plans: 1, tests: 2, profile: true, dayNotes: 0, holdTags: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Restored 1 training plan, 2 test results, your training profile.");
   });
 });

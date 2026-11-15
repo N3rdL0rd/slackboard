@@ -318,12 +318,12 @@ describe("saying what a backup holds", () => {
   });
 
   it("reports a restore, with a count of skipped records", () => {
-    const base = { offBoard: 2, roped: 0, training: 0, goals: 0, plans: 0, tests: 0, profile: false, dayNotes: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 1, moonProblems: 3, moonTags: 0, places: 0, preferences: false, skipped: 0 };
+    const base = { offBoard: 2, roped: 0, training: 0, goals: 0, plans: 0, tests: 0, profile: false, dayNotes: 0, holdTags: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 1, moonProblems: 3, moonTags: 0, places: 0, preferences: false, skipped: 0 };
     expect(describeRestored(base)).toBe("Restored 2 off-board climbs, 1 MoonBoard, 3 problems you set.");
     expect(describeRestored({ ...base, skipped: 2 })).toContain("2 records were damaged and skipped.");
     expect(describeRestored({ ...base, offBoard: 0, moonBoards: 0, moonProblems: 0, roped: 3 })).toBe("Restored 3 roped climbs.");
     expect(describeRestored({ ...base, offBoard: 0, moonBoards: 0, moonProblems: 0, dayNotes: 4 })).toBe("Restored 4 body check-ins.");
-    expect(describeRestored({ offBoard: 0, roped: 0, training: 0, goals: 0, plans: 0, tests: 0, profile: false, dayNotes: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Nothing needed restoring.");
+    expect(describeRestored({ offBoard: 0, roped: 0, training: 0, goals: 0, plans: 0, tests: 0, profile: false, dayNotes: 0, holdTags: 0, localLogs: 0, circuits: 0, litHistory: 0, moonBoards: 0, moonProblems: 0, moonTags: 0, places: 0, preferences: false, skipped: 0 })).toBe("Nothing needed restoring.");
   });
 });
 

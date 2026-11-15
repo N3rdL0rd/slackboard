@@ -44,6 +44,8 @@ export interface Settings {
   haptics: boolean;
   /** Count gym and outdoor climbs in the stats (default on). */
   statsOffBoard?: boolean;
+  /** The developer menu, unlocked by tapping About in Settings seven times. Off until then. */
+  developer: boolean;
   /** Let roped sends count toward the boulder working grade and stats, through `ropedEquivalence`. Off until the user turns it on. */
   ropedWorking: boolean;
   /** The pair the user counts as equal: a roped grade and a boulder grade. */
@@ -68,7 +70,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
 };
 
 export const DEFAULT_SETTINGS: Settings = {
-  gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, logLit: true, haptics: true,
+  gradeDisplay: "both", shapes: false, highContrast: false, autoConnect: true, logLit: true, haptics: true, developer: false,
   ropedWorking: false, ropedEquivalence: DEFAULT_EQUIVALENCE, trainTab: true, updateCheck: false, crashLog: false, units: { weight: "kg", length: "m" }, motivation: true, nudges: "standard", notifications: DEFAULT_NOTIFICATIONS, notificationsDeclined: false,
 };
 
@@ -80,7 +82,7 @@ const DISPLAYS: GradeDisplay[] = ["both", "v", "font"];
 const NUDGES: NudgeLevel[] = ["off", "relaxed", "standard", "keen"];
 const NOTIFICATION_SWITCHES = ["plan", "review", "streak", "rest", "milestone", "sessionRest"] as const;
 const NOTIFICATION_TIMES = ["planTime", "reviewTime", "quietStart", "quietEnd"] as const;
-const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "ropedWorking", "trainTab", "updateCheck", "crashLog", "motivation", "notificationsDeclined"] as const;
+const BOOLS = ["shapes", "highContrast", "autoConnect", "logLit", "haptics", "statsOffBoard", "ropedWorking", "trainTab", "updateCheck", "crashLog", "motivation", "notificationsDeclined", "developer"] as const;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 type Obj = Record<string, unknown>;

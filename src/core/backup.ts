@@ -29,10 +29,12 @@ import type { Plan, Profile, TestResult } from "./planner";
 import { ropedValue, type RopedSystem } from "../data/ropedGrades";
 import { parseDayNote, type DayNote } from "./body";
 import { saveDayNote } from "./dayNotesLocal";
+import { parseHoldTag, type HoldTag } from "./holdSurvey";
+import { saveHoldTag } from "./holdTagsLocal";
 import type { LogEntry } from "./types";
 
 /** The newest file format this version of the app writes and reads. */
-export const BACKUP_VERSION = 7;
+export const BACKUP_VERSION = 8;
 
 export interface ParsedBackup {
   exportedAt: string;
@@ -49,6 +51,8 @@ export interface ParsedBackup {
   plans: Plan[];
   /** Daily body check-ins. */
   dayNotes: DayNote[];
+  /** Hold-survey tags (a developer tool). */
+  holdTags: HoldTag[];
   /** Sends and attempts on boards that have no service. */
   localLogs: LogEntry[];
   /** Circuits that were never published to a service. */
@@ -74,6 +78,7 @@ export interface RestoreSummary {
   tests: number;
   profile: boolean;
   dayNotes: number;
+  holdTags: number;
   localLogs: number;
   circuits: number;
   litHistory: number;
@@ -202,6 +207,7 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
   const profile = raw.profile === null || raw.profile === undefined ? null : parseProfile(raw.profile);
   if (raw.profile !== null && raw.profile !== undefined && !profile) skipped++;
   const dayNotes = each(raw.dayNotes, parseDayNote);
+  const holdTags = each(raw.holdTags, parseHoldTag);
   const allLogs = each(raw.logbook, logOf);
   // Entries on services come back by syncing, so they are neither restored nor counted as damaged.
   const localLogs = allLogs.filter((e) => isLocalProvider(e.provider));
@@ -210,7 +216,7 @@ export function parseBackup(text: string, isLocalProvider: (provider: string) =>
   const moon = parseMoon(raw.moon, () => { skipped++; });
   const spaces = parseSpaces(raw.spaces, () => { skipped++; });
   const preferences = parsePreferences(raw.preferences);
-  return { ok: true, backup: { exportedAt, offBoard, roped, training, goals, profile, tests, plans, dayNotes, localLogs, circuits, litHistory, moon, spaces, preferences, skipped } };
+  return { ok: true, backup: { exportedAt, offBoard, roped, training, goals, profile, tests, plans, dayNotes, holdTags, localLogs, circuits, litHistory, moon, spaces, preferences, skipped } };
 }
 
 /**
@@ -232,6 +238,7 @@ export async function restoreBackup(t: RestoreTargets, b: ParsedBackup): Promise
   for (const r of b.tests) await saveTest(t.local, r);
   for (const p of b.plans) await savePlan(t.local, p);
   for (const n of b.dayNotes) await saveDayNote(t.local, n);
+  for (const h of b.holdTags) await saveHoldTag(t.local, h);
   for (const e of b.litHistory) await saveLit(t.local, e);
   // Boards first, so the problems, logs and tags that belong to them have somewhere to go.
   if (hasMoon(b.moon)) await restoreMoon(await t.dbFor("moonboard"), b.moon);
@@ -249,6 +256,7 @@ export async function restoreBackup(t: RestoreTargets, b: ParsedBackup): Promise
     tests: b.tests.length,
     profile: b.profile !== null,
     dayNotes: b.dayNotes.length,
+    holdTags: b.holdTags.length,
     offBoard: b.offBoard.length, localLogs: b.localLogs.length, circuits: added.length, litHistory: b.litHistory.length, moonBoards: b.moon.boards.length,
     moonProblems: b.moon.problems.length, moonTags: b.moon.tags.length, places: b.spaces.places.length, preferences: hasPreferences(b.preferences), skipped: b.skipped,
   };
@@ -267,6 +275,7 @@ export function describeBackup(b: ParsedBackup): string {
     b.tests.length ? plural(b.tests.length, "test result", "test results") : "",
     b.profile ? "your training profile" : "",
     b.dayNotes.length ? plural(b.dayNotes.length, "body check-in", "body check-ins") : "",
+    b.holdTags.length ? plural(b.holdTags.length, "hold tag", "hold tags") : "",
     b.localLogs.length ? plural(b.localLogs.length, "MoonBoard log entry", "MoonBoard log entries") : "",
     b.moon.boards.length ? plural(b.moon.boards.length, "MoonBoard", "MoonBoards") : "",
     b.moon.problems.length ? plural(b.moon.problems.length, "problem you set", "problems you set") : "",
@@ -290,6 +299,7 @@ export function describeRestored(s: RestoreSummary): string {
     s.tests ? plural(s.tests, "test result", "test results") : "",
     s.profile ? "your training profile" : "",
     s.dayNotes ? plural(s.dayNotes, "body check-in", "body check-ins") : "",
+    s.holdTags ? plural(s.holdTags, "hold tag", "hold tags") : "",
     s.localLogs ? plural(s.localLogs, "MoonBoard log entry", "MoonBoard log entries") : "",
     s.moonBoards ? plural(s.moonBoards, "MoonBoard", "MoonBoards") : "",
     s.moonProblems ? plural(s.moonProblems, "problem you set", "problems you set") : "",

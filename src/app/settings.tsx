@@ -1,6 +1,6 @@
 import { DEFAULT_PROVIDER } from "../providers";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Pressable, ScrollView, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { GradeDisplay } from "../core/grades";
@@ -28,6 +28,18 @@ export default function Settings() {
   const insets = useSafeAreaInsets();
   const s = useStore((x) => x.settings);
   const patch = useStore((x) => x.patchSettings);
+  // Seven quick taps on About unlock the developer menu.
+  const aboutTaps = useRef({ n: 0, at: 0 });
+  const [aboutNote, setAboutNote] = useState("");
+  const tapAbout = () => {
+    const now = Date.now();
+    const t = aboutTaps.current;
+    t.n = now - t.at < 1500 ? t.n + 1 : 1;
+    t.at = now;
+    if (s.developer) return;
+    if (t.n >= 7) { patch({ developer: true }); setAboutNote("Developer menu unlocked."); }
+    else if (t.n >= 4) setAboutNote(`${7 - t.n} more taps to unlock the developer menu.`);
+  };
   const ropedSystem = useRopedLogs()[0]?.gradeSystem ?? "yds";
   const accounts = useStore((x) => x.accounts);
   const roles: { n: RoleName; l: string }[] = [{ n: "start", l: "Start" }, { n: "middle", l: "Middle" }, { n: "finish", l: "Finish" }, { n: "foot", l: "Foot only" }];
@@ -105,8 +117,19 @@ export default function Settings() {
           <Text v="caption">{Object.keys(accounts).length === 1 ? "1 account" : `${Object.keys(accounts).length} accounts`}, one per board brand</Text>
         </Pressable>
 
-        <SectionLabel>About</SectionLabel>
+        <Pressable accessibilityRole="button" accessibilityLabel="About" onPress={tapAbout}><SectionLabel>About</SectionLabel></Pressable>
         <Text v="secondary">Slackboard is an independent project and is not affiliated with or endorsed by any board maker.</Text>
+        {aboutNote ? <Text v="caption" aria-live="polite" style={{ marginTop: 6 }}>{aboutNote}</Text> : null}
+
+        {s.developer ? (
+          <>
+            <SectionLabel>Developer</SectionLabel>
+            <View style={{ gap: 8 }}>
+              <Button variant="secondary" label="Hold survey" onPress={() => router.push("/dev/hold-survey")} />
+              <Button variant="secondary" label="Hide the developer menu" onPress={() => patch({ developer: false })} />
+            </View>
+          </>
+        ) : null}
       </ScrollView>
     </View>
   );
