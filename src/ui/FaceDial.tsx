@@ -10,7 +10,7 @@ const SIZE = 200;
 const STEP = 15;
 
 /** The direction a hold's useful face points: touch or drag round the circle, straight up is 0 and right is 90, in 15 degree steps. */
-export function FaceDial({ value, onChange }: { value: number | null; onChange: (deg: number | null) => void }) {
+export function FaceDial({ value, onChange, onActive }: { value: number | null; onChange: (deg: number | null) => void; /** True while a finger is on the dial, so the screen behind can stop scrolling. */ onActive?: (active: boolean) => void }) {
   const box = useRef({ x: SIZE / 2, y: SIZE / 2 });
   const at = (e: any) => {
     const { locationX, locationY } = e.nativeEvent;
@@ -32,7 +32,8 @@ export function FaceDial({ value, onChange }: { value: number | null; onChange: 
         accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
         onAccessibilityAction={(e) => onChange(snapFace((value ?? 0) + (e.nativeEvent.actionName === "increment" ? STEP : -STEP), STEP))}
         onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true}
-        onResponderGrant={at} onResponderMove={at}
+        onResponderGrant={(e) => { onActive?.(true); at(e); }} onResponderMove={at} onResponderTerminationRequest={() => false}
+        onResponderRelease={() => onActive?.(false)} onResponderTerminate={() => onActive?.(false)}
         style={{ width: SIZE, height: SIZE }}
       >
         <Svg width={SIZE} height={SIZE} pointerEvents="none">
@@ -51,7 +52,7 @@ export function FaceDial({ value, onChange }: { value: number | null; onChange: 
             </G>
           ) : null}
         </Svg>
-        <Text v="caption" style={{ position: "absolute", top: 4, alignSelf: "center" }}>up</Text>
+        {value === null ? <Text v="caption" style={{ position: "absolute", top: 26, alignSelf: "center" }}>up</Text> : null}
       </View>
       <Text v="bodyStrong" aria-live="polite">{value === null ? "Direction not set" : `Faces ${faceWords(value)} (${value}°)`}</Text>
       {value !== null ? <LinkButton label="Clear the direction" onPress={() => onChange(null)} /> : null}

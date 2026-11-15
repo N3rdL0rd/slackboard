@@ -50,6 +50,8 @@ export default function HoldSurvey() {
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [sheet, setSheet] = useState<null | "guide" | "scale">(null);
+  // The page stops scrolling while a finger is on the dial.
+  const [dialActive, setDialActive] = useState(false);
   const started = useRef(false);
   const last = useRef<{ tags: SurveyTag[]; face: number | null } | null>(null);
   const hold = order[index];
@@ -146,7 +148,7 @@ export default function HoldSurvey() {
   return (
     <View style={{ flex: 1, backgroundColor: c.ground, paddingTop: insets.top }}>
       {header}
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 14 }} keyboardShouldPersistTaps="handled">
+      <ScrollView scrollEnabled={!dialActive} contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 14 }} keyboardShouldPersistTaps="handled">
         <Text v="caption" aria-live="polite">{progress.tagged} tagged · {progress.unsure} unsure · {progress.left} left of {progress.total}</Text>
         <View style={{ backgroundColor: c.card, borderRadius: r.card, borderWidth: 1, borderColor: c.line, padding: 14, gap: 4 }}>
           <Text v="caption">Hold {index + 1} of {order.length}, lit white on the board</Text>
@@ -165,7 +167,7 @@ export default function HoldSurvey() {
 
         <View style={{ gap: 8 }}>
           <SectionLabel>Direction of the face</SectionLabel>
-          {showDial ? <FaceDial value={face} onChange={setFace} /> : <LinkButton label="Set a direction for this hold" onPress={() => setFace(0)} />}
+          {showDial ? <FaceDial value={face} onChange={setFace} onActive={setDialActive} /> : <LinkButton label="Set a direction for this hold" onPress={() => setFace(0)} />}
         </View>
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
