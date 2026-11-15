@@ -10,6 +10,7 @@ import { EQUIPMENT, exerciseById, type Equipment } from "../data/exercises";
 import { TESTS } from "../data/protocols";
 import { usePlanner, usePlannerStore, useStyleInsight } from "../state/planner";
 import { useStore } from "../state/store";
+import { Slider } from "../ui/Slider";
 import { Button, Chip, IconButton, Segmented, SectionLabel } from "../ui/parts";
 import { Stepper } from "../ui/Stepper";
 import { Text } from "../ui/Text";
@@ -85,9 +86,7 @@ export default function PlanSetup() {
             {weeks ? (
               <View style={{ gap: 8 }}>
                 <SectionLabel>The block ends in</SectionLabel>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  {WEEKS_AHEAD.map((w) => <Chip key={w} label={`${w} weeks`} selected={weeks === w} onPress={() => setWeeks(w)} />)}
-                </View>
+                <Slider label="Weeks until your date" stops={WEEKS_AHEAD.map((w) => ({ value: w, label: `${w} weeks` }))} value={weeks} onChange={setWeeks} />
                 <Text v="caption">The last week is a light week, so your strongest weeks land before your date.</Text>
               </View>
             ) : null}

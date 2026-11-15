@@ -9,6 +9,7 @@ import { useStore } from "../state/store";
 import type { NudgeLevel } from "../core/settings";
 import { deleteUserReq, submit } from "../core/api";
 import { sessionFor } from "../state/session";
+import { Slider } from "../ui/Slider";
 import { Button, IconButton, Segmented, SectionLabel, Sheet, SwitchRow } from "../ui/parts";
 import { NotificationSettings } from "../ui/NotificationSettings";
 import { Stepper } from "../ui/Stepper";
@@ -92,7 +93,7 @@ export default function Settings() {
         <SwitchRow label="Rest advice" help="A line on the Climb tab after hard days." value={s.nudges !== "off"} onChange={(on) => patch({ nudges: on ? "standard" : "off" })} />
         {s.nudges !== "off" ? (
           <>
-            <Segmented<NudgeLevel> options={[{ value: "relaxed", label: "Relaxed" }, { value: "standard", label: "Standard" }, { value: "keen", label: "Keen" }]} value={s.nudges} onChange={(nudges) => patch({ nudges })} />
+            <Slider<NudgeLevel> label="How readily rest is suggested" stops={[{ value: "relaxed", label: "Relaxed" }, { value: "standard", label: "Standard" }, { value: "keen", label: "Keen" }]} value={s.nudges as NudgeLevel} onChange={(nudges) => patch({ nudges })} />
             <Text v="caption" style={{ marginTop: 6 }}>Relaxed speaks up after 3 days in a row. Standard also after 2 hard days in a row. Keen after any 2 in a row.</Text>
           </>
         ) : null}

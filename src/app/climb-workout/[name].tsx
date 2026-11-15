@@ -19,7 +19,8 @@ import { setSequence } from "../../state/sequence";
 import { sessionFor } from "../../state/session";
 import { useBoard, useStore } from "../../state/store";
 import { ClimbThumb } from "../../ui/ClimbThumb";
-import { Button, Chip, GradeChip, IconButton, Sheet, SwitchRow } from "../../ui/parts";
+import { Slider } from "../../ui/Slider";
+import { Button, GradeChip, IconButton, Sheet, SwitchRow } from "../../ui/parts";
 import { Text } from "../../ui/Text";
 import { workoutRequest } from "../climb-workouts";
 import { c, r } from "../../theme";
@@ -155,13 +156,21 @@ function KnobRow({ knob, value, onChange }: { knob: Knob; value: number | boolea
       <View style={{ marginTop: 14, gap: 8 }}>
         <Text v="bodyStrong">{knob.title}</Text>
         <Text v="caption">{knob.description}</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {knob.options.map((o) => <Chip key={o.value} label={o.title} selected={value === o.value} onPress={() => onChange(o.value)} />)}
-        </View>
+        <Slider label={knob.title} stops={knob.options.map((o) => ({ value: o.value, label: o.title }))} value={typeof value === "number" ? value : knob.default} onChange={onChange} />
       </View>
     );
   }
   const n = typeof value === "number" ? value : knob.default;
+  if (knob.min != null && knob.max != null && knob.max > knob.min && knob.max - knob.min <= 30) {
+    const stops = Array.from({ length: knob.max - knob.min + 1 }, (_, i) => ({ value: knob.min! + i, label: String(knob.min! + i) }));
+    return (
+      <View style={{ marginTop: 14, gap: 4 }}>
+        <Text v="bodyStrong">{knob.title}</Text>
+        <Text v="caption">{knob.description}</Text>
+        <Slider label={knob.title} stops={stops} value={Math.min(knob.max, Math.max(knob.min, n))} onChange={onChange} />
+      </View>
+    );
+  }
   const dec = knob.min != null && n <= knob.min;
   const inc = knob.max != null && n >= knob.max;
   return (

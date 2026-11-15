@@ -23,6 +23,7 @@ import { useBoard, useStore } from "../state/store";
 import { useCanSet } from "../state/useActive";
 import { BoardView } from "../ui/BoardView";
 import { SetterFrames } from "../ui/SetterFrames";
+import { GradeStrip } from "../ui/GradeStrip";
 import { LinkButton, Button, Chip, IconButton, Segmented, Sheet, SwitchRow } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c, r, role as roleTokens, type RoleName } from "../theme";
@@ -333,12 +334,8 @@ export default function SetClimb() {
           {local ? (
             <>
               <Text v="section" style={{ marginTop: 6 }}>Grade</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {SETTABLE_DIFFICULTIES.map((d) => {
-                  const l = grades.label(d, settings.gradeDisplay, false);
-                  return <Chip key={d} label={`${l.primary}${l.secondary ? ` ${l.secondary}` : ""}`} selected={grade === d} onPress={() => { haptic.selection(); setGrade(d); }} />;
-                })}
-              </View>
+              <GradeStrip cells={SETTABLE_DIFFICULTIES.map((d) => { const l = grades.label(d, settings.gradeDisplay, false); return { key: d, primary: l.primary, secondary: l.secondary, band: grades.band(d) }; })}
+                value={grade} onChange={(k) => { haptic.selection(); setGrade(Number(k)); }} resetKey={String(details)} />
               <Text v="section" style={{ marginTop: 6 }}>Feet</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {METHODS.map((m) => <Chip key={m} label={m} selected={method === m} onPress={() => { haptic.selection(); setMethod(m); }} />)}

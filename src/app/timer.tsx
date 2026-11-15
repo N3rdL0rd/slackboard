@@ -6,7 +6,8 @@ import { haptic } from "../ui/haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildSchedule, countdown, formatClock, PRESETS, REST_PRESETS_SEC, stateAt, startOf, type Segment, type SegmentKind, type TimerConfig } from "../core/timer";
 import { useStore } from "../state/store";
-import { Button, Chip, IconButton, Segmented, SectionLabel } from "../ui/parts";
+import { Slider } from "../ui/Slider";
+import { Button, IconButton, Segmented, SectionLabel } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c, r, role } from "../theme";
 
@@ -56,9 +57,7 @@ export default function Timer() {
         {mode === "rest" ? (
           <>
             <SectionLabel>Rest between attempts</SectionLabel>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {REST_PRESETS_SEC.map((s) => <Chip key={s} label={formatClock(s * 1000)} selected={restSec === s} onPress={() => setRestSec(s)} />)}
-            </View>
+            <Slider label="Rest between attempts" stops={REST_PRESETS_SEC.map((s) => ({ value: s, label: formatClock(s * 1000) }))} value={restSec} onChange={setRestSec} unsetText={formatClock(restSec * 1000)} />
             <View style={{ marginTop: 16 }}>
               <Stepper label="Custom" value={formatClock(restSec * 1000)} onDec={() => setRestSec(Math.max(15, restSec - 15))} onInc={() => setRestSec(Math.min(3600, restSec + 15))} />
             </View>

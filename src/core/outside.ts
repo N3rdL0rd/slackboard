@@ -37,6 +37,9 @@ export const WALL_STYLES: WallStyle[] = [
   { id: "steep", label: "Steep or roof", hint: "40\u00B0 and over", angle: 45 },
 ];
 
+/** The wall categories as the stops of a slider, from leaning back to roof. */
+export const WALL_STOPS = WALL_STYLES.map((w) => ({ value: w.id, label: w.label }));
+
 export const wallStyle = (id: WallStyleId): WallStyle => WALL_STYLES.find((w) => w.id === id) ?? WALL_STYLES[1];
 
 /** Which category a board angle (degrees past vertical) falls in. */

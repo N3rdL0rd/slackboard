@@ -4,12 +4,13 @@ import { Linking, ScrollView, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { randomHex } from "../core/api";
 import {
-  MAX_ATTEMPTS, RESULT_LABEL, cleanLink, SETTING_LABEL, STYLE_TAGS, WALL_STYLES, draftProblem, gradeOptions, makeOutsideLog, normaliseResult, wallStyle,
+  MAX_ATTEMPTS, RESULT_LABEL, cleanLink, SETTING_LABEL, STYLE_TAGS, WALL_STOPS, WALL_STYLES, draftProblem, gradeOptions, makeOutsideLog, normaliseResult, wallStyle,
   type OutsideDraft, type OutsideGradeSystem, type OutsideLog, type OutsideResult, type OutsideSetting, type WallStyleId,
 } from "../core/outside";
 import { localStamp } from "../core/shareCard";
 import { grades } from "../data/grades";
 import { useOutside, useOutsideLogs } from "../state/outside";
+import { Slider } from "../ui/Slider";
 import { Button, Chip, IconButton, LinkButton, Segmented, SectionLabel, Sheet, Tap } from "../ui/parts";
 import { WhenRow } from "../ui/WhenRow";
 import { GradeStrip } from "../ui/GradeStrip";
@@ -123,9 +124,7 @@ export default function Outside() {
         ) : <Text v="caption" style={{ marginTop: 6 }}>Sent on the first try.</Text>}
 
         <SectionLabel>Wall angle</SectionLabel>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {WALL_STYLES.map((w) => <Chip key={w.id} label={w.label} selected={draft.wall === w.id} onPress={() => patch({ wall: w.id })} />)}
-        </View>
+        <Slider<WallStyleId> label="Wall angle" stops={WALL_STOPS} value={draft.wall} onChange={(w) => patch({ wall: w })} unsetText="Pick the closest" />
         <Text v="caption" style={{ marginTop: 4 }}>{wall ? wall.hint : "Pick the closest."}</Text>
 
         <SectionLabel>Grade</SectionLabel>

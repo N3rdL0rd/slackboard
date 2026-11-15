@@ -21,11 +21,13 @@ import { planActions, useAdapted, usePlanner } from "../state/planner";
 import { ExerciseList } from "../ui/ExerciseList";
 import { haptic } from "../ui/haptics";
 import { Icon } from "../ui/Icon";
+import { Slider } from "../ui/Slider";
 import { Button, Chip, IconButton, LinkButton, SectionLabel, Segmented, Sheet, Spinner, Tap } from "../ui/parts";
 import { Stepper } from "../ui/Stepper";
 import { Text } from "../ui/Text";
 import { c, font, r, role } from "../theme";
 
+const EFFORT_STOPS = Array.from({ length: 11 }, (_, n) => ({ value: n, label: n === 0 ? "Skip" : String(n) }));
 const clock = (ms: number): string => {
   const total = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
@@ -307,9 +309,7 @@ function Summary({ state, startedAt, idFor, planSessionId }: { state: RunnerStat
         </View>
         <View style={{ gap: 8 }}>
           <SectionLabel>How hard was it? (optional)</SectionLabel>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => <Chip key={n} label={String(n)} selected={effort === n} onPress={() => setEffort(effort === n ? null : n)} />)}
-          </View>
+          <Slider label="Effort, 1 to 10" stops={EFFORT_STOPS} value={effort ?? 0} onChange={(v) => setEffort(v === 0 ? null : v)} ends={["Skip", "Everything you had"]} />
         </View>
       </ScrollView>
       <View style={{ padding: 16, paddingBottom: 16 + insets.bottom, gap: 8, borderTopWidth: 1, borderTopColor: c.divider, backgroundColor: c.ground }}>

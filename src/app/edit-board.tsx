@@ -10,6 +10,7 @@ import { useData } from "../state/data";
 import { surveyBoardId } from "../core/holdSurvey";
 import { useHoldTags } from "../state/holdTags";
 import { useStore } from "../state/store";
+import { AngleDial } from "../ui/AngleDial";
 import { Button, Chip, IconButton, Segmented, Sheet } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c, r } from "../theme";
@@ -84,9 +85,7 @@ export default function EditBoard() {
         </View>
         <Text v="section" style={{ marginTop: 8 }}>Angle</Text>
         <Segmented options={[{ value: "adj", label: "Adjustable" }, { value: "fix", label: "Fixed" }]} value={adjustable ? "adj" : "fix"} onChange={(v) => setAdjustable(v === "adj")} />
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {board.spec.angles.map((a) => <Chip key={a} label={`${a}°`} selected={angle === a} onPress={() => setAngle(a)} />)}
-        </View>
+        {board.spec.angles.length > 1 ? <AngleDial angles={board.spec.angles} value={angle} onChange={setAngle} /> : <Text v="secondary">{angle}°</Text>}
         <Text v="section" style={{ marginTop: 8 }}>Controller serial number</Text>
         <TextInput value={serial} onChangeText={setSerial} placeholder="Optional" placeholderTextColor={c.placeholder} keyboardType="number-pad" accessibilityLabel="Controller serial number" style={input} />
         <Text v="caption">Needed for Recently lit. It's printed on the controller.</Text>

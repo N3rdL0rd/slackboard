@@ -6,11 +6,13 @@ import { dayTitle } from "../core/logTimeline";
 import { useDayNotes, useDayNotesStore } from "../state/dayNotes";
 import { c, r } from "../theme";
 import { haptic } from "./haptics";
+import { Slider } from "./Slider";
 import { Button, Chip, LinkButton, SectionLabel, Sheet } from "./parts";
 import { Text } from "./Text";
 
-const ENERGY = [1, 2, 3, 4, 5];
-const EFFORT = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const stops = (max: number) => Array.from({ length: max + 1 }, (_, n) => ({ value: n, label: n === 0 ? "Skip" : String(n) }));
+const ENERGY_STOPS = stops(5);
+const EFFORT_STOPS = stops(10);
 
 /**
  * The optional body check-in for one day: how each area feels (tap to cycle fine, sore, hurts), energy, how hard the day was, and a
@@ -52,15 +54,10 @@ export function BodySheet({ visible, onClose, day, today }: { visible: boolean; 
       </View>
       <Text v="caption" style={{ marginTop: 6 }}>Tap an area to change it: fine, sore, hurts.</Text>
       <SectionLabel>Energy</SectionLabel>
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        {ENERGY.map((n) => <Chip key={n} label={String(n)} selected={draft.energy === n} onPress={() => patch({ energy: draft.energy === n ? null : n })} />)}
-      </View>
-      <Text v="caption" style={{ marginTop: 6 }}>1 is flat, 5 is great.</Text>
+      <Slider label="Energy, 1 to 5" stops={ENERGY_STOPS} value={draft.energy ?? 0} onChange={(v) => patch({ energy: v === 0 ? null : v })} ends={["Skip", "Great"]} />
       <SectionLabel>How hard was the day</SectionLabel>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {EFFORT.map((n) => <Chip key={n} label={String(n)} selected={draft.effort === n} onPress={() => patch({ effort: draft.effort === n ? null : n })} />)}
-      </View>
-      <Text v="caption" style={{ marginTop: 6 }}>1 is easy, 10 is everything you had. It adjusts how big the day counts for rest advice.</Text>
+      <Slider label="Effort, 1 to 10" stops={EFFORT_STOPS} value={draft.effort ?? 0} onChange={(v) => patch({ effort: v === 0 ? null : v })} ends={["Skip", "Everything you had"]} />
+      <Text v="caption" style={{ marginTop: 6 }}>It adjusts how big the day counts for rest advice.</Text>
       <SectionLabel>Note</SectionLabel>
       <TextInput value={draft.note} onChangeText={(note) => patch({ note: note.slice(0, MAX_NOTE_LENGTH) })} placeholder="Anything worth remembering (optional)" placeholderTextColor={c.placeholder} multiline
         accessibilityLabel="Note" style={{ minHeight: 80, borderRadius: r.input, borderWidth: 1, borderColor: c.line, backgroundColor: c.card, color: c.text, padding: 12, fontSize: 16, fontFamily: "Barlow_400Regular", textAlignVertical: "top" }} />

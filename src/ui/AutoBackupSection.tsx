@@ -4,10 +4,11 @@ import { clampKeep } from "../core/autoBackup";
 import { chooseBackupFolder, runAutoBackup, turnOffAutoBackup } from "../state/autoBackup";
 import { useStore } from "../state/store";
 import { c, r } from "../theme";
-import { Button, Segmented, SectionLabel } from "./parts";
+import { Button, SectionLabel } from "./parts";
+import { Slider } from "./Slider";
 import { Text } from "./Text";
 
-const KEEP = ["3", "7", "14", "30"];
+const KEEP = [3, 7, 14, 30];
 
 /** Daily backups to a folder the user picks. Android only; elsewhere the section says so and does nothing. */
 export function AutoBackupSection() {
@@ -27,7 +28,7 @@ export function AutoBackupSection() {
           <Text v="bodyStrong" numberOfLines={1}>{s.folder || "Backup folder"}</Text>
           <Text v="caption" style={s.error ? { color: c.danger } : undefined}>{s.error || (s.lastDay ? `Last backup ${s.lastDay}` : "No backup yet")}</Text>
           <Text v="caption">Files kept</Text>
-          <Segmented<string> options={KEEP.map((v) => ({ value: v, label: v }))} value={String(clampKeep(s.keep))} onChange={(v) => setAutoBackup({ keep: Number(v) })} />
+          <Slider label="Files kept" stops={KEEP.map((v) => ({ value: v, label: `${v} files` }))} value={clampKeep(s.keep)} onChange={(v) => setAutoBackup({ keep: v })} />
           <Button label={busy ? "Backing up" : "Back up now"} disabled={busy} onPress={() => void go(() => runAutoBackup(true))} />
           <View style={{ flexDirection: "row", gap: 8 }}>
             <View style={{ flex: 1 }}><Button variant="secondary" label="Change folder" disabled={busy} onPress={() => void go(chooseBackupFolder)} /></View>

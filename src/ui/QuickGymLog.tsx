@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { randomHex } from "../core/api";
 import {
-  WALL_STYLES, draftFromCombo, draftProblem, gradeOptions, makeOutsideLog, normaliseResult, quickLabel, recentGymCombos,
+  WALL_STOPS, draftFromCombo, draftProblem, gradeOptions, makeOutsideLog, normaliseResult, quickLabel, recentGymCombos,
   type OutsideDraft, type OutsideResult, type QuickCombo, type WallStyleId,
 } from "../core/outside";
 import { localStamp } from "../core/shareCard";
@@ -14,7 +14,8 @@ import { c, r } from "../theme";
 import { GradeStrip } from "./GradeStrip";
 import { haptic } from "./haptics";
 import { Icon } from "./Icon";
-import { Button, Chip, Segmented, Sheet, Tap } from "./parts";
+import { Slider } from "./Slider";
+import { Button, Segmented, Sheet, Tap } from "./parts";
 import { Text } from "./Text";
 
 const RESULTS: { value: OutsideResult; label: string }[] = [{ value: "flash", label: "Flash" }, { value: "send", label: "Sent" }, { value: "attempt", label: "Tried" }];
@@ -122,9 +123,7 @@ export function QuickGymLog({ visible, onClose }: { visible: boolean; onClose: (
       ) : null}
 
       <Text v="section" style={{ marginTop: 16, marginBottom: 8 }}>Wall angle</Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {WALL_STYLES.map((w) => <Chip key={w.id} label={w.label} selected={wall === w.id} onPress={() => setWall(w.id)} />)}
-      </View>
+      <Slider<WallStyleId> label="Wall angle" stops={WALL_STOPS} value={wall} onChange={setWall} unsetText="Pick the closest" />
 
       <Text v="section" style={{ marginTop: 16, marginBottom: 4 }}>Grade</Text>
       <GradeStrip cells={cells} value={grade} onChange={(k) => setGrade(String(k))} resetKey={`${visible}:${system}`} />

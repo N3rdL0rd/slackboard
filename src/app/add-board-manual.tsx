@@ -8,6 +8,7 @@ import * as repo from "../core/repo";
 import { getDb } from "../data/sqlite";
 import { createBoard } from "../state/boards";
 import { useStore } from "../state/store";
+import { AngleDial } from "../ui/AngleDial";
 import { Button, Chip, IconButton, Segmented } from "../ui/parts";
 import { Text } from "../ui/Text";
 import { c, r } from "../theme";
@@ -139,9 +140,7 @@ export default function AddBoardManual() {
                 <Text v="section" style={{ marginTop: 8 }}>Angle</Text>
                 <Segmented options={[{ value: "adj", label: "Adjustable" }, { value: "fix", label: "Fixed" }]} value={adjustable ? "adj" : "fix"} onChange={(v) => setAdjustable(v === "adj")} />
                 <Text v="caption">{adjustable ? "Your usual angle. You can change it any time in the app." : "The angle your board is set to."}</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  {angles.map((a) => <Chip key={a} label={`${a}°`} selected={angle === a} onPress={() => setAngle(a)} />)}
-                </View>
+                {angles.length > 1 ? <AngleDial angles={angles} value={angle} onChange={setAngle} /> : <Text v="secondary">{angle}°</Text>}
               </>
             )}
           </>
