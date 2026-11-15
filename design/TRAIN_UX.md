@@ -252,7 +252,7 @@ Pre-filled from last time ("last: +18.5 kg, 10 s, 20 mm"), editable with stepper
 ### 7.1 Streak
 
 - The chip on the Climb tab shows the count and the week dots. Tapping it opens a sheet with **the last eight weeks as a small calendar**, the current and longest streak, the span, and the state in words: *Climbed today*, *Rest day is fine*, *Today keeps it going*, or *Longest: 14 days* after a break (no negative wording).
-- Hollow dots between filled ones are labelled "rest day, keeps your streak" for people who have not seen the rule. A short "How streaks work" line explains the one-day gap.
+- Hollow dots between filled ones are labelled "rest day, keeps your streak" for people who have not seen the rule. A short "How streaks work" line explains the rest rule: one rest day always keeps it, and after a run of two or more days the rest may be as long as the run, up to three.
 
 ### 7.2 Motivation (default, no goals needed)
 

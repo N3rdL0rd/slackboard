@@ -117,8 +117,10 @@ A **climbing day** is a local day with at least one logged climb or training ses
 boulder, a roped climb, or a training entry such as a hangboard session. Hangboard-only and other training-only days count.
 (Lighting a climb over Bluetooth does not count on its own.)
 
-A streak is a chain of climbing days where **consecutive climbing days are at most 2 calendar days apart**. That allows exactly one
-rest day between climbs, so one day on and one day off keeps it alive.
+A streak is a chain of climbing days. **One rest day between climbs always keeps it alive** (one day on and one day off). **After a
+run of two or more climbing days in a row, the rest may be as long as that run, up to three days**: two on and two off, or three on and
+three off, keep it; one on and two off, or two on and three off, break it. Only days in a row earn the longer rest, and only the run
+just before the break counts.
 
 ```
 climbing days:  Mon  Wed  Thu  Sat  Mon       streak = 5, span = 7 days

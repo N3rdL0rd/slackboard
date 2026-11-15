@@ -18,12 +18,46 @@ describe("streakInfo", () => {
     expect(s.span).toBe(1);
   });
 
-  it("is alive on the day after and two days after the last climb, and broken on the third", () => {
+  it("is alive on the day after and two days after a single climb, and broken on the third", () => {
+    const days = [d(2)];
+    expect(streakInfo(days, d(2))).toMatchObject({ state: "today", deadline: d(4) });
+    expect(streakInfo(days, d(3))).toMatchObject({ state: "rest", current: 1 });
+    expect(streakInfo(days, d(4))).toMatchObject({ state: "last", current: 1 });
+    expect(streakInfo(days, d(5))).toMatchObject({ state: "broken", current: 0, span: 0, longest: 1, deadline: null });
+  });
+
+  it("allows as many rest days as the run of climbing days before them: one on and two off breaks it, two on and two off does not", () => {
+    // One day on, two off.
+    expect(streakInfo([d(2), d(5)], d(5)).current).toBe(1);
+    // Two on, two off.
+    expect(streakInfo([d(2), d(3), d(6)], d(6))).toMatchObject({ current: 3, span: 5 });
+    // Three on, three off.
+    expect(streakInfo([d(2), d(3), d(4), d(8)], d(8))).toMatchObject({ current: 4, span: 7 });
+    // Two on, three off is too many.
+    expect(streakInfo([d(2), d(3), d(7)], d(7)).current).toBe(1);
+    // Four on can still only rest three days.
+    expect(streakInfo([d(2), d(3), d(4), d(5), d(10)], d(10)).current).toBe(1);
+  });
+
+  it("earns the longer rest only from days in a row, not from climbing days with a rest day between", () => {
+    // Mon, Wed, Fri are three climbing days but never two in a row, so two rest days break it.
+    expect(streakInfo([d(2), d(4), d(6), d(9)], d(9)).current).toBe(1);
+    // The run that counts is the one just before the break: here Mon, Wed, then Thu, Fri, then two days off.
+    expect(streakInfo([d(2), d(4), d(5), d(6), d(9)], d(9)).current).toBe(5);
+  });
+
+  it("tells you when a longer rest is still fine and when today is the last day", () => {
     const days = [d(2), d(3)];
     expect(streakInfo(days, d(3)).state).toBe("today");
     expect(streakInfo(days, d(4))).toMatchObject({ state: "rest", current: 2 });
-    expect(streakInfo(days, d(5))).toMatchObject({ state: "last", current: 2 });
-    expect(streakInfo(days, d(6))).toMatchObject({ state: "broken", current: 0, span: 0, longest: 2 });
+    expect(streakInfo(days, d(5))).toMatchObject({ state: "rest", current: 2 });
+    expect(streakInfo(days, d(6))).toMatchObject({ state: "last", current: 2, deadline: d(6) });
+    expect(streakInfo(days, d(7))).toMatchObject({ state: "broken", current: 0, longest: 2 });
+  });
+
+  it("marks every rest day a longer rest keeps as a rest day", () => {
+    const m = dayMarks([d(2), d(3)], d(5), d(2), d(6));
+    expect([...m.values()]).toEqual(["climbed", "climbed", "rest", "rest", "future"]);
   });
 
   it("keeps the longest streak after a break, and prefers the more recent of equal chains", () => {

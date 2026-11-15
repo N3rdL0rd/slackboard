@@ -16,7 +16,7 @@ import type { Milestone } from "./milestones";
 import type { Plan } from "./planner";
 import { reviewNotificationText, weeklyReview, type ReviewLabels } from "./review";
 import type { NotificationPrefs } from "./settings";
-import { STREAK_MAX_GAP, type StreakInfo } from "./streak";
+import type { StreakInfo } from "./streak";
 
 export type NotificationKind = "plan" | "review" | "streak" | "rest" | "milestone";
 
@@ -102,8 +102,8 @@ export function plan(input: PlanInput): PlannedNotification[] {
   };
 
   // Streak: the last day that keeps it alive, if nothing is logged on that day yet.
-  if (prefs.streak && input.streak.current >= MIN_STREAK_FOR_REMINDER && input.streak.lastDay) {
-    const deadline = addDays(input.streak.lastDay, STREAK_MAX_GAP);
+  if (prefs.streak && input.streak.current >= MIN_STREAK_FOR_REMINDER && input.streak.deadline) {
+    const deadline = input.streak.deadline;
     const nothingYet = !input.activities.some((a) => a.day === deadline && ACTIVITY_KINDS[a.kind].countsTowardStreak);
     const fireAt = atTime(deadline, STREAK_TIME);
     if (deadline >= today && nothingYet && !quiet(fireAt)) {

@@ -1,13 +1,19 @@
 /**
  * Streaks. A climbing day is a local day with at least one logged entry that counts (a board climb, a gym or outdoor boulder, a roped
- * climb, or training: see `climbingDays` in activity.ts). A streak is a chain of climbing days where consecutive ones are at most
- * `STREAK_MAX_GAP` calendar days apart, so one day on and one day off keeps it alive. Everything is computed from the log, so an old
+ * climb, or training: see `climbingDays` in activity.ts). A streak is a chain of climbing days. One rest day between climbs always keeps
+ * it alive; after a run of two or more climbing days in a row the rest may be as long as that run (two on, two off; three on, three
+ * off), up to `MAX_REST_DAYS`. One day on and two days off breaks it. Everything is computed from the log, so an old
  * entry added later can extend or repair a streak and deleting one can break it. Nothing is stored.
  */
 import { addDays, daysBetween, weekStartDay, type Day } from "./days";
 
-/** Consecutive climbing days may be this many days apart: exactly one rest day between climbs. */
-export const STREAK_MAX_GAP = 2;
+/** The rest days that always keep a streak alive: one, whatever came before. */
+export const BASE_REST_DAYS = 1;
+/** The most rest days in a row that any run of climbing days can earn. */
+export const MAX_REST_DAYS = 3;
+
+/** The rest days in a row allowed after `run` climbing days in a row: as many as the run, at least one, at most `MAX_REST_DAYS`. */
+export const restAllowed = (run: number): number => Math.min(MAX_REST_DAYS, Math.max(BASE_REST_DAYS, run));
 
 /**
  * Where today stands. `today`: climbed today. `rest`: climbed yesterday, so a rest day today is fine. `last`: climbed two days ago, so
@@ -27,9 +33,15 @@ export interface StreakInfo {
   state: StreakState;
   /** The most recent climbing day on or before today. */
   lastDay: Day | null;
+  /** The last day on which a climb keeps the current streak alive, or null when it has ended. */
+  deadline: Day | null;
 }
 
-interface Chain { start: Day; end: Day; count: number }
+/** `run` is the climbing days in a row that end the chain: what decides how much rest it may now take. */
+interface Chain { start: Day; end: Day; count: number; run: number }
+
+/** The last day that keeps a chain alive: its end plus the rest it has earned, plus the climb that follows. */
+const deadlineOf = (c: Chain): Day => addDays(c.end, restAllowed(c.run) + 1);
 
 /** Splits climbing days (any order, duplicates allowed) into chains. */
 function chainsOf(days: Iterable<Day>): Chain[] {
@@ -37,7 +49,12 @@ function chainsOf(days: Iterable<Day>): Chain[] {
   const out: Chain[] = [];
   for (const d of sorted) {
     const last = out[out.length - 1];
-    if (last && daysBetween(last.end, d) <= STREAK_MAX_GAP) { last.end = d; last.count++; } else out.push({ start: d, end: d, count: 1 });
+    const gap = last ? daysBetween(last.end, d) : 0;
+    if (last && gap <= restAllowed(last.run) + 1) {
+      last.run = gap === 1 ? last.run + 1 : 1;
+      last.end = d;
+      last.count++;
+    } else out.push({ start: d, end: d, count: 1, run: 1 });
   }
   return out;
 }
@@ -47,15 +64,18 @@ const span = (c: Chain): number => daysBetween(c.start, c.end) + 1;
 /** The streak as of `today`. Days after today (a clock set back, an odd import) are ignored. */
 export function streakInfo(climbingDays: Iterable<Day>, today: Day): StreakInfo {
   const chains = chainsOf([...climbingDays].filter((d) => d <= today));
-  if (!chains.length) return { current: 0, span: 0, longest: 0, longestSpan: 0, state: "none", lastDay: null };
+  if (!chains.length) return { current: 0, span: 0, longest: 0, longestSpan: 0, state: "none", lastDay: null, deadline: null };
   // The best chain; on a tie the more recent one, which is the one the user will recognise.
   const best = chains.reduce((a, b) => (b.count >= a.count ? b : a));
   const last = chains[chains.length - 1];
   const gap = daysBetween(last.end, today);
-  const alive = gap <= STREAK_MAX_GAP;
+  const deadline = deadlineOf(last);
+  const alive = today <= deadline;
   return {
     current: alive ? last.count : 0, span: alive ? span(last) : 0, longest: best.count, longestSpan: span(best),
-    state: !alive ? "broken" : gap === 0 ? "today" : gap === 1 ? "rest" : "last", lastDay: last.end,
+    // A rest day is fine until the deadline; on the deadline itself today is the last day that keeps it going.
+    state: !alive ? "broken" : gap === 0 ? "today" : today === deadline ? "last" : "rest", lastDay: last.end,
+    deadline: alive ? deadline : null,
   };
 }
 
@@ -70,7 +90,7 @@ export function dayMarks(climbingDays: Iterable<Day>, today: Day, from: Day, to:
   const days = new Set([...climbingDays].filter((d) => d <= today));
   const chains = chainsOf(days);
   const lastChain = chains[chains.length - 1];
-  const keepsAlive = lastChain && daysBetween(lastChain.end, today) <= STREAK_MAX_GAP ? lastChain : null;
+  const keepsAlive = lastChain && today <= deadlineOf(lastChain) ? lastChain : null;
   const out = new Map<Day, DayMark>();
   for (let d = from; d <= to; d = addDays(d, 1)) {
     if (d > today) out.set(d, "future");

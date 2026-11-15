@@ -42,13 +42,15 @@ describe("the streak reminder", () => {
 
   it("fires late afternoon on the last day that keeps the streak alive, with the streak's length", () => {
     const [p] = plan(input({ acts, prefs: only("streak") }));
-    expect(p).toMatchObject({ id: "streak:2026-11-13", kind: "streak", title: "Keep your streak going", body: "Today keeps your 3-day streak going.", route: "/stats" });
-    expect(p.fireAt).toEqual(new Date(2026, 10, 13, 16, 30));
+    // Three days in a row earn three rest days, so the last day that keeps it is the 15th.
+    expect(p).toMatchObject({ id: "streak:2026-11-15", kind: "streak", title: "Keep your streak going", body: "Today keeps your 3-day streak going.", route: "/stats" });
+    expect(p.fireAt).toEqual(new Date(2026, 10, 15, 16, 30));
   });
 
   it("moves to the new last day once something is logged, so the old reminder goes", () => {
     const [p] = plan(input({ acts: [...acts, board("2026-11-12")], prefs: only("streak") }));
-    expect(p.id).toBe("streak:2026-11-14");
+    // Four in a row can still only rest three days.
+    expect(p.id).toBe("streak:2026-11-16");
   });
 
   it("is not planned for a short streak or a broken one", () => {
@@ -57,7 +59,7 @@ describe("the streak reminder", () => {
   });
 
   it("is not sent once the time has passed, and not inside quiet hours", () => {
-    expect(plan(input({ acts, now: new Date(2026, 10, 13, 17, 0), prefs: only("streak") }))).toEqual([]);
+    expect(plan(input({ acts, now: new Date(2026, 10, 15, 17, 0), prefs: only("streak") }))).toEqual([]);
     expect(plan(input({ acts, prefs: { ...only("streak"), quietStart: "16:00", quietEnd: "17:00" } }))).toEqual([]);
   });
 
@@ -125,8 +127,9 @@ describe("the milestone reminder", () => {
 
 describe("one a day, within the horizon", () => {
   it("keeps the streak reminder over the review when both fall on one day", () => {
-    // Saturday 14th: the last climb was today, so the last day that keeps the streak is Monday 16th, which is also the review's day.
-    const acts = ["2026-11-12", "2026-11-13", "2026-11-14"].map((d) => board(d));
+    // Saturday 14th: the last climb was today, and the days before it were a day apart, so one rest day keeps the streak: the last
+    // day that does is Monday 16th, which is also the review's day.
+    const acts = ["2026-11-10", "2026-11-12", "2026-11-14"].map((d) => board(d));
     const list = plan(input({ acts, now: new Date(2026, 10, 14, 12, 0), prefs: { ...ON, rest: false } }));
     expect(list.filter((x) => x.day === "2026-11-16").map((x) => x.kind)).toEqual(["streak"]);
   });
