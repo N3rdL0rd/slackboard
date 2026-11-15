@@ -19,6 +19,7 @@ import { commonLabel } from "../state/stats";
 import { Text } from "../ui/Text";
 import { CrashLogSettings } from "../ui/CrashLogSettings";
 import { WidgetSettings } from "../ui/WidgetSettings";
+import { WatchSettings } from "../ui/WatchSettings";
 import { UpdateSettings } from "../ui/UpdateSettings";
 import { c, r, role as roleTokens, type RoleName } from "../theme";
 
@@ -91,6 +92,8 @@ export default function Settings() {
         <SwitchRow label="Log climbs I light up" help={`Each board brand keeps a Recently lit history for each controller. Turn this off and Slackboard won't add the climbs you light up to it.`} value={s.logLit} onChange={(logLit) => patch({ logLit })} />
 
         <WidgetSettings />
+
+        <WatchSettings />
 
         <UpdateSettings />
 

@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "expo.modules.slackboardwear.slackboard-wear-release-5:/layout/notification_template_part_chronometer.xml",
+        "source": "expo.modules.slackboardwear.slackboard-wear-core-1.2.0-0:/layout/notification_template_part_chronometer.xml"
+    },
+    {
+        "merged": "expo.modules.slackboardwear.slackboard-wear-release-5:/layout/notification_template_part_time.xml",
+        "source": "expo.modules.slackboardwear.slackboard-wear-core-1.2.0-0:/layout/notification_template_part_time.xml"
+    },
+    {
+        "merged": "expo.modules.slackboardwear.slackboard-wear-release-5:/layout/custom_dialog.xml",
+        "source": "expo.modules.slackboardwear.slackboard-wear-core-1.2.0-0:/layout/custom_dialog.xml"
+    }
+]

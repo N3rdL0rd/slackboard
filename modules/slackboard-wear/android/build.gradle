@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'app.slackboard'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.slackboardwear"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+dependencies {
+  // The Data Layer: how the phone talks to a Wear OS watch.
+  implementation 'com.google.android.gms:play-services-wearable:19.0.0'
+}

@@ -1,0 +1,34 @@
+{
+    "logs": [
+        {
+            "outputFile": "expo.modules.slackboardwear.slackboard-wear-mergeReleaseResources-3:/values-en-rXC/values-en-rXC.xml",
+            "map": [
+                {
+                    "source": "/home/nerd/.gradle/caches/9.4.1/transforms/34a64e5167113a52c2a4e0cfe4bd99a8/transformed/core-1.2.0/res/values-en-rXC/values-en-rXC.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "203",
+                        "endOffsets": "254"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "expo.modules.slackboardwear.slackboard-wear-release-5:/values-en-rXC/values-en-rXC.xml",
+            "map": [
+                {
+                    "source": "/home/nerd/.gradle/caches/9.4.1/transforms/34a64e5167113a52c2a4e0cfe4bd99a8/transformed/core-1.2.0/res/values-en-rXC/values-en-rXC.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "203",
+                        "endOffsets": "254"
+                    }
+                }
+            ]
+        }
+    ]
+}
