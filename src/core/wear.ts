@@ -12,6 +12,9 @@ export const WEAR_PATHS = {
   hr: "/slackboard/hr",
   summary: "/slackboard/summary",
   capabilities: "/slackboard/capabilities",
+  motion: "/slackboard/motion",
+  elevation: "/slackboard/elevation",
+  stats: "/slackboard/stats",
 } as const;
 
 export const MIN_BPM = 20;
@@ -44,7 +47,44 @@ export interface WatchCapabilities {
 
 export const MAX_CAPABILITY_ITEMS = 100;
 
+/** One second of motion. Any field is null when the watch had no reading for it. */
+export interface MotionRow {
+  at: number;
+  /** Strength of the arm's acceleration (m/s2, gravity removed) averaged over the second, and its peak. */
+  accRms: number | null;
+  accMax: number | null;
+  /** Strength of the rotation (rad/s) averaged over the second, and its peak. */
+  gyroRms: number | null;
+  gyroMax: number | null;
+  /** Air pressure in hPa, a raw source for height. */
+  pressure: number | null;
+  /** Gravity through the watch's three axes (m/s2): how the wrist is held. */
+  gx: number | null;
+  gy: number | null;
+  gz: number | null;
+}
+
+export interface ElevationSample { at: number; metres: number }
+
+/** Running totals from the workout. */
+export interface WorkoutStats {
+  calories: number | null;
+  /** Elevation gained over the session, in metres. */
+  gain: number | null;
+  hrAvg: number | null;
+  hrMin: number | null;
+  hrMax: number | null;
+}
+
+export const MIN_PRESSURE = 300;
+export const MAX_PRESSURE = 1100;
+export const MIN_ELEVATION = -500;
+export const MAX_ELEVATION = 9000;
+
 export type WatchMessage =
+  | { kind: "motion"; session: string; rows: MotionRow[] }
+  | { kind: "elevation"; session: string; samples: ElevationSample[] }
+  | { kind: "stats"; session: string; stats: WorkoutStats }
   | { kind: "capabilities"; capabilities: WatchCapabilities }
   | {
       kind: "state";
@@ -57,7 +97,7 @@ export type WatchMessage =
       error: string | null;
     }
   | { kind: "hr"; session: string; samples: HrSample[] }
-  | { kind: "summary"; session: string; startedAt: number; endedAt: number; calories: number | null };
+  | ({ kind: "summary"; session: string; startedAt: number; endedAt: number } & WorkoutStats);
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -114,14 +154,60 @@ function parseCapabilities(o: Obj): WatchMessage | null {
   };
 }
 
+const inRange = (v: unknown, lo: number, hi: number, places = 1): number | null =>
+  typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi ? Math.round(v * 10 ** places) / 10 ** places : null;
+
+/** The totals every workout message can carry. Each is null when it is missing or not believable. */
+function statsOf(o: Obj): WorkoutStats {
+  const hr = (v: unknown) => inRange(v, MIN_BPM, MAX_BPM);
+  return { calories: inRange(o.calories, 0, 20000), gain: inRange(o.gain, 0, 10000), hrAvg: hr(o.hrAvg), hrMin: hr(o.hrMin), hrMax: hr(o.hrMax) };
+}
+
+/** Columns of equal length: null for a missing or unbelievable value in a column that may hold nulls. */
+function column(v: unknown, n: number, lo: number, hi: number): (number | null)[] | null {
+  if (!Array.isArray(v) || v.length !== n) return null;
+  return v.map((x) => inRange(x, lo, hi, 3));
+}
+
+function parseMotion(o: Obj): WatchMessage | null {
+  const session = str(o.session);
+  if (!session || !Array.isArray(o.t) || o.t.length > MAX_BATCH) return null;
+  const n = o.t.length;
+  const a = column(o.a, n, 0, 500), am = column(o.am, n, 0, 500), g = column(o.g, n, 0, 100), gm = column(o.gm, n, 0, 100);
+  const p = column(o.p, n, MIN_PRESSURE, MAX_PRESSURE), gx = column(o.gx, n, -50, 50), gy = column(o.gy, n, -50, 50), gz = column(o.gz, n, -50, 50);
+  if (!a || !am || !g || !gm || !p || !gx || !gy || !gz) return null;
+  const rows: MotionRow[] = [];
+  for (let i = 0; i < n; i++) {
+    const at = ms(o.t[i]);
+    if (at === null) continue;
+    rows.push({ at, accRms: a[i], accMax: am[i], gyroRms: g[i], gyroMax: gm[i], pressure: p[i], gx: gx[i], gy: gy[i], gz: gz[i] });
+  }
+  return { kind: "motion", session, rows };
+}
+
+function parseElevation(o: Obj): WatchMessage | null {
+  const session = str(o.session);
+  if (!session || !Array.isArray(o.t) || !Array.isArray(o.m) || o.t.length !== o.m.length || o.t.length > MAX_BATCH) return null;
+  const samples: ElevationSample[] = [];
+  for (let i = 0; i < o.t.length; i++) {
+    const at = ms(o.t[i]);
+    const metres = inRange(o.m[i], MIN_ELEVATION, MAX_ELEVATION, 2);
+    if (at !== null && metres !== null) samples.push({ at, metres });
+  }
+  return { kind: "elevation", session, samples };
+}
+
+function parseStats(o: Obj): WatchMessage | null {
+  const session = str(o.session);
+  return session ? { kind: "stats", session, stats: statsOf(o) } : null;
+}
+
 function parseSummary(o: Obj): WatchMessage | null {
   const session = str(o.session);
   const startedAt = ms(o.startedAt);
   const endedAt = ms(o.endedAt);
   if (!session || startedAt === null || endedAt === null || endedAt < startedAt) return null;
-  const c = o.calories;
-  const calories = typeof c === "number" && Number.isFinite(c) && c >= 0 && c < 20000 ? Math.round(c * 10) / 10 : null;
-  return { kind: "summary", session, startedAt, endedAt, calories };
+  return { kind: "summary", session, startedAt, endedAt, ...statsOf(o) };
 }
 
 /** One inbox line: {"path": ..., "data": "<json>", "at": ms}. Null when it is not a usable message. */
@@ -151,6 +237,12 @@ export function parseInboxLine(line: string): WatchMessage | null {
       return parseSummary(body);
     case WEAR_PATHS.capabilities:
       return parseCapabilities(body);
+    case WEAR_PATHS.motion:
+      return parseMotion(body);
+    case WEAR_PATHS.elevation:
+      return parseElevation(body);
+    case WEAR_PATHS.stats:
+      return parseStats(body);
     default:
       return null;
   }

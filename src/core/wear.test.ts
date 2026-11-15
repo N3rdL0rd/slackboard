@@ -84,3 +84,38 @@ describe("the watch's capabilities report", () => {
     expect(parseInboxLine(line("/slackboard/capabilities", { ...body, model: "" }))).toBeNull();
   });
 });
+
+describe("motion, elevation and workout totals", () => {
+  const motion = { session: "s1", t: [1000, 2000, 3000], a: [0.4, null, 2.5], am: [1.1, null, 6], g: [0.2, 0.1, null], gm: [0.9, 0.3, null], p: [1008.2, 1008.1, null], gx: [0.1, 0.2, null], gy: [-9.7, -9.6, null], gz: [1.2, 1.3, null] };
+
+  it("reads a second at a time, with null where a sensor gave nothing", () => {
+    const m = parseInboxLine(line("/slackboard/motion", motion));
+    expect(m).toMatchObject({ kind: "motion", session: "s1" });
+    if (m?.kind !== "motion") throw new Error("not motion");
+    expect(m.rows).toHaveLength(3);
+    expect(m.rows[0]).toMatchObject({ at: 1000, accRms: 0.4, accMax: 1.1, gyroRms: 0.2, pressure: 1008.2, gy: -9.7 });
+    expect(m.rows[1]).toMatchObject({ accRms: null, accMax: null, gyroRms: 0.1 });
+    expect(m.rows[2]).toMatchObject({ gyroRms: null, pressure: null, gz: null });
+  });
+
+  it("drops a value that cannot be real instead of the whole batch, and refuses columns of the wrong length", () => {
+    const m = parseInboxLine(line("/slackboard/motion", { ...motion, p: [50, 1008, 5000] }));
+    if (m?.kind !== "motion") throw new Error("not motion");
+    expect(m.rows.map((r) => r.pressure)).toEqual([null, 1008, null]);
+    expect(parseInboxLine(line("/slackboard/motion", { ...motion, a: [1, 2] }))).toBeNull();
+    expect(parseInboxLine(line("/slackboard/motion", { ...motion, gx: undefined }))).toBeNull();
+  });
+
+  it("reads elevation samples and skips one outside the range of the planet", () => {
+    const m = parseInboxLine(line("/slackboard/elevation", { session: "s1", t: [1000, 2000, 3000], m: [120.456, 99999, -3] }));
+    expect(m).toEqual({ kind: "elevation", session: "s1", samples: [{ at: 1000, metres: 120.46 }, { at: 3000, metres: -3 }] });
+    expect(parseInboxLine(line("/slackboard/elevation", { session: "s1", t: [1], m: [] }))).toBeNull();
+  });
+
+  it("reads totals, treating a missing or wild one as unknown, and carries them in the summary", () => {
+    const s = parseInboxLine(line("/slackboard/stats", { session: "s1", calories: 212.34, gain: 4.26, hrAvg: 101.6, hrMin: 70, hrMax: 400 }));
+    expect(s).toEqual({ kind: "stats", session: "s1", stats: { calories: 212.3, gain: 4.3, hrAvg: 101.6, hrMin: 70, hrMax: null } });
+    const sum = parseInboxLine(line("/slackboard/summary", { session: "s1", startedAt: 1000, endedAt: 9000, calories: null, gain: 3, hrAvg: 99, hrMin: 60, hrMax: 140 }));
+    expect(sum).toEqual({ kind: "summary", session: "s1", startedAt: 1000, endedAt: 9000, calories: null, gain: 3, hrAvg: 99, hrMin: 60, hrMax: 140 });
+  });
+});

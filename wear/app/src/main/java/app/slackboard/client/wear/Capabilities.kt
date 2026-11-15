@@ -26,10 +26,10 @@ object Capabilities {
 
         val workout = part("workout") {
             val caps = client.exerciseClient.getCapabilitiesAsync().get()
-            caps.getExerciseTypeCapabilities(ExerciseType.ROCK_CLIMBING).supportedDataTypes.map { it.name }.sorted()
+            caps.getExerciseTypeCapabilities(ExerciseType.ROCK_CLIMBING).supportedDataTypes.map { it.name }.distinct().sorted()
         }
-        val measure = part("measure") { client.measureClient.getCapabilitiesAsync().get().supportedDataTypesMeasure.map { it.name }.sorted() }
-        val passive = part("passive") { client.passiveMonitoringClient.getCapabilitiesAsync().get().supportedDataTypesPassiveMonitoring.map { it.name }.sorted() }
+        val measure = part("measure") { client.measureClient.getCapabilitiesAsync().get().supportedDataTypesMeasure.map { it.name }.distinct().sorted() }
+        val passive = part("passive") { client.passiveMonitoringClient.getCapabilitiesAsync().get().supportedDataTypesPassiveMonitoring.map { it.name }.distinct().sorted() }
         val sensors = part("sensors") {
             val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
             sm.getSensorList(Sensor.TYPE_ALL).map { it.stringType.removePrefix("android.sensor.") }.distinct().sorted()

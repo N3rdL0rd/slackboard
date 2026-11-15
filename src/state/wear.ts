@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import Wear from "../../modules/slackboard-wear";
 import { randomHex } from "../core/api";
-import { parseInbox, type WatchCapabilities, type WatchMessage } from "../core/wear";
+import { parseInbox, type WatchCapabilities, type WatchMessage, type WorkoutStats } from "../core/wear";
 
 /**
  * The link to the Wear OS watch app. Android only: elsewhere there is no native module and every
@@ -15,8 +15,13 @@ interface WearState {
   reachable: boolean | null;
   running: boolean;
   bpm: number | null;
-  /** Samples received since the app started. */
+  /** Heart-rate samples received since the app started. */
   received: number;
+  /** Seconds of motion and elevation samples received since the app started (counted only; they are not kept yet). */
+  motionRows: number;
+  elevationSamples: number;
+  /** The latest totals from the watch's workout. */
+  stats: WorkoutStats | null;
   /** The last report of what the watch supports, if it has sent one since the app started. */
   capabilities: WatchCapabilities | null;
   /** True while waiting for the watch to answer. */
@@ -38,7 +43,13 @@ const apply = (s: WearState, m: WatchMessage): Partial<WearState> => {
       return { received: s.received + m.samples.length, bpm: last ? last.bpm : s.bpm };
     }
     case "summary":
-      return {};
+      return { stats: { calories: m.calories, gain: m.gain, hrAvg: m.hrAvg, hrMin: m.hrMin, hrMax: m.hrMax } };
+    case "stats":
+      return { stats: m.stats };
+    case "motion":
+      return { motionRows: s.motionRows + m.rows.length };
+    case "elevation":
+      return { elevationSamples: s.elevationSamples + m.samples.length };
     case "capabilities":
       return { capabilities: m.capabilities };
   }
@@ -52,6 +63,9 @@ export const useWear = create<WearState>((set, get) => ({
   running: false,
   bpm: null,
   received: 0,
+  motionRows: 0,
+  elevationSamples: 0,
+  stats: null,
   capabilities: null,
   asking: false,
   note: "",

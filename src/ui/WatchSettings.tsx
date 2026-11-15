@@ -25,6 +25,16 @@ export function WatchSettings() {
         Install Slackboard on your Wear OS watch to record heart rate while you climb.
         {w.received > 0 ? ` ${w.received} heart-rate readings received.` : ""}
       </Text>
+      {w.stats && (w.stats.calories !== null || w.stats.hrAvg !== null || w.stats.gain !== null) ? (
+        <Text v="secondary" style={{ marginTop: 4 }}>
+          {[
+            w.stats.calories !== null ? `${Math.round(w.stats.calories)} kcal` : "",
+            w.stats.hrAvg !== null ? `heart rate ${Math.round(w.stats.hrAvg)} average${w.stats.hrMin !== null && w.stats.hrMax !== null ? ` (${Math.round(w.stats.hrMin)} to ${Math.round(w.stats.hrMax)})` : ""}` : "",
+            w.stats.gain !== null ? `${w.stats.gain.toFixed(1)} m gained` : "",
+          ].filter(Boolean).join(" · ")}
+        </Text>
+      ) : null}
+      {w.motionRows > 0 || w.elevationSamples > 0 ? <Text v="caption" style={{ marginTop: 4 }}>{w.motionRows} seconds of motion and {w.elevationSamples} elevation samples received.</Text> : null}
       <View style={{ gap: 8, marginTop: 10 }}>
         <Button variant="secondary" label="Check the watch" onPress={() => void w.check()} />
         {w.reachable ? (

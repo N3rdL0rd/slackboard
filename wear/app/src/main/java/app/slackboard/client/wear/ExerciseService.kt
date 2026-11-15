@@ -54,6 +54,14 @@ class ExerciseService : Service() {
     private var session: String? = null
     private var startedAt = 0L
     private var calories: Double? = null
+    private var gain: Double? = null
+    private var hrAvg: Double? = null
+    private var hrMin: Double? = null
+    private var hrMax: Double? = null
+    private var statsSent: List<Double?> = emptyList()
+    private val elevT = ArrayList<Long>()
+    private val elevM = ArrayList<Double>()
+    private val motion by lazy { MotionRecorder(this) }
     private var running = false
     private var mode = MODE_WORKOUT
     private var wake: PowerManager.WakeLock? = null
@@ -83,7 +91,11 @@ class ExerciseService : Service() {
         override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
             val boot = bootInstant()
             for (p in update.latestMetrics.getData(DataType.HEART_RATE_BPM)) addSample(p.getTimeInstant(boot).toEpochMilli(), p.value.toInt())
-            update.latestMetrics.getData(DataType.CALORIES_TOTAL)?.let { calories = it.total }
+            val m = update.latestMetrics
+            m.getData(DataType.CALORIES_TOTAL)?.let { calories = it.total }
+            m.getData(DataType.ELEVATION_GAIN_TOTAL)?.let { gain = it.total }
+            m.getData(DataType.HEART_RATE_BPM_STATS)?.let { hrAvg = it.average; hrMin = it.min; hrMax = it.max }
+            for (p in m.getData(DataType.ABSOLUTE_ELEVATION)) synchronized(elevT) { elevT.add(p.getTimeInstant(boot).toEpochMilli()); elevM.add(p.value) }
             if (update.exerciseStateInfo.state.isEnded) handler.post { finish() }
         }
 
@@ -125,8 +137,12 @@ class ExerciseService : Service() {
         session = id ?: UUID.randomUUID().toString()
         startedAt = System.currentTimeMillis()
         calories = null
+        gain = null
+        hrAvg = null; hrMin = null; hrMax = null
+        statsSent = emptyList()
         running = true
         synchronized(times) { times.clear(); bpms.clear() }
+        synchronized(elevT) { elevT.clear(); elevM.clear() }
         wake = (getSystemService(Context.POWER_SERVICE) as PowerManager)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "slackboard:session").apply { acquire(MAX_SESSION_MS) }
 
@@ -139,6 +155,7 @@ class ExerciseService : Service() {
                     fail("Could not read the sensors. Is the watch on your wrist?")
                 } else {
                     mode = picked
+                    motion.start()
                     WatchState.update { it.copy(running = true, session = session, startedAt = startedAt, bpm = null, mode = mode, message = null) }
                     Uplink.send(Protocol.STATE, stateJson("running"))
                     handler.postDelayed(flusher, BATCH_MS)
@@ -161,18 +178,21 @@ class ExerciseService : Service() {
             tracked = ExerciseTrackedStatus.NO_EXERCISE_IN_PROGRESS
         }
         if (tracked != ExerciseTrackedStatus.OTHER_APP_IN_PROGRESS) {
-            try {
-                val config = ExerciseConfig.builder(ExerciseType.ROCK_CLIMBING)
-                    .setDataTypes(setOf(DataType.HEART_RATE_BPM, DataType.CALORIES_TOTAL))
-                    .setIsAutoPauseAndResumeEnabled(false)
-                    .setIsGpsEnabled(false)
-                    .build()
-                exerciseClient.setUpdateCallback(exerciseCallback)
-                exerciseClient.startExerciseAsync(config).get()
-                return MODE_WORKOUT
-            } catch (e: Exception) {
-                Log.w(TAG, "workout refused, reading heart rate only", e)
-                runCatching { exerciseClient.clearUpdateCallbackAsync(exerciseCallback).get() }
+            // Everything wanted first; if the watch refuses that set, the basics alone.
+            for (types in listOf(FULL_TYPES, BASIC_TYPES)) {
+                try {
+                    val config = ExerciseConfig.builder(ExerciseType.ROCK_CLIMBING)
+                        .setDataTypes(types)
+                        .setIsAutoPauseAndResumeEnabled(false)
+                        .setIsGpsEnabled(false)
+                        .build()
+                    exerciseClient.setUpdateCallback(exerciseCallback)
+                    exerciseClient.startExerciseAsync(config).get()
+                    return MODE_WORKOUT
+                } catch (e: Exception) {
+                    Log.w(TAG, "workout refused with ${types.size} data types", e)
+                    runCatching { exerciseClient.clearUpdateCallbackAsync(exerciseCallback).get() }
+                }
             }
         }
         return try {
@@ -200,12 +220,14 @@ class ExerciseService : Service() {
         if (!running) return
         running = false
         handler.removeCallbacks(flusher)
+        motion.stop()
         sendBatch()
         val ended = System.currentTimeMillis()
         Uplink.send(
             Protocol.SUMMARY,
             JSONObject().put("session", session).put("startedAt", startedAt).put("endedAt", ended)
-                .put("calories", calories ?: JSONObject.NULL),
+                .put("calories", calories ?: JSONObject.NULL).put("gain", gain ?: JSONObject.NULL)
+                .put("hrAvg", hrAvg ?: JSONObject.NULL).put("hrMin", hrMin ?: JSONObject.NULL).put("hrMax", hrMax ?: JSONObject.NULL),
         )
         Uplink.send(Protocol.STATE, stateJson("idle"))
         WatchState.update { it.copy(running = false, session = null, startedAt = null, bpm = null) }
@@ -216,6 +238,7 @@ class ExerciseService : Service() {
     }
 
     private fun fail(text: String) {
+        motion.stop()
         WatchState.update { it.copy(running = false, message = text) }
         Uplink.send(Protocol.STATE, stateJson("idle").put("error", text))
         wake?.takeIf { it.isHeld }?.release()
@@ -224,6 +247,13 @@ class ExerciseService : Service() {
     }
 
     private fun sendBatch() {
+        sendHeartRate()
+        sendElevation()
+        sendMotion()
+        sendStats()
+    }
+
+    private fun sendHeartRate() {
         val t: List<Long>
         val b: List<Int>
         synchronized(times) {
@@ -234,6 +264,43 @@ class ExerciseService : Service() {
             bpms.clear()
         }
         Uplink.send(Protocol.HR, JSONObject().put("session", session).put("t", JSONArray(t)).put("b", JSONArray(b)))
+    }
+
+    private fun sendElevation() {
+        val t: List<Long>
+        val m: List<Double>
+        synchronized(elevT) {
+            if (elevT.isEmpty()) return
+            t = ArrayList(elevT)
+            m = ArrayList(elevM)
+            elevT.clear()
+            elevM.clear()
+        }
+        Uplink.send(Protocol.ELEVATION, JSONObject().put("session", session).put("t", JSONArray(t)).put("m", JSONArray(m)))
+    }
+
+    private fun sendMotion() {
+        val rows = motion.take()
+        if (rows.isEmpty()) return
+        fun col(f: (MotionRecorder.Row) -> Double?) = JSONArray().also { a -> rows.forEach { a.put(f(it) ?: JSONObject.NULL) } }
+        Uplink.send(
+            Protocol.MOTION,
+            JSONObject().put("session", session).put("t", JSONArray(rows.map { it.at }))
+                .put("a", col { it.accRms }).put("am", col { it.accMax }).put("g", col { it.gyroRms }).put("gm", col { it.gyroMax })
+                .put("p", col { it.pressure }).put("gx", col { it.gx }).put("gy", col { it.gy }).put("gz", col { it.gz }),
+        )
+    }
+
+    /** Totals, only when one has changed since the last time. */
+    private fun sendStats() {
+        val now = listOf(calories, gain, hrAvg, hrMin, hrMax)
+        if (now == statsSent || now.all { it == null }) return
+        statsSent = now
+        Uplink.send(
+            Protocol.STATS,
+            JSONObject().put("session", session).put("calories", calories ?: JSONObject.NULL).put("gain", gain ?: JSONObject.NULL)
+                .put("hrAvg", hrAvg ?: JSONObject.NULL).put("hrMin", hrMin ?: JSONObject.NULL).put("hrMax", hrMax ?: JSONObject.NULL),
+        )
     }
 
     private fun stateJson(state: String) =
@@ -259,6 +326,7 @@ class ExerciseService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(flusher)
+        motion.stop()
         worker.shutdown()
         super.onDestroy()
     }
@@ -271,6 +339,8 @@ class ExerciseService : Service() {
         /** Heart rate only, used when the watch is already running another workout. */
         const val MODE_HEART_RATE = "heart-rate"
         private const val TAG = "SlackboardWear"
+        private val BASIC_TYPES = setOf(DataType.HEART_RATE_BPM, DataType.CALORIES_TOTAL)
+        private val FULL_TYPES = BASIC_TYPES + setOf(DataType.HEART_RATE_BPM_STATS, DataType.ABSOLUTE_ELEVATION, DataType.ELEVATION_GAIN_TOTAL)
         private const val CHANNEL = "session"
         private const val NOTIF_ID = 1
         private const val BATCH_MS = 3000L

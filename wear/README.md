@@ -37,3 +37,10 @@ adb -s emulator-5556 shell dumpsys battery unplug   # otherwise the charging scr
 
 Linking a phone emulator to the watch emulator needs a Google account on the phone, so the
 phone-to-watch messages are only tested on real devices.
+
+## What a session sends
+
+Heart rate every few seconds, the workout's running totals (calories, elevation gained, heart-rate average, minimum and maximum), elevation
+samples, and one row of motion a second: acceleration and rotation strength with their peaks, gravity through the watch's three axes, and
+air pressure. Raw sensor readings are never sent. The messages are listed in `Protocol.kt`. `What can this watch do?` on the watch (or
+Settings > Watch on the phone) reports what the watch supports.
