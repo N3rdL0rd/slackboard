@@ -1,0 +1,197 @@
+package app.slackboard.client.wear
+
+import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.text.format.DateFormat
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.Text
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.math.abs
+
+/**
+ * A look at the watch remote with made-up data: a list of dummy climbs to swipe through (it stops at both ends), a clock, the screen
+ * kept on, and a tap that runs a 30 second demo timer. The ring shows the place in the list; while a timer runs it becomes the timer
+ * and turns red for the last three seconds, with a buzz. Nothing here talks to the phone yet.
+ */
+class RemoteActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        setContent { RemoteScreen() }
+    }
+}
+
+private val Ground = Color(0xFF121618)
+private val Raised = Color(0xFF232A2E)
+private val Chalk = Color(0xFFEDEBE4)
+private val Secondary = Color(0xFFC5CBC9)
+private val Muted = Color(0xFFA3ABA9)
+private val Star = Color(0xFFE8C766)
+private val StarOff = Color(0xFF46515A)
+private val Danger = Color(0xFFF2554D)
+
+private val Display = FontFamily(Font(R.font.barlow_condensed_bold, FontWeight.Bold))
+private val Ui = FontFamily(Font(R.font.barlow_regular, FontWeight.Normal))
+
+/** The numeral takes the band colour; from V9 the band is black, so the numeral takes the ring colour instead, as on the phone. */
+private data class Demo(val name: String, val grade: String, val numeral: Color, val ring: Color, val angle: Int, val mirrored: Boolean, val stars: Int)
+
+private val CLIMBS = listOf(
+    Demo("Warm Up Slab", "V0", Color(0xFFF49AC2), Color(0xFFF49AC2), 30, false, 2),
+    Demo("Pizza Box", "V2", Color(0xFF5AA9FF), Color(0xFF5AA9FF), 40, false, 3),
+    Demo("Masquerade", "V4", Color(0xFF4FD08A), Color(0xFF4FD08A), 40, true, 3),
+    Demo("Chalk Bag Blues", "V5", Color(0xFFF2F0EA), Color(0xFFF2F0EA), 45, false, 1),
+    Demo("Red Eye", "V7", Color(0xFFF2554D), Color(0xFFF2554D), 40, false, 3),
+    Demo("Night Shift", "V9", Color(0xFFEDEBE4), Color(0xFF8E9795), 50, true, 2),
+    Demo("Violet Hour", "V11", Color(0xFF9A6BFF), Color(0xFF9A6BFF), 40, false, 3),
+)
+private const val TIMER_MS = 30_000L
+
+@Composable
+private fun RemoteScreen() {
+    val context = LocalContext.current
+    val vibrator = remember { context.getSystemService(Vibrator::class.java) }
+    val is24 = remember { DateFormat.is24HourFormat(context) }
+    var index by remember { mutableIntStateOf(2) }
+    var timerEnd by remember { mutableLongStateOf(0L) }
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var drag by remember { mutableFloatStateOf(0f) }
+    var lastBuzz by remember { mutableIntStateOf(-1) }
+
+    LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(100) } }
+
+    val left = if (timerEnd > 0) (timerEnd - now).coerceAtLeast(0) else 0L
+    val running = timerEnd > 0
+    // Buzz once for each of the last three seconds, and a long one at zero; each second only once.
+    LaunchedEffect(left, running) {
+        if (!running) { lastBuzz = -1; return@LaunchedEffect }
+        val s = ((left + 999) / 1000).toInt()
+        if (left == 0L) {
+            vibrator.vibrate(VibrationEffect.createOneShot(700, VibrationEffect.DEFAULT_AMPLITUDE))
+            delay(1500); timerEnd = 0L
+        } else if (s in 1..3 && s != lastBuzz) {
+            lastBuzz = s
+            vibrator.vibrate(VibrationEffect.createOneShot(40, 120))
+        }
+    }
+
+    val climb = CLIMBS[index]
+    val urgent = running && left <= 3000
+    val ringColor = if (urgent) Danger else climb.ring
+    val time = remember(now / 1000) { SimpleDateFormat(if (is24) "HH:mm" else "h:mm", Locale.getDefault()).format(Date(now)) }
+
+    Box(
+        Modifier.fillMaxSize().background(Ground)
+            .pointerInput(index) {
+                detectHorizontalDragGestures(
+                    onDragStart = { drag = 0f },
+                    onHorizontalDrag = { _, dx -> drag += dx },
+                    onDragEnd = {
+                        // Swiping left shows the next climb, right the previous; it stops at both ends.
+                        if (abs(drag) > 70f) index = (index + if (drag < 0) 1 else -1).coerceIn(0, CLIMBS.lastIndex)
+                        drag = 0f
+                    },
+                )
+            }
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                if (running) timerEnd = 0L else timerEnd = System.currentTimeMillis() + TIMER_MS
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.fillMaxSize().padding(2.dp)) {
+            val w = 6.dp.toPx()
+            val inset = w / 2
+            val size = Size(this.size.width - w, this.size.height - w)
+            val topLeft = Offset(inset, inset)
+            drawArc(Raised, 0f, 360f, false, topLeft, size, style = Stroke(w))
+            if (running) {
+                // The ring is the timer: it empties clockwise from the top as time runs down.
+                val frac = left / TIMER_MS.toFloat()
+                drawArc(ringColor, -90f, 360f * frac, false, topLeft, size, style = Stroke(w, cap = StrokeCap.Round))
+            } else {
+                // Otherwise it is the place in the list: one segment per climb, the current one lit.
+                val n = CLIMBS.size
+                val step = 360f / n
+                drawArc(ringColor, -90f + step * index + 1.5f, step - 3f, false, topLeft, size, style = Stroke(w))
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize().padding(top = 16.dp, bottom = 26.dp)) {
+            Text(time, style = TextStyle(fontFamily = Ui, fontSize = 13.sp, color = Secondary))
+            Spacer(Modifier.height(2.dp))
+            Text(climb.grade, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, color = if (urgent) Danger else climb.numeral, lineHeight = 50.sp))
+            Text(climb.name, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 21.sp, color = Chalk, lineHeight = 23.sp), maxLines = 1)
+            Text(
+                "${climb.angle}°" + if (climb.mirrored) "  ·  Mirrored" else "",
+                style = TextStyle(fontFamily = Ui, fontSize = 11.sp, color = Secondary),
+            )
+            if (!running) Stars(climb.stars)
+            Spacer(Modifier.weight(1f))
+            if (running) {
+                Box(Modifier.background(if (urgent) Danger else Raised, RoundedCornerShape(50)).padding(horizontal = 14.dp, vertical = 0.dp)) {
+                    Text(clock((left + 999) / 1000), style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (urgent) Ground else Chalk))
+                }
+            } else {
+                Text("${index + 1} of ${CLIMBS.size}", style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Muted))
+            }
+        }
+    }
+}
+
+@Composable
+private fun Stars(on: Int) {
+    Text(
+        buildStars(on),
+        style = TextStyle(fontSize = 13.sp, letterSpacing = 2.sp),
+    )
+}
+
+private fun buildStars(on: Int) = androidx.compose.ui.text.buildAnnotatedString {
+    for (i in 0 until 3) {
+        pushStyle(androidx.compose.ui.text.SpanStyle(color = if (i < on) Star else StarOff))
+        append("\u2605")
+        pop()
+    }
+}
+
+private fun clock(s: Long) = "%d:%02d".format(s / 60, s % 60)
