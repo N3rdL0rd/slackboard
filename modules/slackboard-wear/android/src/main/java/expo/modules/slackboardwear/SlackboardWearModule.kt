@@ -12,7 +12,20 @@ class SlackboardWearModule : Module() {
     private val context get() = appContext.reactContext ?: throw IllegalStateException("No context")
 
     /** The watch to talk to: the one that has the app, else any connected watch. Null when none. */
+    private var cachedNode: String? = null
+    private var cachedAt = 0L
+
     private fun watchNodeId(): String? {
+        // The remote sends a few messages a second at most; asking the capability service each time is slow, so the answer is kept briefly.
+        val now = System.currentTimeMillis()
+        if (cachedNode != null && now - cachedAt < 20_000) return cachedNode
+        val found = lookupNode()
+        cachedNode = found
+        cachedAt = now
+        return found
+    }
+
+    private fun lookupNode(): String? {
         val caps = Tasks.await(
             Wearable.getCapabilityClient(context).getCapability(WATCH_CAPABILITY, CapabilityClient.FILTER_REACHABLE),
         )
@@ -54,6 +67,15 @@ class SlackboardWearModule : Module() {
 
         AsyncFunction("startSession") { session: String ->
             runCatching { send(START, JSONObject().put("session", session)) }.getOrDefault(false)
+        }
+
+        /** Send one remote message (state, answer or summary) to the watch. Only the remote paths are allowed. */
+        AsyncFunction("sendRemote") { path: String, body: String ->
+            if (!path.startsWith("/slackboard/remote/")) return@AsyncFunction false
+            val ok = runCatching { send(path, JSONObject(body)) }.getOrDefault(false)
+            // A failed send may mean the watch moved; look it up again next time.
+            if (!ok) cachedNode = null
+            ok
         }
 
         AsyncFunction("stopSession") {

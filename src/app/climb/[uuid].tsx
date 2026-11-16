@@ -20,6 +20,9 @@ import { grades } from "../../data/grades";
 import { getDb } from "../../data/sqlite";
 import { LOCAL_SETTER } from "../../core/moonLocal";
 import { useData } from "../../state/data";
+import { useClimbTimer } from "../../state/climbTimer";
+import { useRemote } from "../../state/remote";
+import { CLIMB_TIMER_STEPS, climbFace, timerStepLabel } from "../../core/remote";
 import { holesFor } from "../../core/led";
 import { lightBoard } from "../../state/ble";
 import { useGeometry } from "../../state/layouts";
@@ -168,8 +171,12 @@ export default function ClimbView() {
   const [picks, setPicks] = useState<number[]>([]);
   const [mode, setMode] = useState<"send" | "attempt">("send");
   const blocked = useData((d) => d.blocked);
-  const [timerEnd, setTimerEnd] = useState<number | null>(null);
-  const [timerLen, setTimerLen] = useState(60);
+  const timerEnd = useClimbTimer((t) => t.end);
+  const timerLen = useClimbTimer((t) => t.length);
+  const startTimer = useClimbTimer((t) => t.start);
+  const stopTimer = useClimbTimer((t) => t.stop);
+  // The timer belongs to this screen: leaving it ends the timer.
+  useEffect(() => () => useClimbTimer.getState().stop(), []);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [toast, setToast] = useState<{ text: string; entry: Logged; share?: { send: SendFacts; difficulty: number }; celebrate?: Celebration; loggedV?: number } | null>(null);
@@ -193,6 +200,30 @@ export default function ClimbView() {
     if (!led.matches || !climb || !board || climb.layoutId !== board.spec.layoutId) return;
     void lightBoard(holesFor(frame, new Map(placements.map((p) => [p.id, p])), new Map(roles.map((x) => [x.id, x])), mirror), board, current);
   }, [led.matches, current, frame, mirror, climb?.uuid]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The watch remote shows this climb and drives it: publish what is shown, and register what the remote may do.
+  const controls = useRef<{ go: (delta: 1 | -1) => boolean; mirror: () => boolean; light: () => Promise<boolean>; log: (send: boolean, tries: number) => Promise<{ ok: boolean; text: string }> } | null>(null);
+  useEffect(() => {
+    useRemote.getState().setClimbControls({
+      go: (delta) => controls.current?.go(delta) ?? false,
+      toggleMirror: () => controls.current?.mirror() ?? false,
+      light: async () => (await controls.current?.light()) ?? false,
+      log: async (send, tries) => (await controls.current?.log(send, tries)) ?? { ok: false, text: "Open a climb on the phone" },
+    });
+    return () => { useRemote.getState().setClimbControls(null); useRemote.getState().publishClimb(null, { name: "", connected: false }); };
+  }, []);
+  useEffect(() => {
+    if (!climb || !spec) return;
+    const dNow = difficultyOf(stat);
+    const lbl = dNow != null ? grades.label(dNow, settings.gradeDisplay, isRoute(climb)) : null;
+    useRemote.getState().publishClimb(
+      climbFace({
+        id: current, name: climb.name, setter: climb.setter, difficulty: dNow, grade: lbl?.primary ?? null, alt: lbl?.secondary ?? null, band: dNow != null ? grades.band(dNow) : null,
+        angle: viewAngle, mirrored: mirror, canMirror: spec.isMirrored, quality: stat ? stat[3] : null, sends: stat ? stat[2] : null, classic: isClassic(stat),
+        index: Math.max(0, index), count,
+      }),
+      { name: board?.name ?? "", connected: led.matches },
+    );
+  }, [current, climb?.name, spec?.isMirrored, stat, viewAngle, mirror, index, count, led.matches, settings.gradeDisplay]); // eslint-disable-line react-hooks/exhaustive-deps
   // A new climb starts on its first frame, paused.
   useEffect(() => { setFrameIndex(0); setPlaying(false); }, [current]);
   useEffect(() => {
@@ -244,6 +275,20 @@ export default function ClimbView() {
     if (lastTick.current >= 0 && i !== lastTick.current) haptic.selection();
     lastTick.current = i;
   };
+  controls.current = {
+    go: (delta) => { if (!idAt(index + delta)) return false; go(delta); return true; },
+    mirror: () => { if (!spec.isMirrored) return false; setMirror((m) => !m); return true; },
+    light: async () => {
+      if (!led.matches || !board || climb.layoutId !== board.spec.layoutId) return false;
+      return lightBoard(holesFor(frame, new Map(placements.map((p) => [p.id, p])), new Map(roles.map((x) => [x.id, x])), mirror), board, current);
+    },
+    log: async (send, tries) => {
+      if (send && d == null) return { ok: false, text: "No grade yet. Log it on the phone" };
+      const text = !send ? `${tries} ${tries === 1 ? "attempt" : "attempts"} logged` : tries === 1 ? "Flash logged" : `Send logged \u00B7 ${tries} attempts`;
+      const ok = await save({ climbUuid: current, angle: viewAngle, isMirror: mirror, bidCount: tries, comment: "", climbedAt: new Date(), ...(send ? { quality: 0, difficulty: d! } : {}) }, text);
+      return ok ? { ok: true, text } : { ok: false, text: "Couldn't save that" };
+    },
+  };
   const pagerH = HEADER_H + 14 + boardHeight(spec, boardW);
   const pageKey = `${current}|${viewAngle}|${mirror}|${zoomed}|${settings.shapes}|${settings.highContrast}|${settings.gradeDisplay}|${stats?.size ?? 0}|${allFrames.length > 1 ? frameIndex : 0}|${byAngle[viewAngle]?.join(",") ?? ""}`;
 
@@ -267,7 +312,7 @@ export default function ClimbView() {
     haptic.warning();
     if (spec.isMirrored && !mirror) setMirror(true);
     else { setMirror(false); go(1); }
-    setTimerEnd(Date.now() + timerLen * 1000);
+    startTimer(timerLen);
   };
 
   const save = async (input: Parameters<typeof logSend>[0], text: string) => {
@@ -275,7 +320,7 @@ export default function ClimbView() {
     setSaveError(false);
     const entry = await logSend(input);
     setSaving(false);
-    if (!entry) { setSaveError(true); return; }
+    if (!entry) { setSaveError(true); return false; }
     // A send is a win; an attempt is a lighter acknowledgement.
     if (entry.kind === "ascent") haptic.success(); else haptic.light();
     setSheet(null);
@@ -292,6 +337,7 @@ export default function ClimbView() {
     });
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), sent ? 9000 : 6000);
+    return true;
   };
 
   return (
@@ -430,7 +476,7 @@ export default function ClimbView() {
       <MoreSheet visible={sheet === "more"} onClose={() => setSheet(null)} climb={climb} blocked={blocked.has(current)} onShare={(k) => { if (k === "send") shareMySend(); else openShare("climb"); }} canShareSend={mySend} onMeasure={() => { setPicks([]); setMeasuring(true); }} />
       <ShareSheet facts={share} onClose={() => setShare(null)} />
       {confetti > 0 ? <Confetti key={confetti} onDone={() => setConfetti(0)} /> : null}
-      <TimerSheet visible={sheet === "timer"} onClose={() => setSheet(null)} running={timerEnd != null} onStart={(sec) => { setSheet(null); setTimerEnd(Date.now() + sec * 1000); setTimerLen(sec); }} onStop={() => { setSheet(null); setTimerEnd(null); }} />
+      <TimerSheet visible={sheet === "timer"} onClose={() => setSheet(null)} running={timerEnd != null} onStart={(sec) => { setSheet(null); startTimer(sec); }} onStop={() => { setSheet(null); stopTimer(); }} />
       {timerEnd != null && <TimerBar end={timerEnd} length={timerLen} onExpire={onTimerExpire} />}
     </View>
   );
@@ -480,15 +526,13 @@ function useBetaCount(uuid: string): number {
   return n;
 }
 
-const TIMER_STEPS = [30, 60, 120, 300, 600];
-const stepLabel = (s: number) => (s < 60 ? `${s} sec` : `${s / 60} min`);
 
 function TimerSheet({ visible, onClose, running, onStart, onStop }: { visible: boolean; onClose: () => void; running: boolean; onStart: (sec: number) => void; onStop: () => void }) {
   return (
     <Sheet visible={visible} onClose={onClose} title="Timer">
       <Text v="secondary" style={{ marginBottom: 12 }}>Then mirrors, or moves to the next climb.</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {TIMER_STEPS.map((sec) => <Chip key={sec} label={stepLabel(sec)} onPress={() => onStart(sec)} />)}
+        {CLIMB_TIMER_STEPS.map((sec) => <Chip key={sec} label={timerStepLabel(sec)} onPress={() => onStart(sec)} />)}
       </View>
       {running && <View style={{ marginTop: 16 }}><Button variant="secondary" label="Stop timer" onPress={onStop} /></View>}
     </Sheet>

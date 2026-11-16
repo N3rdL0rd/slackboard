@@ -6,6 +6,7 @@ import { randomHex } from "../core/api";
 import { ingestWatchMessages } from "../core/watchLocal";
 import { parseInbox, type ElevationSample, type MotionRow, type WatchCapabilities, type WatchMessage, type WorkoutStats } from "../core/wear";
 import { getLocalDb } from "../data/sqlite";
+import { handleRemoteLines } from "./remote";
 
 /**
  * The link to the Wear OS watch app. Android only: elsewhere there is no native module and every call answers "no watch".
@@ -110,7 +111,9 @@ export const useWear = create<WearState>((set, get) => ({
   drain() {
     const run = async () => {
       if (!Wear) return;
-      const lines = await Wear.drainInbox();
+      const waiting = await Wear.drainInbox();
+      // Remote commands are acted on straight away; what is left is the recorder's data.
+      const lines = await handleRemoteLines(waiting);
       if (lines.length === 0) return;
       const { messages, receivedAt, skipped } = parseInbox(lines);
       const result = await ingestWatchMessages(await getLocalDb(), messages.map((message, i) => ({ message, receivedAt: receivedAt[i] })));

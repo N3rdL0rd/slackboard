@@ -17,6 +17,7 @@ import { useWidgetSync } from "../state/widgetSync";
 import { useCrashLog } from "../state/crashLog";
 import { useUpdateCheck } from "../state/updates";
 import { useNotificationSync } from "../state/notificationSync";
+import { useRemotePublisher } from "../state/remote";
 import { useWatchSync } from "../state/wear";
 import { installNotificationHandler, onNotificationTap } from "../state/notifications";
 import { useData } from "../state/data";
@@ -38,6 +39,7 @@ export default function Root() {
   useGoalSync();
   useBoardKeepAwake();
   useWatchSync();
+  useRemotePublisher();
   useNotificationSync();
   useAutoBackup();
   useUpdateCheck();

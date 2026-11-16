@@ -22,6 +22,8 @@ import { ExerciseList } from "../ui/ExerciseList";
 import { haptic } from "../ui/haptics";
 import { Icon } from "../ui/Icon";
 import { Slider } from "../ui/Slider";
+import { describeTarget, runnerFace } from "../core/remoteRunner";
+import { useRemote } from "../state/remote";
 import { Button, Chip, IconButton, LinkButton, SectionLabel, Segmented, Sheet, Spinner, Tap } from "../ui/parts";
 import { Stepper } from "../ui/Stepper";
 import { Text } from "../ui/Text";
@@ -32,13 +34,6 @@ const clock = (ms: number): string => {
   const total = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 };
-
-/** What a set asks for, in a phrase: "6 \u00D7 7 s on, 3 s off", "10 s hold", "5 reps". */
-function describeTarget(t: SetTarget): string {
-  if (t.onS === null) return t.reps === null ? "Do the set" : `${t.reps} reps`;
-  if ((t.reps ?? 1) > 1) return `${t.reps} \u00D7 ${t.onS} s on, ${t.offS ?? 0} s off`;
-  return `${t.onS} s hold`;
-}
 
 /** A load stepped by one tap in the user's own unit, kept to a number a plate or a pulley can be set to. */
 function bumpLoad(kg: number | null, dir: 1 | -1, units: Units): number {
@@ -190,6 +185,28 @@ function Runner({ items, startedAt, idFor, onFinished }: { items: RunnerItem[]; 
       if (s >= 1 && s <= 3 && s !== lastSecond.current) { lastSecond.current = s; haptic.medium(); }
     }
   }, [state]);
+
+  // The watch remote shows the set in progress and can press Done, Skip rest, +30 s and Pause. It counts the time itself from the
+  // milliseconds sent, so a new state goes out when the phase changes or the time jumps (+30 s, a skip), not every tick.
+  const sent = useRef<{ key: string; endAt: number } | null>(null);
+  useEffect(() => {
+    const face = runnerFace(state, { work: role.start.color, rest: role.middle.color, ready: c.text2 });
+    const key = `${state.item}.${state.set}.${state.rep}.${state.phase}.${state.paused}`;
+    const endAt = Date.now() + state.remainingMs;
+    if (sent.current && sent.current.key === key && Math.abs(sent.current.endAt - endAt) < 1500) return;
+    sent.current = { key, endAt };
+    useRemote.getState().publishRunner(face);
+  }, [state]);
+  useEffect(() => {
+    useRemote.getState().setRunnerControls({
+      op: (op) => {
+        const e = op === "start" ? { type: "start" as const } : op === "done" ? { type: "done" as const } : op === "skipRest" ? { type: "skipRest" as const }
+          : op === "addRest" ? { type: "addRest" as const, ms: 30_000 } : op === "pause" ? { type: "pause" as const } : { type: "resume" as const };
+        dispatch(e);
+      },
+    });
+    return () => { useRemote.getState().setRunnerControls(null); useRemote.getState().publishRunner(null); };
+  }, []);
 
   const t = currentTarget(state);
   const item = state.items[state.item];
