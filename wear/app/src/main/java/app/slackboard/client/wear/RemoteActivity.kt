@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -200,28 +201,27 @@ private fun RemoteScreen() {
             val sweep = lerp(step - 3f, (360f * frac.value).coerceAtLeast(0.5f), m)
             drawArc(ringColor.value, start, sweep, false, topLeft, size, style = Stroke(w, cap = if (m > 0.5f) StrokeCap.Round else StrokeCap.Butt))
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize().padding(top = 16.dp, bottom = 26.dp)) {
-            Text(clockText, style = TextStyle(fontFamily = Ui, fontSize = 13.sp, color = Secondary))
-            Spacer(Modifier.height(2.dp))
-            AnimatedContent(
-                targetState = index,
-                modifier = Modifier.graphicsLayer { translationX = pull.value; alpha = 1f - abs(pull.value) / 160f },
-                transitionSpec = {
-                    val dir = if (targetState > initialState) 1 else -1
-                    (slideInHorizontally(tween(320, easing = Ease)) { it / 3 * dir } + fadeIn(tween(260, delayMillis = 40))) togetherWith
-                        (slideOutHorizontally(tween(220, easing = Ease)) { -it / 3 * dir } + fadeOut(tween(140)))
-                },
-                label = "climb",
-            ) { i ->
-                val c = CLIMBS[i]
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(c.grade, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, color = if (i == index) numeralColor else c.numeral, lineHeight = 50.sp))
-                    Text(c.name, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 21.sp, color = Chalk, lineHeight = 23.sp), maxLines = 1)
-                    Text("${c.angle}\u00B0" + if (c.mirrored) "  \u00B7  Mirrored" else "", style = TextStyle(fontFamily = Ui, fontSize = 11.sp, color = Secondary))
-                    AnimatedVisibility(!running, enter = fadeIn(tween(300)) + expandVertically(tween(300, easing = Ease)), exit = fadeOut(tween(160)) + shrinkVertically(tween(260, easing = Ease))) { Stars(c.stars) }
-                }
+        // Three anchored parts, so no gap is left over: the clock at the top, the climb centred in the circle, the position or timer at the bottom.
+        Text(clockText, style = TextStyle(fontFamily = Ui, fontSize = 13.sp, color = Secondary), modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp))
+        AnimatedContent(
+            targetState = index,
+            modifier = Modifier.align(Alignment.Center).offset(y = (-6).dp).graphicsLayer { translationX = pull.value; alpha = 1f - abs(pull.value) / 160f },
+            transitionSpec = {
+                val dir = if (targetState > initialState) 1 else -1
+                (slideInHorizontally(tween(320, easing = Ease)) { it / 3 * dir } + fadeIn(tween(260, delayMillis = 40))) togetherWith
+                    (slideOutHorizontally(tween(220, easing = Ease)) { -it / 3 * dir } + fadeOut(tween(140)))
+            },
+            label = "climb",
+        ) { i ->
+            val c = CLIMBS[i]
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(c.grade, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 52.sp, color = if (i == index) numeralColor else c.numeral, lineHeight = 52.sp))
+                Text(c.name, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Chalk, lineHeight = 24.sp), maxLines = 1)
+                Text("${c.angle}\u00B0" + if (c.mirrored) "  \u00B7  Mirrored" else "", style = TextStyle(fontFamily = Ui, fontSize = 12.sp, color = Secondary))
+                AnimatedVisibility(!running, enter = fadeIn(tween(300)) + expandVertically(tween(300, easing = Ease)), exit = fadeOut(tween(160)) + shrinkVertically(tween(260, easing = Ease))) { Stars(c.stars) }
             }
-            Spacer(Modifier.weight(1f))
+        }
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp)) {
             Crossfade(running, animationSpec = tween(260), label = "bottom") { on ->
                 if (on) {
                     Box(Modifier.background(if (urgent) Danger else Raised, RoundedCornerShape(50)).padding(horizontal = 14.dp)) {
