@@ -1,2 +1,0 @@
-expo.modules.slackboardwear
-array android_wear_capabilities

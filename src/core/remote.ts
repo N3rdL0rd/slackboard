@@ -80,6 +80,8 @@ export interface RemoteRunner {
   target: string;
   /** For `on`, `off` and `rest`: milliseconds left. For `work`: milliseconds spent. Otherwise 0. */
   ms: number;
+  /** The big figure before the set starts: the time of the first hang ("0:10") or the reps ("5"). Empty in other phases. */
+  big: string;
   paused: boolean;
   /** The next exercise's name, or null on the last. */
   next: string | null;

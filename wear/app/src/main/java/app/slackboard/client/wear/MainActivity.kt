@@ -1,58 +1,84 @@
 package app.slackboard.client.wear
 
 import android.Manifest
+import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import android.os.SystemClock
+import android.text.format.DateFormat
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
-import androidx.wear.compose.material.Text
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.wear.ambient.AmbientLifecycleObserver
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-private val Ground = Color(0xFF121618)
-private val Chalk = Color(0xFFEDEBE4)
-private val Muted = Color(0xFFA3ABA9)
-private val Gold = Color(0xFFE8C766)
-private val Green = Color(0xFF34D17D)
-private val Red = Color(0xFFF2554D)
+/** Switches for looking at the app on an emulator, which has no phone to talk to. Only honoured by a debuggable build. */
+object Debug {
+    var linked by mutableStateOf(false)
+    var screen by mutableStateOf<String?>(null)
+}
 
+/**
+ * The one watch app: the remote for the phone's climb screen (or training session) at home, an actions list one swipe up, and under it
+ * the heart-rate recorder and the watch's settings. The screen is kept on while it is open (a setting can let it dim to the
+ * always-on view instead), and the phone is told the app is open so it only sends state while someone is looking.
+ */
 class MainActivity : ComponentActivity() {
-    private var autostart: String? = null
+    private var autostart by mutableStateOf<String?>(null)
+    private val ambient = mutableStateOf(false)
+
+    private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+        override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) { ambient.value = true }
+        override fun onExitAmbient() { ambient.value = false }
+    }
+
+    private val debuggable get() = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Uplink.init(this)
-        autostart = intent?.getStringExtra(EXTRA_AUTOSTART)
-        setContent { Screen(autostart) { autostart = null } }
+        Prefs.init(this)
+        lifecycle.addObserver(AmbientLifecycleObserver(this, ambientCallback))
+        handle(intent)
+        setContent { App(autostart, { autostart = null }, ambient.value) }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handle(intent)
+    }
+
+    private fun handle(i: android.content.Intent?) {
+        i ?: return
+        i.getStringExtra(EXTRA_AUTOSTART)?.let { autostart = it }
+        if (!debuggable) return
+        if (i.getBooleanExtra("debugLinked", false)) Debug.linked = true
+        i.getStringExtra("debugState")?.let { RemoteState.onState(it) }
+        i.getStringExtra("debugAck")?.let { RemoteState.onAck(it) }
+        i.getStringExtra("debugScreen")?.let { Debug.screen = it }
+        if (i.getBooleanExtra("debugAmbient", false)) ambient.value = true
+        i.getStringExtra("debugSummary")?.let { RemoteState.onSummary(this, it) }
     }
 
     override fun onResume() {
@@ -66,11 +92,54 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Screen(autostart: String?, clearAutostart: () -> Unit) {
-    val ui by WatchState.ui.collectAsState()
-    val activity = androidx.compose.ui.platform.LocalContext.current as ComponentActivity
-    var now by mutableLongStateOf(System.currentTimeMillis())
+private fun App(autostart: String?, clearAutostart: () -> Unit, ambient: Boolean) {
+    val activity = LocalContext.current as ComponentActivity
+    val remote by RemoteState.ui.collectAsState()
+    val watch by WatchState.ui.collectAsState()
+    val prefs by Prefs.ui.collectAsState()
+    var screen by remember { mutableStateOf(Screen.Remote) }
+    var info by remember { mutableStateOf(false) }
+    var inAttempt by remember { mutableStateOf(false) }
+    var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
+    var wall by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    val is24 = remember { DateFormat.is24HourFormat(activity) }
+    val fmt = remember { SimpleDateFormat(if (is24) "HH:mm" else "h:mm", Locale.getDefault()) }
+    var clockText by remember { mutableStateOf(fmt.format(Date())) }
 
+    // Screen on while the remote is open, unless the user chose to let it dim into the always-on view.
+    LaunchedEffect(prefs.bright) {
+        if (prefs.bright) activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+    LaunchedEffect(Debug.screen) { Debug.screen?.let { s -> runCatching { Screen.valueOf(s) }.getOrNull()?.let { screen = it } } }
+
+    // One tick a second: the clock, and the staleness of what the phone last said.
+    LaunchedEffect(Unit) {
+        while (true) {
+            now = SystemClock.elapsedRealtime(); wall = System.currentTimeMillis()
+            val t = fmt.format(Date(wall))
+            if (t != clockText) clockText = t
+            if (!WatchState.ui.value.linked) Uplink.flush()
+            delay(1000)
+        }
+    }
+
+    // Tell the phone the app is open (it only sends state while someone is looking), and ask again soon while nothing answers.
+    LaunchedEffect(activity) {
+        activity.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            try {
+                while (true) {
+                    Commands.hello(activity)
+                    val live = RemoteState.ui.value.link == Link.Live && SystemClock.elapsedRealtime() - RemoteState.ui.value.stateAt < 45_000
+                    delay(if (live) 30_000 else 5_000)
+                }
+            } finally {
+                Commands.bye(activity)
+            }
+        }
+    }
+
+    // The recorder: permissions, then the foreground service.
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
         if (granted.values.all { it }) ExerciseService.start(activity, null)
         else WatchState.update { it.copy(message = "Sensors are needed to record heart rate.") }
@@ -80,68 +149,39 @@ private fun Screen(autostart: String?, clearAutostart: () -> Unit) {
         val missing = need.filter { activity.checkSelfPermission(it) != android.content.pm.PackageManager.PERMISSION_GRANTED }
         if (missing.isEmpty()) ExerciseService.start(activity, session) else ask.launch(missing.toTypedArray())
     }
-
     LaunchedEffect(autostart) {
-        if (autostart != null) {
-            begin(autostart.ifEmpty { null })
-            clearAutostart()
-        }
-    }
-    LaunchedEffect(Unit) {
-        while (true) {
-            now = System.currentTimeMillis()
-            if (!WatchState.ui.value.linked) Uplink.flush()
-            delay(1000)
-        }
+        if (autostart != null) { begin(autostart.ifEmpty { null }); clearAutostart() }
     }
 
-    Box(Modifier.fillMaxSize().background(Ground), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(8.dp).background(if (ui.linked) Green else Red, CircleShape))
-                Spacer(Modifier.width(6.dp))
-                Text(if (ui.linked) "Phone linked" else "Phone not linked", color = Muted, fontSize = 12.sp)
-            }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                ui.bpm?.toString() ?: "--",
-                color = if (ui.running) Chalk else Muted,
-                fontSize = 44.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                if (ui.running && ui.startedAt != null) clock(now - ui.startedAt!!) + (if (ui.mode == ExerciseService.MODE_HEART_RATE) " · heart rate only" else "") else "bpm",
-                color = Muted,
-                fontSize = 14.sp,
-            )
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = { if (ui.running) ExerciseService.stop(activity) else begin(null) },
-                colors = ButtonDefaults.buttonColors(backgroundColor = if (ui.running) Red else Gold, contentColor = Ground),
-                modifier = Modifier.height(40.dp),
-            ) {
-                Text(if (ui.running) "Stop" else "Start", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            }
-            if (!ui.running) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    "What can this watch do?", color = Muted, fontSize = 11.sp, textAlign = TextAlign.Center,
-                    modifier = Modifier.clickable {
-                        WatchState.update { it.copy(info = "Sending to the phone...") }
-                        Capabilities.sendToPhone(activity) { WatchState.update { it.copy(info = "Sent to the phone.") } }
-                    },
-                )
-                if (ui.info != null) Text(ui.info!!, color = Muted, fontSize = 10.sp, textAlign = TextAlign.Center)
-            }
-            if (ui.message != null) {
-                Spacer(Modifier.height(4.dp))
-                Text(ui.message!!, color = Red, fontSize = 10.sp, textAlign = TextAlign.Center)
-            }
-        }
-    }
-}
+    BackHandler(enabled = screen != Screen.Remote) { screen = parentOf(screen) }
+    BackHandler(enabled = screen == Screen.Remote && info) { info = false }
 
-private fun clock(ms: Long): String {
-    val s = (ms / 1000).coerceAtLeast(0)
-    return "%d:%02d".format(s / 60, s % 60)
+    val linked = watch.linked || Debug.linked
+    val live = remote.link == Link.Live && now - remote.stateAt < 45_000
+
+    Box(Modifier.fillMaxSize().background(Ink.Ground)) {
+        if (ambient) {
+            AmbientFace(clockText, remote.climb, remote.runner)
+        } else when (screen) {
+            Screen.Remote -> when {
+                !linked -> Notice("Phone not connected", "Check that the watch is paired with the phone and Bluetooth is on.", clockText)
+                remote.link == Link.Mismatch -> Notice("Update needed", "Slackboard on the phone and on the watch are different versions.", clockText)
+                !live -> Notice("Open Slackboard on the phone", "The remote shows what the phone shows.", clockText)
+                remote.runner != null -> RunnerFace(remote.runner!!, clockText, watch.bpm.takeIf { watch.running }) { screen = Screen.Actions }
+                remote.climb == null -> Notice("Open a climb on the phone", "Then it appears here.", clockText)
+                remote.climb!!.count == 0 -> Notice("No climbs in this list", "Change the filters on the phone.", clockText)
+                else -> ClimbFace(remote.climb!!, remote.timer, clockText, watch.bpm.takeIf { watch.running }, remote.pending, { screen = Screen.Actions }, info) { info = it }
+            }
+            Screen.Actions -> ActionsScreen(remote, watch, prefs, inAttempt, { inAttempt = it }, { screen = it }, { screen = Screen.Remote }, now)
+            Screen.TimerLength -> TimerLengthScreen(remote.lengths, prefs.timerSeconds, { s -> Prefs.update { it.copy(timerSeconds = s) }; screen = Screen.Actions }, { screen = Screen.Actions })
+            Screen.LogSend -> LogScreen(true, { n -> Commands.log(activity, true, n); screen = Screen.Remote }, { screen = Screen.Actions })
+            Screen.LogAttempt -> LogScreen(false, { n -> Commands.log(activity, false, n); screen = Screen.Remote }, { screen = Screen.Actions })
+            Screen.Recorder -> RecorderScreen(watch, wall, { begin(null) }, { ExerciseService.stop(activity) }, {
+                WatchState.update { it.copy(info = "Sending to the phone...") }
+                Capabilities.sendToPhone(activity) { WatchState.update { it.copy(info = "Sent to the phone.") } }
+            }, { screen = Screen.Actions })
+            Screen.Settings -> SettingsScreen(prefs, remote.lengths) { screen = Screen.Actions }
+        }
+        if (!ambient) AckToast(remote.ack)
+    }
 }

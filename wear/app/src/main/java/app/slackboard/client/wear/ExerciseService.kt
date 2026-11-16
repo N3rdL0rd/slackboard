@@ -313,13 +313,22 @@ class ExerciseService : Service() {
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
-        val n: Notification = NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_menu_compass)
+        val builder = NotificationCompat.Builder(this, CHANNEL)
+            .setSmallIcon(R.drawable.ic_ongoing)
             .setContentTitle("Climbing session")
             .setContentText("Recording heart rate")
+            .setCategory(NotificationCompat.CATEGORY_WORKOUT)
             .setOngoing(true)
             .setContentIntent(open)
+        // The watch face and recents show a chip that returns to the app while the session records.
+        androidx.wear.ongoing.OngoingActivity.Builder(applicationContext, NOTIF_ID, builder)
+            .setStaticIcon(R.drawable.ic_ongoing)
+            .setAnimatedIcon(R.drawable.ic_ongoing)
+            .setTouchIntent(open)
+            .setStatus(androidx.wear.ongoing.Status.Builder().addTemplate("Recording heart rate").build())
             .build()
+            .apply(applicationContext)
+        val n: Notification = builder.build()
         if (Build.VERSION.SDK_INT >= 29) startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
         else startForeground(NOTIF_ID, n)
     }

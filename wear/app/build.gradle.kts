@@ -54,6 +54,14 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.wear:wear:1.3.0")
+    implementation("androidx.wear:wear-ongoing:1.0.0")
+    implementation("androidx.wear.tiles:tiles:1.4.1")
+    implementation("androidx.wear.protolayout:protolayout:1.2.1")
+    implementation("androidx.wear.protolayout:protolayout-expression:1.2.1")
+    implementation("androidx.wear.protolayout:protolayout-material:1.2.1")
+    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1")
+    implementation("com.google.guava:guava:33.0.0-android")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.ui:ui:1.7.6")
     implementation("androidx.wear.compose:compose-foundation:1.4.1")
@@ -61,4 +69,6 @@ dependencies {
     implementation("androidx.health:health-services-client:1.0.0")
     implementation("com.google.guava:listenablefuture:1.0")
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
+
+    testImplementation("junit:junit:4.13.2")
 }

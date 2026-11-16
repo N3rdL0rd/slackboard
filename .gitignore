@@ -63,3 +63,9 @@ research/
 # Generated when the site is deployed (see .github/workflows/pages.yml)
 site/Slackboard.ipa
 site/altstore.json
+
+# Native module build output
+modules/*/android/build/
+modules/*/android/.cxx/
+wear/.gradle/
+wear/**/build/

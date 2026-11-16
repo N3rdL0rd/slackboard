@@ -141,3 +141,9 @@ Climbs you light up on a board are kept in a local **Lit history** (You > Lit hi
 ## Developer menu
 
 Tap **About** seven times in Settings to unlock it. It holds the hold survey, dead holds, watch sessions (timeline, labels, health, attempt detector and elevation labs, export), a live watch monitor and the app's internal values. Nothing in it is needed to climb.
+
+## Wear OS
+
+A watch app (`wear/`) is a remote for the phone: swipe through the climbs, see the grade and name, start a timer that buzzes as it runs
+out, mirror, light the board, log a send or attempts, and run a training session set by set. It also records heart rate while you
+climb. See `wear/README.md`. It is Android only and optional.

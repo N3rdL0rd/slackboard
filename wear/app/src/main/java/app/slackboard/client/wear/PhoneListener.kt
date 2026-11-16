@@ -15,6 +15,9 @@ class PhoneListener : WearableListenerService() {
     override fun onMessageReceived(event: MessageEvent) {
         Uplink.init(this)
         when (event.path) {
+            Remote.STATE -> RemoteState.onState(String(event.data))
+            Remote.ACK -> RemoteState.onAck(String(event.data))
+            Remote.SUMMARY -> RemoteState.onSummary(this, String(event.data))
             Protocol.START -> {
                 val session = runCatching { JSONObject(String(event.data)).optString("session").ifEmpty { null } }.getOrNull()
                 try {

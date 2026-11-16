@@ -62,6 +62,21 @@ object Uplink {
             }
     }
 
+    /** One message now, not queued: a command that is no use late. `onResult` says whether it was sent. */
+    fun sendNow(path: String, json: JSONObject, onResult: (Boolean) -> Unit = {}) {
+        val bytes = json.toString().toByteArray()
+        Wearable.getNodeClient(app).connectedNodes
+            .addOnSuccessListener { nodes ->
+                val phone = nodes.firstOrNull { it.isNearby } ?: nodes.firstOrNull()
+                WatchState.update { it.copy(linked = phone != null) }
+                if (phone == null) return@addOnSuccessListener onResult(false)
+                Wearable.getMessageClient(app).sendMessage(phone.id, path, bytes)
+                    .addOnSuccessListener { onResult(true) }
+                    .addOnFailureListener { WatchState.update { s -> s.copy(linked = false) }; onResult(false) }
+            }
+            .addOnFailureListener { WatchState.update { s -> s.copy(linked = false) }; onResult(false) }
+    }
+
     private fun done() {
         synchronized(queue) { busy = false }
     }

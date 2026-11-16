@@ -46,3 +46,4 @@ Images, exports and backups go only where you send them.
 
 Open an issue at <https://github.com/N3rdL0rd/slackboard/issues>. For anything sensitive, use the private reporting described in
 [SECURITY.md](SECURITY.md).
+- **Watch:** if you use the Wear OS app, the phone and watch talk to each other over Bluetooth through Google's Wear OS link. Climb names and grades for the remote, and the streak and plan line for the watch's tile, go from the phone to the watch; heart rate and motion go the other way. None of it leaves the two devices.

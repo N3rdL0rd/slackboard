@@ -11,6 +11,8 @@ describe("the training set as the watch shows it", () => {
     const f = runnerFace(startRunner(items), colors)!;
     expect(f).toMatchObject({ phase: "ready", label: "Ready", set: 1, sets: 3, ms: 0, paused: false, color: colors.ready });
     expect(f.next).toBeTruthy();
+    expect(f.big).toBe("0:10");
+    expect(runnerFace(step(step(startRunner(items), { type: "start" }), { type: "tick", ms: 1 }), colors)!.big).toBe("");
   });
   it("counts down a hang in milliseconds and counts up a counted set", () => {
     let s = step(startRunner(items), { type: "start" });

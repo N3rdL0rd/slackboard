@@ -11,6 +11,11 @@ export function describeTarget(t: SetTarget): string {
   return `${t.onS} s hold`;
 }
 
+const clock = (ms: number): string => {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+};
+
 const LABELS = { on: "Hang", work: "Go", off: "Off", rest: "Rest", ready: "Ready", finished: "Done" } as const;
 
 export interface RunnerColors { work: string; rest: string; ready: string }
@@ -29,6 +34,7 @@ export function runnerFace(s: RunnerState, colors: RunnerColors): RemoteRunner |
   return {
     phase: s.phase, label, name: ex.name, set: s.set + 1, sets: item.sets.length,
     target: describeTarget(t), ms, paused: s.paused,
+    big: s.phase === "ready" ? (t.onS !== null ? clock(t.onS * 1000) : String(t.reps ?? "")) : "",
     next: next ? exerciseById(next.exerciseId)?.name ?? null : null,
     color: s.phase === "on" || s.phase === "work" ? colors.work : s.phase === "ready" ? colors.ready : colors.rest,
   };
