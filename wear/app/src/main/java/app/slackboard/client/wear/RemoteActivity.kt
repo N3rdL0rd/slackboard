@@ -7,6 +7,26 @@ import android.text.format.DateFormat
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.withFrameMillis
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,7 +42,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
@@ -88,91 +107,122 @@ private val CLIMBS = listOf(
 )
 private const val TIMER_MS = 30_000L
 
+private val Ease = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+private fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
+
 @Composable
 private fun RemoteScreen() {
     val context = LocalContext.current
     val vibrator = remember { context.getSystemService(Vibrator::class.java) }
     val is24 = remember { DateFormat.is24HourFormat(context) }
+    val scope = rememberCoroutineScope()
     var index by remember { mutableIntStateOf(2) }
     var timerEnd by remember { mutableLongStateOf(0L) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    var drag by remember { mutableFloatStateOf(0f) }
     var lastBuzz by remember { mutableIntStateOf(-1) }
-
-    LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(100) } }
-
-    val left = if (timerEnd > 0) (timerEnd - now).coerceAtLeast(0) else 0L
     val running = timerEnd > 0
+    var drag = remember { floatArrayOf(0f) }
+    val pull = remember { Animatable(0f) }
+
+    // Once a second for the clock; every frame while a timer runs, so the ring empties smoothly instead of in steps.
+    LaunchedEffect(running) {
+        while (true) {
+            if (running) withFrameMillis { now = System.currentTimeMillis() } else { now = System.currentTimeMillis(); delay(1000) }
+        }
+    }
+
+    val left = if (running) (timerEnd - now).coerceAtLeast(0) else 0L
     // Buzz once for each of the last three seconds, and a long one at zero; each second only once.
     LaunchedEffect(left, running) {
         if (!running) { lastBuzz = -1; return@LaunchedEffect }
-        val s = ((left + 999) / 1000).toInt()
+        val sec = ((left + 999) / 1000).toInt()
         if (left == 0L) {
             vibrator.vibrate(VibrationEffect.createOneShot(700, VibrationEffect.DEFAULT_AMPLITUDE))
-            delay(1500); timerEnd = 0L
-        } else if (s in 1..3 && s != lastBuzz) {
-            lastBuzz = s
+            delay(900); timerEnd = 0L
+        } else if (sec in 1..3 && sec != lastBuzz) {
+            lastBuzz = sec
             vibrator.vibrate(VibrationEffect.createOneShot(40, 120))
         }
     }
 
     val climb = CLIMBS[index]
     val urgent = running && left <= 3000
-    val ringColor = if (urgent) Danger else climb.ring
+    val ringColor by animateColorAsState(if (urgent) Danger else climb.ring, tween(300), label = "ring")
+    val numeralColor by animateColorAsState(if (urgent) Danger else climb.numeral, tween(300), label = "numeral")
+    // 0 is the place in the list, 1 is the timer; the same arc morphs between them rather than one blinking out for the other.
+    val mix by animateFloatAsState(if (running) 1f else 0f, tween(450, easing = Ease), label = "mix")
+    val place by animateFloatAsState(index.toFloat(), spring(dampingRatio = 0.85f, stiffness = 260f), label = "place")
     val time = remember(now / 1000) { SimpleDateFormat(if (is24) "HH:mm" else "h:mm", Locale.getDefault()).format(Date(now)) }
+    val frac = left / TIMER_MS.toFloat()
 
     Box(
         Modifier.fillMaxSize().background(Ground)
-            .pointerInput(index) {
+            .pointerInput(Unit) {
                 detectHorizontalDragGestures(
-                    onDragStart = { drag = 0f },
-                    onHorizontalDrag = { _, dx -> drag += dx },
+                    onDragStart = { drag[0] = 0f },
+                    onHorizontalDrag = { _, dx ->
+                        drag[0] += dx
+                        // The content follows the finger at a fraction of the distance, and pulls harder against the ends of the list.
+                        val atEnd = (drag[0] < 0 && index == CLIMBS.lastIndex) || (drag[0] > 0 && index == 0)
+                        scope.launch { pull.snapTo((pull.value + dx * (if (atEnd) 0.12f else 0.35f)).coerceIn(-70f, 70f)) }
+                    },
                     onDragEnd = {
                         // Swiping left shows the next climb, right the previous; it stops at both ends.
-                        if (abs(drag) > 70f) index = (index + if (drag < 0) 1 else -1).coerceIn(0, CLIMBS.lastIndex)
-                        drag = 0f
+                        if (abs(drag[0]) > 70f) {
+                            val next = (index + if (drag[0] < 0) 1 else -1).coerceIn(0, CLIMBS.lastIndex)
+                            if (next != index) { index = next; vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)) }
+                        }
+                        drag[0] = 0f
+                        scope.launch { pull.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = 380f)) }
                     },
+                    onDragCancel = { scope.launch { pull.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = 380f)) } },
                 )
             }
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
-                if (running) timerEnd = 0L else timerEnd = System.currentTimeMillis() + TIMER_MS
+                timerEnd = if (running) 0L else System.currentTimeMillis() + TIMER_MS
             },
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.fillMaxSize().padding(2.dp)) {
             val w = 6.dp.toPx()
-            val inset = w / 2
             val size = Size(this.size.width - w, this.size.height - w)
-            val topLeft = Offset(inset, inset)
+            val topLeft = Offset(w / 2, w / 2)
             drawArc(Raised, 0f, 360f, false, topLeft, size, style = Stroke(w))
-            if (running) {
-                // The ring is the timer: it empties clockwise from the top as time runs down.
-                val frac = left / TIMER_MS.toFloat()
-                drawArc(ringColor, -90f, 360f * frac, false, topLeft, size, style = Stroke(w, cap = StrokeCap.Round))
-            } else {
-                // Otherwise it is the place in the list: one segment per climb, the current one lit.
-                val n = CLIMBS.size
-                val step = 360f / n
-                drawArc(ringColor, -90f + step * index + 1.5f, step - 3f, false, topLeft, size, style = Stroke(w))
-            }
+            val step = 360f / CLIMBS.size
+            val start = lerp(-90f + step * place + 1.5f, -90f, mix)
+            val sweep = lerp(step - 3f, (360f * frac).coerceAtLeast(0.5f), mix)
+            drawArc(ringColor, start, sweep, false, topLeft, size, style = Stroke(w, cap = if (mix > 0.5f) StrokeCap.Round else StrokeCap.Butt))
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize().padding(top = 16.dp, bottom = 26.dp)) {
             Text(time, style = TextStyle(fontFamily = Ui, fontSize = 13.sp, color = Secondary))
             Spacer(Modifier.height(2.dp))
-            Text(climb.grade, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, color = if (urgent) Danger else climb.numeral, lineHeight = 50.sp))
-            Text(climb.name, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 21.sp, color = Chalk, lineHeight = 23.sp), maxLines = 1)
-            Text(
-                "${climb.angle}°" + if (climb.mirrored) "  ·  Mirrored" else "",
-                style = TextStyle(fontFamily = Ui, fontSize = 11.sp, color = Secondary),
-            )
-            if (!running) Stars(climb.stars)
-            Spacer(Modifier.weight(1f))
-            if (running) {
-                Box(Modifier.background(if (urgent) Danger else Raised, RoundedCornerShape(50)).padding(horizontal = 14.dp, vertical = 0.dp)) {
-                    Text(clock((left + 999) / 1000), style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (urgent) Ground else Chalk))
+            AnimatedContent(
+                targetState = index,
+                modifier = Modifier.graphicsLayer { translationX = pull.value; alpha = 1f - abs(pull.value) / 160f },
+                transitionSpec = {
+                    val dir = if (targetState > initialState) 1 else -1
+                    (slideInHorizontally(tween(320, easing = Ease)) { it / 3 * dir } + fadeIn(tween(260, delayMillis = 40))) togetherWith
+                        (slideOutHorizontally(tween(220, easing = Ease)) { -it / 3 * dir } + fadeOut(tween(140)))
+                },
+                label = "climb",
+            ) { i ->
+                val c = CLIMBS[i]
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(c.grade, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, color = if (i == index) numeralColor else c.numeral, lineHeight = 50.sp))
+                    Text(c.name, style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 21.sp, color = Chalk, lineHeight = 23.sp), maxLines = 1)
+                    Text("${c.angle}\u00B0" + if (c.mirrored) "  \u00B7  Mirrored" else "", style = TextStyle(fontFamily = Ui, fontSize = 11.sp, color = Secondary))
+                    AnimatedVisibility(!running, enter = fadeIn(tween(300)) + expandVertically(tween(300, easing = Ease)), exit = fadeOut(tween(160)) + shrinkVertically(tween(260, easing = Ease))) { Stars(c.stars) }
                 }
-            } else {
-                Text("${index + 1} of ${CLIMBS.size}", style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Muted))
+            }
+            Spacer(Modifier.weight(1f))
+            Crossfade(running, animationSpec = tween(260), label = "bottom") { on ->
+                if (on) {
+                    Box(Modifier.background(if (urgent) Danger else Raised, RoundedCornerShape(50)).padding(horizontal = 14.dp)) {
+                        Text(clock((left + 999) / 1000), style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (urgent) Ground else Chalk))
+                    }
+                } else {
+                    Text("${index + 1} of ${CLIMBS.size}", style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Muted))
+                }
             }
         }
     }
