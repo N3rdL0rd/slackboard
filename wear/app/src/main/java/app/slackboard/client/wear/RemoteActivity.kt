@@ -44,6 +44,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -118,43 +121,46 @@ private fun RemoteScreen() {
     val scope = rememberCoroutineScope()
     var index by remember { mutableIntStateOf(2) }
     var timerEnd by remember { mutableLongStateOf(0L) }
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    val nowMs = remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var clockText by remember { mutableStateOf("") }
     var lastBuzz by remember { mutableIntStateOf(-1) }
     val running = timerEnd > 0
     var drag = remember { floatArrayOf(0f) }
     val pull = remember { Animatable(0f) }
 
-    // Once a second for the clock; every frame while a timer runs, so the ring empties smoothly instead of in steps.
-    LaunchedEffect(running) {
-        while (true) {
-            if (running) withFrameMillis { now = System.currentTimeMillis() } else { now = System.currentTimeMillis(); delay(1000) }
+    val fmt = remember { SimpleDateFormat(if (is24) "HH:mm" else "h:mm", Locale.getDefault()) }
+    LaunchedEffect(Unit) { while (true) { val t = fmt.format(Date()); if (t != clockText) clockText = t; delay(1000) } }
+    // The clock reading moves every 100 ms while a timer runs, but only the whole second left is read while composing, so the screen
+    // recomposes once a second and not ten times. The ring is driven by its own animation and read only while drawing.
+    LaunchedEffect(running) { while (running) { nowMs.longValue = System.currentTimeMillis(); delay(100) } }
+    val secLeft by remember { derivedStateOf { if (timerEnd > 0) ((timerEnd - nowMs.longValue + 999) / 1000).coerceAtLeast(0) else 0L } }
+    val frac = remember { Animatable(0f) }
+    LaunchedEffect(timerEnd) {
+        if (timerEnd > 0) {
+            val total = timerEnd - System.currentTimeMillis()
+            frac.snapTo(total / TIMER_MS.toFloat())
+            frac.animateTo(0f, tween(total.toInt().coerceAtLeast(1), easing = LinearEasing))
         }
     }
-
-    val left = if (running) (timerEnd - now).coerceAtLeast(0) else 0L
     // Buzz once for each of the last three seconds, and a long one at zero; each second only once.
-    LaunchedEffect(left, running) {
+    LaunchedEffect(secLeft, running) {
         if (!running) { lastBuzz = -1; return@LaunchedEffect }
-        val sec = ((left + 999) / 1000).toInt()
-        if (left == 0L) {
+        if (secLeft == 0L) {
             vibrator.vibrate(VibrationEffect.createOneShot(700, VibrationEffect.DEFAULT_AMPLITUDE))
             delay(900); timerEnd = 0L
-        } else if (sec in 1..3 && sec != lastBuzz) {
-            lastBuzz = sec
+        } else if (secLeft in 1..3 && secLeft.toInt() != lastBuzz) {
+            lastBuzz = secLeft.toInt()
             vibrator.vibrate(VibrationEffect.createOneShot(40, 120))
         }
     }
 
     val climb = CLIMBS[index]
-    val urgent = running && left <= 3000
-    val ringColor by animateColorAsState(if (urgent) Danger else climb.ring, tween(300), label = "ring")
+    val urgent = running && secLeft <= 3
+    val ringColor = animateColorAsState(if (urgent) Danger else climb.ring, tween(300), label = "ring")
     val numeralColor by animateColorAsState(if (urgent) Danger else climb.numeral, tween(300), label = "numeral")
     // 0 is the place in the list, 1 is the timer; the same arc morphs between them rather than one blinking out for the other.
-    val mix by animateFloatAsState(if (running) 1f else 0f, tween(450, easing = Ease), label = "mix")
-    val place by animateFloatAsState(index.toFloat(), spring(dampingRatio = 0.85f, stiffness = 260f), label = "place")
-    val time = remember(now / 1000) { SimpleDateFormat(if (is24) "HH:mm" else "h:mm", Locale.getDefault()).format(Date(now)) }
-    val frac = left / TIMER_MS.toFloat()
-
+    val mix = animateFloatAsState(if (running) 1f else 0f, tween(450, easing = Ease), label = "mix")
+    val place = animateFloatAsState(index.toFloat(), spring(dampingRatio = 0.85f, stiffness = 260f), label = "place")
     Box(
         Modifier.fillMaxSize().background(Ground)
             .pointerInput(Unit) {
@@ -189,12 +195,13 @@ private fun RemoteScreen() {
             val topLeft = Offset(w / 2, w / 2)
             drawArc(Raised, 0f, 360f, false, topLeft, size, style = Stroke(w))
             val step = 360f / CLIMBS.size
-            val start = lerp(-90f + step * place + 1.5f, -90f, mix)
-            val sweep = lerp(step - 3f, (360f * frac).coerceAtLeast(0.5f), mix)
-            drawArc(ringColor, start, sweep, false, topLeft, size, style = Stroke(w, cap = if (mix > 0.5f) StrokeCap.Round else StrokeCap.Butt))
+            val m = mix.value
+            val start = lerp(-90f + step * place.value + 1.5f, -90f, m)
+            val sweep = lerp(step - 3f, (360f * frac.value).coerceAtLeast(0.5f), m)
+            drawArc(ringColor.value, start, sweep, false, topLeft, size, style = Stroke(w, cap = if (m > 0.5f) StrokeCap.Round else StrokeCap.Butt))
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize().padding(top = 16.dp, bottom = 26.dp)) {
-            Text(time, style = TextStyle(fontFamily = Ui, fontSize = 13.sp, color = Secondary))
+            Text(clockText, style = TextStyle(fontFamily = Ui, fontSize = 13.sp, color = Secondary))
             Spacer(Modifier.height(2.dp))
             AnimatedContent(
                 targetState = index,
@@ -218,7 +225,7 @@ private fun RemoteScreen() {
             Crossfade(running, animationSpec = tween(260), label = "bottom") { on ->
                 if (on) {
                     Box(Modifier.background(if (urgent) Danger else Raised, RoundedCornerShape(50)).padding(horizontal = 14.dp)) {
-                        Text(clock((left + 999) / 1000), style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (urgent) Ground else Chalk))
+                        Text(clock(secLeft), style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (urgent) Ground else Chalk))
                     }
                 } else {
                     Text("${index + 1} of ${CLIMBS.size}", style = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Muted))
