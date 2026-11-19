@@ -69,3 +69,5 @@ modules/*/android/build/
 modules/*/android/.cxx/
 wear/.gradle/
 wear/**/build/
+
+modules/
